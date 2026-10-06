@@ -840,7 +840,7 @@ export class Site extends Phaser.Scene {
       duration: 2000,
       onComplete: () => (this.kelpie.anims.stop(), this.kelpie.setFrame(3)),
     });
-    this.cameras.main.pan(this.ute.x, h / 2, 2500, "Sine.InOut");
+    this.cameras.main.pan(this.ute.x, h / 2, 2500, Phaser.Math.Easing.Sine.InOut);
     try {
       const { today } = await knockoff();
       openKnockoff(today, this.current, () => this.day());
@@ -858,7 +858,7 @@ export class Site extends Phaser.Scene {
 
   smoko() {
     toast("smoko. ten minutes.");
-    this.cameras.main.pan(this.empties.x + 100, this.scale.height / 2, 1500, "Sine.InOut");
+    this.cameras.main.pan(this.empties.x + 100, this.scale.height / 2, 1500, Phaser.Math.Easing.Sine.InOut);
     const { height: h } = this.scale;
     for (const a of this.actors.values()) {
       this.tweens.killTweensOf([a.body, a.label]);
