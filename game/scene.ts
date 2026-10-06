@@ -316,10 +316,10 @@ export class Site extends Phaser.Scene {
     this.gate.setX(yard + 300);
     this.signoff.setX(yard + 330);
     this.pallets.setX(yard + 520);
-    this.empties.setX(yard + 730);
-    this.ute.setX(yard + 930);
+    this.empties.setX(yard + 830);
+    this.ute.setX(yard + 1030);
     this.plans.setX(shed.x + 2 * TILE_PX + 6);
-    this.worldW = Math.max(w, yard + 1030);
+    this.worldW = Math.max(w, yard + 1130);
     this.grass.setSize(this.worldW, this.grass.height);
     this.dirt.setSize(this.worldW, this.dirt.height);
     this.road.setSize(this.worldW, 44);
