@@ -63,3 +63,13 @@ export function layoutStreet(epics: Epic[], items: Item[]): { houses: House[]; s
   };
   return { houses, shed, width: shed.x + 2 * TILE_PX + 40 };
 }
+
+export function shortTitle(title: string, max = 26): string {
+  const t = title
+    .replace(/^(epic|flywheel|arch|eval|biz)\s*:\s*/i, "")
+    .split(/\s+[—–-]\s+|:\s/)[0]!
+    .trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max + 1).lastIndexOf(" ");
+  return (cut > 8 ? t.slice(0, cut) : t.slice(0, max)) + "…";
+}

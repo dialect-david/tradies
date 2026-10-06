@@ -3,7 +3,7 @@ import type { Item } from "../server/model.js";
 import { cast, TRADE_COLOUR, type Cast } from "./cast.js";
 import { items as fetchItems, knockoff, onRefresh } from "./client.js";
 import { openCard, openBoard, openKnockoff, toast } from "./card.js";
-import { HOUSE_W, layoutStreet, SHED, TILE_PX, type House } from "./street.js";
+import { HOUSE_W, layoutStreet, SHED, shortTitle, TILE_PX, type House } from "./street.js";
 import {
   CAN_FRAMES,
   CAN_PALETTE,
@@ -333,7 +333,7 @@ export class Site extends Phaser.Scene {
     const label =
       house.id === SHED
         ? `the shed · ${house.items.length}`
-        : `${house.id.replace(/^[a-z]+-/, "")} · ${house.closed}/${house.total}`;
+        : `${shortTitle(house.title)}\n${house.id.replace(/^[a-z]+-/, "")} · ${house.closed}/${house.total}`;
     if (house.stage === lot.stage) {
       (lot.box.getByName("label") as Phaser.GameObjects.Text | null)?.setText(label);
       return;
@@ -380,6 +380,8 @@ export class Site extends Phaser.Scene {
           fontSize: "10px",
           color: "#fff",
           backgroundColor: "#0006",
+          align: "center",
+          wordWrap: { width: W * TILE_PX + 36 },
         })
         .setOrigin(0.5, 1)
         .setName("label"),

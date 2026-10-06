@@ -53,3 +53,15 @@ describe("street", () => {
     expect(shed.items.map((i) => i.id)).toEqual(["lone"]);
   });
 });
+
+import { shortTitle } from "../game/street.js";
+
+describe("shortTitle", () => {
+  it("drops the kind prefix and everything after a dash or colon, then caps at a word", () => {
+    expect(shortTitle("epic: personalise your Sal — voice, style")).toBe("personalise your Sal");
+    expect(shortTitle("arch: classify-retrieve-compose — Clef owns")).toBe("classify-retrieve-compose");
+    expect(shortTitle("epic: tradie lifecycle — signup to leaving")).toBe("tradie lifecycle");
+    expect(shortTitle("Scenarios at ~100% by close reading: harness")).toBe("Scenarios at ~100% by…");
+    expect(shortTitle("epic: business")).toBe("business");
+  });
+});
