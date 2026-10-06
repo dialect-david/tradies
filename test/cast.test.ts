@@ -27,9 +27,13 @@ describe("cast", () => {
         item({ id: "gone", updatedAt: new Date("2026-08-01") }),
         item({ id: "fresh" }),
         item({ id: "#1", kind: "pr", blocked: true }),
+        item({ id: "ask", blocked: true, labels: ["needs-dave"] }),
+        item({ id: "parked", status: "deferred", updatedAt: new Date("2026-01-01") }),
       ],
       now,
     );
+    expect(c.needsYou.map((i) => i.id)).toEqual(["ask"]);
+    expect(c.deferred.map((i) => i.id)).toEqual(["parked"]);
     expect(c.working.map((i) => i.id)).toEqual(["w", "stale-w"]);
     expect(c.asleep.map((i) => i.id)).toEqual(["stale-w"]);
     expect(c.waiting.map((i) => i.id)).toEqual(["wait"]);
@@ -47,6 +51,10 @@ describe("cast", () => {
     expect(cast([gone, old], now).worst?.id).toBe("old");
     const napping = item({ id: "nap", status: "in_progress", updatedAt: new Date("2026-09-25") });
     expect(cast([old, napping], now).worst?.id).toBe("nap");
+    const ask = item({ id: "ask", blocked: true, labels: ["needs-dave"] });
+    expect(cast([old, ask], now).worst?.id).toBe("ask");
+    expect(cast([ask, napping], now).worst?.id).toBe("nap");
+    expect(score(item({ status: "deferred", priority: 0 }), now)).toBe(0);
     expect(score(gone, now)).toBe(2);
     expect(cast([old, p0, rain], now).worst?.id).toBe("#1");
     expect(cast([old, p0], now).worst?.id).toBe("p0");

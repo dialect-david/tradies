@@ -7,7 +7,17 @@ const stripe = "#e8e8e8";
 const shorts = "#2c3e50";
 const boots = "#3b2a1a";
 
-export const TRADIE_PALETTE = { o: outline, s: skin, v: vis, V: stripe, b: shorts, k: boots, m: "#777777" };
+export const TRADIE_PALETTE = {
+  o: outline,
+  s: skin,
+  v: vis,
+  V: stripe,
+  b: shorts,
+  k: boots,
+  m: "#777777",
+  p: "#8b5a2b",
+  W: "#ffffff",
+};
 
 export const TRADIE_FRAMES: string[][] = [
   [
@@ -149,6 +159,27 @@ export const TRADIE_FRAMES: string[][] = [
     ".sVVVVVVVVs.",
     ".svvvvvvvvs.",
     "...vvvvvv...",
+    "...bbbbbb...",
+    "...bbbbbb...",
+    "...bb..bb...",
+    "...ss..ss...",
+    "...ss..ss...",
+    "...kk..kk...",
+    "..kkk..kkk..",
+  ],
+  [
+    "...HHHHHH...",
+    "..HHHHHHHH..",
+    ".HHHHHHHHHH.",
+    "..ssssssss..",
+    "..soss.soss.",
+    "..ssssssss..",
+    "...ssssss...",
+    "..vvvvvvvv..",
+    ".vvvvvvvvvvs",
+    ".sVVVVVVVppp",
+    ".svvvvvvvpWp",
+    "...vvvvvvppp",
     "...bbbbbb...",
     "...bbbbbb...",
     "...bb..bb...",

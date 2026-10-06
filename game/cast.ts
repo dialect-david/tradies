@@ -2,11 +2,16 @@ import { ageDays, byUrgency, isStale, type Item } from "../server/model.js";
 
 export const GONE_DAYS = 30;
 
+export const needsSomeone = (i: Item) => i.labels.some((l) => l.startsWith("needs-"));
+export const whoIsNeeded = (i: Item) => i.labels.find((l) => l.startsWith("needs-"))?.slice(6) ?? "you";
+
 export type Role = "working" | "smoko" | "waiting" | "inspector" | "board";
 
 export type Cast = {
   working: Item[];
   asleep: Item[];
+  needsYou: Item[];
+  deferred: Item[];
   smoko: Item[];
   gone: Item[];
   waiting: Item[];
@@ -17,21 +22,32 @@ export type Cast = {
 };
 
 export function cast(items: Item[], now = new Date()): Cast {
-  const beads = items.filter((i) => i.kind === "bead");
+  const all = items.filter((i) => i.kind === "bead");
+  const deferred = all.filter((i) => i.status === "deferred");
+  const beads = all.filter((i) => i.status !== "deferred");
   const prs = items.filter((i) => i.kind === "pr");
   const byScore = (a: Item, b: Item) => score(b, now) - score(a, now);
   const working = beads.filter((i) => i.status === "in_progress");
   const asleep = working.filter((i) => isStale(i, now));
-  const waiting = beads.filter((i) => i.blocked && i.status !== "in_progress").sort(byScore);
-  const idle = beads.filter((i) => isStale(i, now) && !working.includes(i) && !waiting.includes(i));
+  const needsYou = beads.filter((i) => needsSomeone(i) && i.status !== "in_progress").sort(byScore);
+  const waiting = beads
+    .filter((i) => i.blocked && i.status !== "in_progress" && !needsYou.includes(i))
+    .sort(byScore);
+  const idle = beads.filter(
+    (i) => isStale(i, now) && !working.includes(i) && !waiting.includes(i) && !needsYou.includes(i),
+  );
   const gone = idle.filter((i) => ageDays(i, now) >= GONE_DAYS).sort(byScore);
   const smoko = idle.filter((i) => !gone.includes(i)).sort(byScore);
   const rain = prs.some((i) => i.blocked);
-  const ready = beads.filter((i) => !i.blocked && i.status === "open").sort(byUrgency);
+  const ready = beads
+    .filter((i) => !i.blocked && i.status === "open" && !needsYou.includes(i))
+    .sort(byUrgency);
   const worst = [...items].sort(byScore)[0];
   return {
     working,
     asleep,
+    needsYou,
+    deferred,
     smoko,
     gone,
     waiting,
@@ -50,6 +66,8 @@ export function score(i: Item, now: Date): number {
   const age = ageDays(i, now);
   if (isStale(i, now)) s += age >= GONE_DAYS ? 2 : Math.min(40, age);
   if (i.status === "in_progress" && isStale(i, now)) s += 30;
+  if (needsSomeone(i)) s += 25;
+  if (i.status === "deferred") s = 0;
   if (i.blocked) s += 5;
   return s;
 }

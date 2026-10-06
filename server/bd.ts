@@ -8,7 +8,7 @@ export async function listBeads(): Promise<Item[]> {
     "--limit",
     "0",
     "--status",
-    "open,in_progress,blocked",
+    "open,in_progress,blocked,deferred",
   ]);
   return beads.map(fromBead);
 }

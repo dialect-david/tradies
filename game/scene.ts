@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import type { Item } from "../server/model.js";
-import { cast, TRADE_COLOUR, type Cast } from "./cast.js";
+import { cast, TRADE_COLOUR, whoIsNeeded, type Cast } from "./cast.js";
 import { items as fetchItems, knockoff, onRefresh } from "./client.js";
 import { openCard, openBoard, openKnockoff, toast } from "./card.js";
 import { HOUSE_W, layoutStreet, SHED, shortTitle, TILE_PX, type House } from "./street.js";
@@ -89,6 +89,8 @@ export class Site extends Phaser.Scene {
   private beerCount = -1;
   private pallets!: Phaser.GameObjects.Container;
   private gate!: Phaser.GameObjects.Image;
+  private signoff!: Phaser.GameObjects.Container;
+  private plans!: Phaser.GameObjects.Container;
   private empties!: Phaser.GameObjects.Container;
   private ute!: Phaser.GameObjects.Container;
   private sign!: Phaser.GameObjects.Container;
@@ -219,6 +221,8 @@ export class Site extends Phaser.Scene {
     ]);
     this.beers = this.add.container(0, gy);
     this.gate = this.add.image(0, gy, "tiles", TILE.fence).setOrigin(0.5, 1).setScale(TS);
+    this.signoff = this.add.container(0, gy);
+    this.plans = this.add.container(0, gy);
     this.pallets = this.add.container(0, gy);
     this.empties = this.add.container(0, gy);
     this.ute = this.add.container(0, gy);
@@ -309,11 +313,13 @@ export class Site extends Phaser.Scene {
     const yard = width + 40;
     this.sign.setX(yard);
     this.beers.setX(yard + 60);
-    this.gate.setX(yard + 320);
-    this.pallets.setX(yard + 350);
-    this.empties.setX(yard + 560);
-    this.ute.setX(yard + 760);
-    this.worldW = Math.max(w, yard + 860);
+    this.gate.setX(yard + 300);
+    this.signoff.setX(yard + 330);
+    this.pallets.setX(yard + 520);
+    this.empties.setX(yard + 730);
+    this.ute.setX(yard + 930);
+    this.plans.setX(shed.x + 2 * TILE_PX + 6);
+    this.worldW = Math.max(w, yard + 1030);
     this.grass.setSize(this.worldW, this.grass.height);
     this.dirt.setSize(this.worldW, this.dirt.height);
     this.road.setSize(this.worldW, 44);
@@ -429,9 +435,11 @@ export class Site extends Phaser.Scene {
     const spot = (item: Item, role: string, n: number): [number, number] =>
       role === "working"
         ? [this.lotOf(item).box.x + 20 + (n % 3) * 36, gy]
-        : role === "waiting"
-          ? [this.pallets.x + 150 + n * 30, gy]
-          : [this.empties.x + 70 + n * 34, gy];
+        : role === "signoff"
+          ? [this.signoff.x + 20 + n * 34, gy]
+          : role === "waiting"
+            ? [this.pallets.x + 150 + n * 30, gy]
+            : [this.empties.x + 70 + n * 34, gy];
 
     const put = (item: Item, role: string, n: number) => {
       seen.add(item.id);
@@ -467,7 +475,9 @@ export class Site extends Phaser.Scene {
       a.label.setVisible(role === "working");
       a.body.setDepth(role === "working" ? 5 : 1);
       const napping = role === "working" && c.asleep.includes(item);
-      a.body.setFrame(napping ? 6 : role === "smoko" ? 2 : role === "waiting" ? 3 : 0);
+      a.body.setFrame(
+        napping ? 6 : role === "smoko" ? 2 : role === "waiting" ? 3 : role === "signoff" ? 7 : 0,
+      );
       this.tweens.add({ targets: a.body, x, y, duration: 600, ease: "Bounce.Out" });
       this.tweens.add({ targets: a.label, x, y: y + 2, duration: 600 });
       this.settle(a);
@@ -476,11 +486,14 @@ export class Site extends Phaser.Scene {
       else a.body.anims.stop();
     };
     c.working.forEach((i, n) => put(i, "working", n));
+    c.needsYou.slice(0, 3).forEach((i, n) => put(i, "signoff", n));
     c.waiting.slice(0, 3).forEach((i, n) => put(i, "waiting", n));
     c.smoko.slice(0, 3).forEach((i, n) => put(i, "smoko", n));
     this.pile(this.pallets, "tiles", TILE.crate, c.waiting, 4, T * TS, "waiting on materials", TS);
     this.pile(this.empties, "empty", 0, c.smoko, 8, 9, "on smoko", 0.6, { x: -8, y: -18 * PX });
     this.esky();
+    this.signOff(c.needsYou);
+    this.shelve(c.deferred);
     this.drive(c.gone);
     this.inspect(c.inspectors);
 
@@ -501,8 +514,19 @@ export class Site extends Phaser.Scene {
 
     if (c.rain) this.rain.start();
     else this.rain.stop();
-    this.hud.querySelector("#counts")!.textContent =
-      `${this.lots.size - 1} houses · ${c.working.length} on the tools${c.asleep.length ? ` (${c.asleep.length} asleep)` : ""} · ${c.ready.length} ready · ${c.waiting.length} waiting on materials · ${c.smoko.length} on smoko · ${c.gone.length} gone home · ${c.inspectors.length} inspectors${c.rain ? " · ☔ rain" : ""}`;
+    this.hud.querySelector("#counts")!.textContent = [
+      `${c.working.length} on the tools${c.asleep.length ? ` (${c.asleep.length} asleep)` : ""}`,
+      `${c.ready.length} ready`,
+      c.needsYou.length ? `${c.needsYou.length} on you` : "",
+      `${c.waiting.length} materials`,
+      `${c.smoko.length} smoko`,
+      c.deferred.length ? `${c.deferred.length} plans` : "",
+      c.gone.length ? `${c.gone.length} gone home` : "",
+      c.inspectors.length ? `${c.inspectors.length} inspectors` : "",
+      c.rain ? "☔ rain" : "",
+    ]
+      .filter(Boolean)
+      .join(" · ");
 
     const target = c.worst && this.actors.get(c.worst.id);
     const tx = target ? target.body.x + 26 : w * 0.5;
@@ -609,6 +633,46 @@ export class Site extends Phaser.Scene {
           onComplete: () => car.destroy(),
         });
       }
+  }
+
+  signOff(items: Item[]) {
+    this.signoff.removeAll(true);
+    if (!items.length) return;
+    const who = whoIsNeeded(items[0]!);
+    const t = this.add
+      .text(50, -70, `${items.length} waiting on ${who}`, {
+        fontSize: "10px",
+        color: "#ffd166",
+        backgroundColor: "#0008",
+      })
+      .setOrigin(0.5, 1)
+      .setInteractive();
+    t.on("pointerdown", () => openBoard(items, `waiting on ${who}`, false));
+    this.signoff.add(t);
+  }
+
+  shelve(items: Item[]) {
+    this.plans.removeAll(true);
+    if (!items.length) return;
+    items.slice(0, 12).forEach((_, i) => {
+      const roll = this.add
+        .rectangle(0, -14 - i * 7, 26, 6, 0xf1e3c6)
+        .setOrigin(0, 1)
+        .setStrokeStyle(1, 0x8b5a2b)
+        .setInteractive();
+      roll.on("pointerdown", () => openBoard(items, "on the plans", false));
+      this.plans.add(roll);
+    });
+    const t = this.add
+      .text(13, -14 - Math.min(items.length, 12) * 7 - 28, `${items.length} on the plans`, {
+        fontSize: "9px",
+        color: "#fff",
+        backgroundColor: "#0006",
+      })
+      .setOrigin(0.5, 1)
+      .setInteractive();
+    t.on("pointerdown", () => openBoard(items, "on the plans", false));
+    this.plans.add(t);
   }
 
   drive(gone: Item[]) {
