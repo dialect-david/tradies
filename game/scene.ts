@@ -43,7 +43,14 @@ const TILE = {
   sign: 86,
 };
 
-type Actor = { item: Item; body: Phaser.GameObjects.Sprite; label: Phaser.GameObjects.Text; role: string };
+type Actor = {
+  item: Item;
+  body: Phaser.GameObjects.Sprite;
+  label: Phaser.GameObjects.Text;
+  role: string;
+  gen: number;
+  puff?: Phaser.GameObjects.Particles.ParticleEmitter;
+};
 
 export class Site extends Phaser.Scene {
   private actors = new Map<string, Actor>();
@@ -323,7 +330,7 @@ export class Site extends Phaser.Scene {
             .setVisible(role === "working")
             .setDepth(0),
         );
-        a = { item, body, label, role };
+        a = { item, body, label, role, gen: 0 };
         this.actors.set(item.id, a);
       }
       a.item = item;
@@ -333,6 +340,7 @@ export class Site extends Phaser.Scene {
       a.body.setFrame(role === "smoko" ? 2 : role === "waiting" ? 3 : 0);
       this.tweens.add({ targets: a.body, x, y, duration: 600, ease: "Bounce.Out" });
       this.tweens.add({ targets: a.label, x, y: y + 2, duration: 600 });
+      this.settle(a);
       if (role === "working") this.wander(a);
       else a.body.anims.stop();
     };
@@ -558,7 +566,8 @@ export class Site extends Phaser.Scene {
   }
 
   wander(a: Actor) {
-    const alive = () => a.role === "working" && this.actors.get(a.item.id) === a;
+    const gen = a.gen;
+    const alive = () => a.gen === gen && a.role === "working" && this.actors.get(a.item.id) === a;
     const houseL = this.house.x + 10;
     const houseR = this.house.x + 8 * T * HS - 10;
     const door = this.house.x + 3.5 * T * HS;
@@ -581,17 +590,16 @@ export class Site extends Phaser.Scene {
     };
     const hammer = (ms: number, then: () => void) => {
       a.body.play(`${a.body.texture.key}-hammer`, true);
-      const puff = this.add.particles(a.body.x + (a.body.flipX ? -14 : 14), a.body.y - 30, "dust", {
+      const puff = (a.puff = this.add.particles(a.body.x + (a.body.flipX ? -14 : 14), a.body.y - 30, "dust", {
         speed: { min: 20, max: 60 },
         angle: { min: 200, max: 340 },
         lifespan: 500,
         scale: { start: 1, end: 0 },
         frequency: 160,
         quantity: 2,
-      });
+      }));
       this.time.delayedCall(ms, () => {
-        puff.stop();
-        this.time.delayedCall(600, () => puff.destroy());
+        this.dustOff(a, puff);
         a.body.anims.stop();
         a.body.setFrame(0);
         if (alive()) then();
@@ -626,6 +634,20 @@ export class Site extends Phaser.Scene {
           : hammer(Phaser.Math.Between(1500, 4000), () => this.wander(a)),
       );
     });
+  }
+
+  settle(a: Actor) {
+    a.gen++;
+    if (a.puff) this.dustOff(a, a.puff);
+    a.body.anims.stop();
+    a.body.setAlpha(1);
+    a.label.setAlpha(1);
+  }
+
+  dustOff(a: Actor, puff: Phaser.GameObjects.Particles.ParticleEmitter) {
+    if (a.puff === puff) a.puff = undefined;
+    puff.stop();
+    this.time.delayedCall(600, () => puff.destroy());
   }
 
   swingDoor(open: boolean, then?: () => void) {
