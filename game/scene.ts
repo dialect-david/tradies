@@ -311,15 +311,15 @@ export class Site extends Phaser.Scene {
     const { width: w, height: h } = this.scale;
     const gy = h * GROUND;
     const yard = width + 40;
-    this.sign.setX(yard);
-    this.beers.setX(yard + 60);
-    this.gate.setX(yard + 300);
-    this.signoff.setX(yard + 330);
+    this.gate.setX(yard);
+    this.signoff.setX(yard + 30);
+    this.sign.setX(yard + 200);
+    this.empties.setX(yard + 260);
     this.pallets.setX(yard + 520);
-    this.empties.setX(yard + 830);
-    this.ute.setX(yard + 1030);
-    this.plans.setX(shed.x + 2 * TILE_PX + 6);
-    this.worldW = Math.max(w, yard + 1130);
+    this.plans.setX(yard + 780);
+    this.beers.setX(yard + 840);
+    this.ute.setX(yard + 1140);
+    this.worldW = Math.max(w, yard + 1240);
     this.grass.setSize(this.worldW, this.grass.height);
     this.dirt.setSize(this.worldW, this.dirt.height);
     this.road.setSize(this.worldW, 44);
@@ -656,7 +656,7 @@ export class Site extends Phaser.Scene {
     if (!items.length) return;
     items.slice(0, 12).forEach((_, i) => {
       const roll = this.add
-        .rectangle(0, -14 - i * 7, 26, 6, 0xf1e3c6)
+        .rectangle(0, -i * 7, 40, 6, 0xf1e3c6)
         .setOrigin(0, 1)
         .setStrokeStyle(1, 0x8b5a2b)
         .setInteractive();
@@ -664,7 +664,7 @@ export class Site extends Phaser.Scene {
       this.plans.add(roll);
     });
     const t = this.add
-      .text(13, -14 - Math.min(items.length, 12) * 7 - 28, `${items.length} on the plans`, {
+      .text(20, -Math.min(items.length, 12) * 7 - 6, `${items.length} on the plans`, {
         fontSize: "9px",
         color: "#fff",
         backgroundColor: "#0006",
