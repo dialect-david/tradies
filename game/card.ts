@@ -1,6 +1,6 @@
 import { ageDays, type Item } from "../server/model.js";
 import { act, show } from "./client.js";
-import { score, whoIsNeeded, type Cast } from "./cast.js";
+import { score, type Cast } from "./cast.js";
 
 const card = document.getElementById("card")!;
 const board = document.getElementById("board")!;
@@ -118,7 +118,7 @@ export function openKnockoff(today: Item[], c: Cast, onClose: () => void) {
     <div class="head"><h3>knock-off · ${now.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "short" })}</h3></div>
     <h4>${today.length ? `${today.length} beer${today.length === 1 ? "" : "s"} cracked ${"🍺".repeat(Math.min(today.length, 12))}` : "dry day. none closed."}</h4>
     ${today.map((i) => row(i, i.closeReason ? `<div class="why">${esc(i.closeReason.slice(0, 120))}</div>` : "")).join("")}
-    ${c.needsYou.length ? `<h4>${c.needsYou.length} waiting on ${whoIsNeeded(c.needsYou[0]!)}</h4>${c.needsYou.map((i) => row(i)).join("")}` : ""}
+    ${c.needsYou.length ? `<h4>${c.needsYou.length} waiting on the foreman</h4>${c.needsYou.map((i) => row(i)).join("")}` : ""}
     <h4>the Kelpie's worried about</h4>
     ${worry.map((i) => row(i, ` <span class="why">${ageDays(i)}d · P${i.priority}</span>`)).join("") || "<i>nothing. good girl.</i>"}
     <h4>${c.smoko.length} still on smoko, ${c.waiting.length} waiting on materials, ${c.ready.length} ready for tomorrow</h4>

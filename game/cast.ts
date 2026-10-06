@@ -3,7 +3,6 @@ import { ageDays, byUrgency, isStale, type Item } from "../server/model.js";
 export const GONE_DAYS = 30;
 
 export const needsSomeone = (i: Item) => i.labels.some((l) => l.startsWith("needs-"));
-export const whoIsNeeded = (i: Item) => i.labels.find((l) => l.startsWith("needs-"))?.slice(6) ?? "you";
 
 export type Role = "working" | "smoko" | "waiting" | "inspector" | "board";
 

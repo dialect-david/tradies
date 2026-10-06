@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import type { Item } from "../server/model.js";
-import { cast, TRADE_COLOUR, whoIsNeeded, type Cast } from "./cast.js";
+import { cast, TRADE_COLOUR, type Cast } from "./cast.js";
 import { items as fetchItems, knockoff, onRefresh } from "./client.js";
 import { openCard, openBoard, openKnockoff, toast } from "./card.js";
 import { HOUSE_W, layoutStreet, SHED, shortTitle, TILE_PX, type House } from "./street.js";
@@ -525,7 +525,7 @@ export class Site extends Phaser.Scene {
     this.hud.querySelector("#counts")!.textContent = [
       `${c.working.length} on the tools${c.asleep.length ? ` (${c.asleep.length} asleep)` : ""}`,
       `${c.ready.length} ready`,
-      c.needsYou.length ? `${c.needsYou.length} on you` : "",
+      c.needsYou.length ? `${c.needsYou.length} on the foreman` : "",
       `${c.waiting.length} materials`,
       `${c.smoko.length} smoko`,
       c.deferred.length ? `${c.deferred.length} plans` : "",
@@ -646,16 +646,15 @@ export class Site extends Phaser.Scene {
   signOff(items: Item[]) {
     this.signoff.removeAll(true);
     if (!items.length) return;
-    const who = whoIsNeeded(items[0]!);
     const t = this.add
-      .text(50, -70, `${items.length} waiting on ${who}`, {
+      .text(50, -70, `${items.length} waiting on the foreman`, {
         fontSize: "10px",
         color: "#ffd166",
         backgroundColor: "#0008",
       })
       .setOrigin(0.5, 1)
       .setInteractive();
-    t.on("pointerdown", () => openBoard(items, `waiting on ${who}`, false));
+    t.on("pointerdown", () => openBoard(items, "waiting on the foreman", false));
     this.signoff.add(t);
   }
 
