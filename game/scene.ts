@@ -172,7 +172,7 @@ export class Site extends Phaser.Scene {
       .setScale(TS);
     this.empties = this.add.container(w * 0.74, gy);
     this.ute = this.add.container(w * 0.88, gy);
-    this.sun = this.add.circle(w * 0.15, 90, 34, 0xffe066).setDepth(0);
+    this.sun = this.add.circle(w * 0.15, 90, 34, 0xffe066).setDepth(-1);
     this.dusk = this.add.rectangle(w / 2, h / 2, w, h, 0x2a1a3e, 0).setDepth(9);
 
     this.rain = this.add.particles(0, 0, "drop", {
