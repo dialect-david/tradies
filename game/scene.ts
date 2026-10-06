@@ -65,6 +65,8 @@ export class Site extends Phaser.Scene {
   private ute!: Phaser.GameObjects.Container;
   private cars = new Map<string, Phaser.GameObjects.Container>();
   private roadY = 0;
+  private door?: Phaser.GameObjects.Image;
+  private doorUsers = 0;
   private dusk!: Phaser.GameObjects.Rectangle;
   private sun!: Phaser.GameObjects.Arc;
 
@@ -226,6 +228,7 @@ export class Site extends Phaser.Scene {
     this.hud.querySelector("#jobs")!.addEventListener("click", () => openBoard(this.current.ready));
     this.hud.querySelector("#knockoff")!.addEventListener("click", () => void this.knockoff());
 
+    (window as unknown as { site: Site }).site = this;
     void this.refresh();
     onRefresh(() => void this.refresh());
   }
@@ -266,7 +269,9 @@ export class Site extends Phaser.Scene {
     if (at >= 3) for (let c = 0; c < W; c++) tile(c, H + 2, TILE.roof);
     if (at >= 4) {
       for (let r = 1; r <= H; r++) for (let c = 0; c < W; c++) if (c !== 3 || r > 1) tile(c, r, TILE.crate);
-      tile(3, 1, TILE.door);
+      this.house.add(this.add.rectangle(3 * T * HS, -T * HS, T * HS, T * HS, 0x1a1008).setOrigin(0, 1));
+      this.door = tile(3, 1, TILE.door);
+      this.doorUsers = 0;
     }
     if (at >= 5) for (const c of [1, W - 2]) tile(c, 2, TILE.window);
     if (at >= 6) for (const c of [-1, W]) tile(c, 1, TILE.bush);
@@ -593,9 +598,23 @@ export class Site extends Phaser.Scene {
       });
     };
     const inside = (then: () => void) => {
-      this.tweens.add({ targets: [a.body, a.label], alpha: 0, duration: 400 });
+      this.swingDoor(true, () =>
+        this.tweens.add({
+          targets: [a.body, a.label],
+          alpha: 0,
+          duration: 300,
+          onComplete: () => this.swingDoor(false),
+        }),
+      );
       this.time.delayedCall(Phaser.Math.Between(3000, 7000), () => {
-        this.tweens.add({ targets: [a.body, a.label], alpha: 1, duration: 400 });
+        this.swingDoor(true, () =>
+          this.tweens.add({
+            targets: [a.body, a.label],
+            alpha: 1,
+            duration: 300,
+            onComplete: () => this.swingDoor(false),
+          }),
+        );
         if (alive()) then();
       });
     };
@@ -606,6 +625,20 @@ export class Site extends Phaser.Scene {
           ? inside(() => this.wander(a))
           : hammer(Phaser.Math.Between(1500, 4000), () => this.wander(a)),
       );
+    });
+  }
+
+  swingDoor(open: boolean, then?: () => void) {
+    const d = this.door;
+    if (!d) return then?.();
+    this.doorUsers += open ? 1 : -1;
+    if (open ? this.doorUsers > 1 : this.doorUsers > 0) return then?.();
+    this.tweens.add({
+      targets: d,
+      scaleX: open ? HS * 0.25 : HS,
+      duration: 220,
+      ease: "Quad.Out",
+      onComplete: then,
     });
   }
 
