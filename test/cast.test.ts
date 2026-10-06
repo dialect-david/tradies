@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { cast, score } from "../game/cast.js";
+import { DEFAULTS } from "../server/config.js";
 import type { Item } from "../server/model.js";
 
 const now = new Date("2026-10-10T00:00:00Z");
@@ -61,5 +62,23 @@ describe("cast", () => {
     expect(cast([old, item({ id: "fresh" })], now).worst?.id).toBe("old");
     expect(cast([item({ id: "fresh" })], now).worst).toBeUndefined();
     expect(score(old, now)).toBe(20);
+  });
+});
+
+describe("config", () => {
+  it("foreman label prefixes and day thresholds come from config; defaults match the needs- convention", () => {
+    const ask = item({ id: "ask", blocked: true, labels: ["waiting-on:sam"] });
+    expect(cast([ask], now).needsYou).toEqual([]);
+    expect(
+      cast([ask], now, { ...DEFAULTS, foremanLabels: ["waiting-on:"] }).needsYou.map((i) => i.id),
+    ).toEqual(["ask"]);
+    const twoDays = item({ id: "2d", updatedAt: new Date("2026-10-08") });
+    expect(cast([twoDays], now).smoko).toEqual([]);
+    expect(cast([twoDays], now, { ...DEFAULTS, staleDays: 1, goneDays: 3 }).smoko.map((i) => i.id)).toEqual([
+      "2d",
+    ]);
+    expect(cast([twoDays], now, { ...DEFAULTS, staleDays: 1, goneDays: 2 }).gone.map((i) => i.id)).toEqual([
+      "2d",
+    ]);
   });
 });

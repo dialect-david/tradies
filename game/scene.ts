@@ -304,9 +304,9 @@ export class Site extends Phaser.Scene {
 
   async refresh() {
     try {
-      const { site, closed, epics, items } = await fetchItems();
+      const { site, closed, epics, config, items } = await fetchItems();
       this.closed = closed;
-      this.current = cast(items);
+      this.current = cast(items, new Date(), config);
       this.hud.querySelector("#site")!.textContent = `🏗 ${site}`;
       this.street(layoutStreet(epics, items));
       if (!this.onSmoko && !this.knockedOff) this.place(this.current);

@@ -30,6 +30,14 @@ Art: houses from Kenney's Tiny Town, ground and props from Kenney's Pixel Platfo
 Every closed bead is a beer; 24 make a slab, stacked beside the house. Closing one flies a tinnie onto the pile.
 The street is wider than the screen: drag, scroll wheel, or arrow keys to pan. The yard sits past the last house, ordered by how much you need to act: waiting on the foreman, smoko, jobs, materials, plans, beers, ute (clear WIP before picking up new work).
 
+Config, optional, at `~/.config/tradies/config.json`; missing file means these defaults:
+
+```json
+{ "foremanLabels": ["needs-"], "staleDays": 7, "goneDays": 30 }
+```
+
+`foremanLabels` are label prefixes that mean "waiting on the foreman". With no such labels in a workspace the gate is simply empty. House signs strip any leading `word:` from an epic title.
+
 PR testing: private repo `dialect-david/tradies-scratch`, open a PR there and run the game from its clone.
 
 Working tradies walk the house front, hammer with dust, and once there is a door they go inside for a bit.

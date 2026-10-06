@@ -63,5 +63,7 @@ describe("shortTitle", () => {
     expect(shortTitle("epic: tradie lifecycle — signup to leaving")).toBe("tradie lifecycle");
     expect(shortTitle("Scenarios at ~100% by close reading: harness")).toBe("Scenarios at ~100% by…");
     expect(shortTitle("epic: business")).toBe("business");
+    expect(shortTitle("chore: tidy the ute")).toBe("tidy the ute");
+    expect(shortTitle("http://x")).toBe("http://x");
   });
 });

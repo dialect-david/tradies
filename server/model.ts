@@ -100,8 +100,8 @@ export function ageDays(item: Item, now = new Date()): number {
   return Math.floor((now.getTime() - item.updatedAt.getTime()) / 86_400_000);
 }
 
-export function isStale(item: Item, now = new Date()): boolean {
-  return item.kind === "bead" && item.status !== "closed" && ageDays(item, now) >= STALE_DAYS;
+export function isStale(item: Item, now = new Date(), days = STALE_DAYS): boolean {
+  return item.kind === "bead" && item.status !== "closed" && ageDays(item, now) >= days;
 }
 
 export function byUrgency(a: Item, b: Item): number {

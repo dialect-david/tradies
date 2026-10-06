@@ -66,7 +66,7 @@ export function layoutStreet(epics: Epic[], items: Item[]): { houses: House[]; s
 
 export function shortTitle(title: string, max = 26): string {
   const t = title
-    .replace(/^(epic|flywheel|arch|eval|biz)\s*:\s*/i, "")
+    .replace(/^[a-z][\w-]*:\s+/i, "")
     .split(/\s+[—–-]\s+|:\s/)[0]!
     .trim();
   if (t.length <= max) return t;

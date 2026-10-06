@@ -112,7 +112,7 @@ export function openKnockoff(today: Item[], c: Cast, onClose: () => void) {
   const row = (i: Item, extra = "") =>
     `<div class="line" data-id="${i.id}"><b>${i.id}</b> ${esc(i.title.slice(0, 70))}${extra}</div>`;
   const worry = [...c.working, ...c.waiting, ...c.smoko, ...c.inspectors, ...c.needsYou]
-    .sort((a, b) => score(b, now) - score(a, now))
+    .sort((a, b) => score(b, now, c.cfg) - score(a, now, c.cfg))
     .slice(0, 3);
   board.innerHTML = `
     <div class="head"><h3>knock-off · ${now.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "short" })}</h3></div>

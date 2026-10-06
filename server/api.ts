@@ -3,6 +3,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import * as bd from "./bd.js";
 import * as gh from "./gh.js";
 import { site } from "./shell.js";
+import { loadConfig } from "./config.js";
 import { watch } from "node:fs";
 import path from "node:path";
 
@@ -58,7 +59,13 @@ export function api(): Plugin {
               bd.closedCount(),
               bd.epics(),
             ]);
-            return send(res, 200, { site: site.split("/").pop(), closed, epics, items: [...beads, ...prs] });
+            return send(res, 200, {
+              site: site.split("/").pop(),
+              closed,
+              epics,
+              config: loadConfig(),
+              items: [...beads, ...prs],
+            });
           }
           if (url.pathname === "/knockoff") {
             const start = new Date();
