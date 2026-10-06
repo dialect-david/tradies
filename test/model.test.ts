@@ -46,6 +46,8 @@ describe("fromBead", () => {
   });
   it("prefers assignee over owner", () => {
     expect(fromBead(bead({ assignee: "sal" })).owner).toBe("sal");
+    expect(fromBead(bead({ assignee: "sal" })).assignee).toBe("sal");
+    expect(fromBead(bead()).assignee).toBeUndefined();
   });
 });
 

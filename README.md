@@ -36,7 +36,7 @@ Config in `config.json` at the repo root; missing file means these defaults:
 { "foremanLabels": ["needs-"], "staleDays": 7, "goneDays": 30 }
 ```
 
-`foremanLabels` are label prefixes that mean "waiting on the foreman". With no such labels in a workspace the gate is simply empty. House signs strip any leading `word:` from an epic title.
+A bead is "waiting on the foreman" when it is blocked and assigned to the foreman (`bd assign <id> <you>`), or carries a label starting with one of `foremanLabels`. `foreman` defaults to `BEADS_ACTOR`, else git `user.name`; set it in config to override. With neither in a workspace the gate is simply empty. House signs strip any leading `word:` from an epic title.
 
 PR testing: private repo `dialect-david/tradies-scratch`, open a PR there and run the game from its clone.
 

@@ -72,6 +72,12 @@ describe("config", () => {
     expect(
       cast([ask], now, { ...DEFAULTS, foremanLabels: ["waiting-on:"] }).needsYou.map((i) => i.id),
     ).toEqual(["ask"]);
+    const mine = item({ id: "mine", blocked: true, assignee: "david" });
+    expect(cast([mine], now).needsYou).toEqual([]);
+    expect(cast([mine], now, { ...DEFAULTS, foreman: "David" }).needsYou.map((i) => i.id)).toEqual(["mine"]);
+    expect(
+      cast([item({ id: "open-mine", assignee: "david" })], now, { ...DEFAULTS, foreman: "David" }).needsYou,
+    ).toEqual([]);
     const twoDays = item({ id: "2d", updatedAt: new Date("2026-10-08") });
     expect(cast([twoDays], now).smoko).toEqual([]);
     expect(cast([twoDays], now, { ...DEFAULTS, staleDays: 1, goneDays: 3 }).smoko.map((i) => i.id)).toEqual([

@@ -64,3 +64,12 @@ export async function epics(): Promise<Epic[]> {
     ...done.map((b) => ({ id: b.id, title: b.title, status: "closed", closed: 1, total: 1 })),
   ];
 }
+
+export async function actor(): Promise<string | undefined> {
+  if (process.env.BEADS_ACTOR) return process.env.BEADS_ACTOR;
+  try {
+    return (await sh("git", ["config", "user.name"])).trim() || process.env.USER;
+  } catch {
+    return process.env.USER;
+  }
+}

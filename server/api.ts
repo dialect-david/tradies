@@ -53,17 +53,18 @@ export function api(): Plugin {
         const url = new URL(req.url ?? "/", "http://x");
         try {
           if (url.pathname === "/items") {
-            const [beads, prs, closed, epics] = await Promise.all([
+            const [beads, prs, closed, epics, actor] = await Promise.all([
               bd.listBeads(),
               gh.listPrs(),
               bd.closedCount(),
               bd.epics(),
+              bd.actor(),
             ]);
             return send(res, 200, {
               site: site.split("/").pop(),
               closed,
               epics,
-              config: loadConfig(),
+              config: loadConfig(undefined, actor),
               items: [...beads, ...prs],
             });
           }

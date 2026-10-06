@@ -9,6 +9,7 @@ export type Item = {
   priority: number;
   trade: string;
   owner?: string;
+  assignee?: string;
   updatedAt: Date;
   blocked: boolean;
   parent?: string;
@@ -58,6 +59,7 @@ export function fromBead(b: Bead): Item {
     priority: b.priority,
     trade: b.issue_type,
     owner: b.assignee ?? b.owner,
+    assignee: b.assignee,
     updatedAt: new Date(b.updated_at),
     closedAt: b.closed_at ? new Date(b.closed_at) : undefined,
     closeReason: b.close_reason,

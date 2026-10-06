@@ -3,7 +3,9 @@ import { DEFAULTS, loadConfig, parseConfig } from "../server/config.js";
 
 describe("config", () => {
   it("missing or empty file gives defaults", () => {
-    expect(loadConfig("/nonexistent/tradies.json")).toEqual(DEFAULTS);
+    expect(loadConfig("/nonexistent/tradies.json")).toEqual({ ...DEFAULTS, foreman: undefined });
+    expect(loadConfig("/nonexistent/tradies.json", "Sam").foreman).toBe("Sam");
+    expect(parseConfig('{"foreman":"Dave"}').foreman).toBe("Dave");
     expect(parseConfig(undefined)).toEqual(DEFAULTS);
   });
   it("partial file fills gaps and drops junk", () => {

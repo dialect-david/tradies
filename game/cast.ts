@@ -2,7 +2,8 @@ import { ageDays, byUrgency, isStale, type Item } from "../server/model.js";
 import { DEFAULTS, type Config } from "../server/defaults.js";
 
 export const needsSomeone = (i: Item, cfg: Config = DEFAULTS) =>
-  i.labels.some((l) => cfg.foremanLabels.some((p) => l.startsWith(p)));
+  i.labels.some((l) => cfg.foremanLabels.some((p) => l.startsWith(p))) ||
+  (i.blocked && !!i.assignee && !!cfg.foreman && i.assignee.toLowerCase() === cfg.foreman.toLowerCase());
 
 export type Role = "working" | "smoko" | "waiting" | "inspector" | "board";
 
