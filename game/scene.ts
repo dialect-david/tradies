@@ -135,15 +135,19 @@ export class Site extends Phaser.Scene {
       .setOrigin(0.5, 1)
       .setScale(TS);
 
-    this.add.rectangle(w * 0.58, h * 0.33, 480, 260, 0x111111, 0.82).setStrokeStyle(4, 0xf1c40f);
     this.add
-      .text(w * 0.58, h * 0.33 - 150, "ON THE TOOLS", {
+      .rectangle(w * 0.6, 150, 640, 220, 0x111111, 0.82)
+      .setStrokeStyle(4, 0xf1c40f)
+      .setDepth(3);
+    this.add
+      .text(w * 0.6, 28, "ON THE TOOLS", {
         color: "#f1c40f",
         fontSize: "18px",
         fontStyle: "bold",
       })
-      .setOrigin(0.5);
-    this.board = this.add.container(w * 0.58 - 225, h * 0.33 - 120);
+      .setOrigin(0.5)
+      .setDepth(3);
+    this.board = this.add.container(w * 0.6 - 305, 52).setDepth(3);
     this.time.addEvent({ delay: 2500, loop: true, callback: () => this.drawBoard(this.boardTop + 1) });
 
     this.pallets = this.add.container(w * 0.53, gy);
@@ -438,7 +442,7 @@ export class Site extends Phaser.Scene {
   shout() {
     const { width: w, height: h } = this.scale;
     const can = this.add
-      .image(w * 0.58, h * 0.33, "can", 0)
+      .image(w * 0.6, 150, "can", 0)
       .setScale(2)
       .setDepth(20);
     this.tweens.add({
@@ -454,7 +458,7 @@ export class Site extends Phaser.Scene {
 
   drawBoard(top: number) {
     const rows = this.boardRows;
-    const fit = 10;
+    const fit = 9;
     this.boardTop = rows.length > fit ? top % rows.length : 0;
     this.board.removeAll(true);
     if (!rows.length) {
@@ -464,7 +468,7 @@ export class Site extends Phaser.Scene {
     for (let n = 0; n < Math.min(fit, rows.length); n++) {
       const i = rows[(this.boardTop + n) % rows.length]!;
       const t = this.add
-        .text(0, n * 22, `◐ ${i.id}  ${i.title.slice(0, 48)}`, { fontSize: "13px", color: "#eee" })
+        .text(0, n * 22, `◐ ${i.id}  ${i.title}`.slice(0, 76), { fontSize: "13px", color: "#eee" })
         .setInteractive();
       t.on("pointerdown", () => void openCard(i));
       this.board.add(t);

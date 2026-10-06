@@ -45,7 +45,8 @@ await send("Page.enable");
 await send("Page.navigate", { url });
 await new Promise((r) => setTimeout(r, Number(waitMs)));
 if (js) {
-  await send("Runtime.evaluate", { expression: js, awaitPromise: true });
+  const r = await send("Runtime.evaluate", { expression: js, awaitPromise: true, returnByValue: true });
+  console.log("eval:", JSON.stringify(r?.result?.value));
   await new Promise((r) => setTimeout(r, 800));
 }
 const { data } = await send("Page.captureScreenshot", { format: "png" });

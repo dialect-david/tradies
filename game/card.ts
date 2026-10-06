@@ -16,12 +16,11 @@ export async function openCard(item: Item) {
   card.innerHTML = `<h3>${item.id} · ${esc(item.title)}</h3><pre>loading…</pre>`;
   const detail = await show(item.id);
   const beadActions = `
-    <div class="row"><button data-act="claim">claim</button><button data-close>close</button></div>
+    <div class="row"><button data-act="claim">claim</button></div>
     <input data-text placeholder="note or close reason" />
     <div class="row"><button data-act="note">note</button><button data-act="close">close bead</button></div>`;
-  const prActions = `<div class="row"><button data-act="merge">merge</button><button data-close>close</button></div>`;
+  const prActions = `<div class="row"><button data-act="merge">merge</button></div>`;
   card.innerHTML = `<h3>${item.id} · ${esc(item.title)}</h3><pre>${esc(detail)}</pre>${item.kind === "bead" ? beadActions : prActions}`;
-  card.querySelector("[data-close]")!.addEventListener("click", closeCard);
   for (const b of card.querySelectorAll<HTMLButtonElement>("[data-act]")) {
     b.addEventListener("click", async () => {
       const text = card.querySelector<HTMLInputElement>("[data-text]")?.value ?? "";
@@ -53,13 +52,12 @@ export function openBoard(ready: Item[], title = "job board", claimable = true) 
     )
     .join("");
   board.innerHTML = `
-    <div class="head"><h3>${title} · ${ready.length}</h3><button data-close>close</button></div>
+    <div class="head"><h3>${title} · ${ready.length}</h3></div>
     <form class="new" ${claimable ? "" : "hidden"}><input name="title" placeholder="new job…" autocomplete="off" />
       <select name="priority"><option>2</option><option>0</option><option>1</option><option>3</option><option>4</option></select>
       <select name="kind"><option>task</option><option>bug</option><option>feature</option><option>chore</option></select>
       <button>pin it</button></form>
     <div class="chits">${chits || "<i>nobody here.</i>"}</div>`;
-  board.querySelector("[data-close]")!.addEventListener("click", closeBoard);
   board.querySelector<HTMLFormElement>("form.new")!.addEventListener("submit", async (e) => {
     e.preventDefault();
     const f = new FormData(e.target as HTMLFormElement);
@@ -94,3 +92,12 @@ export function openBoard(ready: Item[], title = "job board", claimable = true) 
 export function closeBoard() {
   board.classList.remove("open");
 }
+
+document.addEventListener("pointerdown", (e) => {
+  const t = e.target as Node;
+  if (!card.contains(t)) closeCard();
+  if (!board.contains(t)) closeBoard();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") (closeCard(), closeBoard());
+});
