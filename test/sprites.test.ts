@@ -4,6 +4,7 @@ import { frameSize, KELPIE_FRAMES, stage, TRADIE_FRAMES } from "../game/sprites.
 describe("sprites", () => {
   it("frames are rectangular", () => {
     expect(frameSize(TRADIE_FRAMES)).toEqual({ w: 12, h: 19 });
+    expect(TRADIE_FRAMES).toHaveLength(4);
     expect(frameSize(KELPIE_FRAMES)).toEqual({ w: 16, h: 8 });
   });
   it("house stage follows closed ratio and only finishes at zero open", () => {
@@ -17,7 +18,7 @@ describe("sprites", () => {
   });
 });
 
-import { CAN_FRAMES, SLAB_FRAMES, slabs } from "../game/sprites.js";
+import { CAN_FRAMES, SLAB_FRAMES, slabs, UTE_FRAMES } from "../game/sprites.js";
 
 describe("beers", () => {
   it("a slab is 24 closed beads, the rest are loose tinnies", () => {
@@ -29,5 +30,6 @@ describe("beers", () => {
   it("sprites are rectangular", () => {
     expect(frameSize(SLAB_FRAMES)).toEqual({ w: 22, h: 9 });
     expect(frameSize(CAN_FRAMES)).toEqual({ w: 4, h: 6 });
+    expect(frameSize(UTE_FRAMES)).toEqual({ w: 32, h: 12 });
   });
 });

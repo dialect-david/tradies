@@ -73,6 +73,27 @@ export const TRADIE_FRAMES: string[][] = [
     "............",
     "............",
   ],
+  [
+    "...HHHHHH...",
+    "..HHHHHHHH..",
+    ".HHHHHHHHHH.",
+    "..ssssssss..",
+    "..soss.soss.",
+    "..ssssssss..",
+    "...ssssss...",
+    "..vvvvvvvv..",
+    ".vvvvvvvvvv.",
+    ".sssssssss..",
+    "..vsssssssss",
+    "...vvvvvv...",
+    "...bbbbbb...",
+    "...bbbbbb...",
+    "...bb..bb...",
+    "...ss..ss...",
+    "...ss..ss...",
+    "...kk..kk...",
+    "..kkk..kkk..",
+  ],
 ];
 
 export const KELPIE_PALETTE = { o: outline, r: "#9b5a2a", d: "#6b3a14", t: "#d9a066", w: "#ffffff" };
@@ -181,3 +202,23 @@ export const SLAB_SIZE = 24;
 export function slabs(closed: number): { slabs: number; cans: number } {
   return { slabs: Math.floor(closed / SLAB_SIZE), cans: closed % SLAB_SIZE };
 }
+
+export const EMPTY_PALETTE = { o: outline, g: "#9a9a9a", s: "#bdbdbd", y: "#8a8a5a" };
+
+export const UTE_PALETTE = { o: outline, w: "#f4f4f4", d: "#333333", t: "#87ceeb", r: "#777777" };
+export const UTE_FRAMES: string[][] = [
+  [
+    "........oooooooo................",
+    ".......owwwwwwwwo...............",
+    "......owttooootwwo..............",
+    "oooooowttooootwwoooooooooooooooo",
+    "owwwwwwwwwwwwwwwwwwwwwwwwwwwwwwo",
+    "owwwwwwwwwwwwwwwwwwwwwwwwwwwwwwo",
+    "oooooooooooooooooooooooooooooooo",
+    "...oooo..............oooo.......",
+    "..oddddo............oddddo......",
+    "..odrrdo............odrrdo......",
+    "..oddddo............oddddo......",
+    "...oooo..............oooo.......",
+  ],
+];

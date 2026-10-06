@@ -1,10 +1,13 @@
 import { ageDays, byUrgency, isStale, type Item } from "../server/model.js";
 
+export const GONE_DAYS = 30;
+
 export type Role = "working" | "smoko" | "waiting" | "inspector" | "board";
 
 export type Cast = {
   working: Item[];
   smoko: Item[];
+  gone: Item[];
   waiting: Item[];
   inspectors: Item[];
   rain: boolean;
@@ -15,15 +18,19 @@ export type Cast = {
 export function cast(items: Item[], now = new Date()): Cast {
   const beads = items.filter((i) => i.kind === "bead");
   const prs = items.filter((i) => i.kind === "pr");
+  const byScore = (a: Item, b: Item) => score(b, now) - score(a, now);
   const working = beads.filter((i) => i.status === "in_progress");
-  const waiting = beads.filter((i) => i.blocked && i.status !== "in_progress");
-  const smoko = beads.filter((i) => isStale(i, now) && !working.includes(i) && !waiting.includes(i));
+  const waiting = beads.filter((i) => i.blocked && i.status !== "in_progress").sort(byScore);
+  const idle = beads.filter((i) => isStale(i, now) && !working.includes(i) && !waiting.includes(i));
+  const gone = idle.filter((i) => ageDays(i, now) >= GONE_DAYS).sort(byScore);
+  const smoko = idle.filter((i) => !gone.includes(i)).sort(byScore);
   const rain = prs.some((i) => i.blocked);
   const ready = beads.filter((i) => !i.blocked && i.status === "open").sort(byUrgency);
-  const worst = [...items].sort((a, b) => score(b, now) - score(a, now))[0];
+  const worst = [...items].sort(byScore)[0];
   return {
     working,
     smoko,
+    gone,
     waiting,
     inspectors: prs,
     rain,
@@ -37,7 +44,8 @@ export function score(i: Item, now: Date): number {
   if (i.kind === "pr" && i.blocked) s += 100;
   if (i.priority === 0) s += 50;
   if (i.priority === 1) s += 10;
-  if (isStale(i, now)) s += Math.min(40, ageDays(i, now));
+  const age = ageDays(i, now);
+  if (isStale(i, now)) s += age >= GONE_DAYS ? 2 : Math.min(40, age);
   if (i.blocked) s += 5;
   return s;
 }

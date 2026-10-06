@@ -15,6 +15,9 @@ import {
   stage,
   TRADIE_FRAMES,
   TRADIE_PALETTE,
+  UTE_FRAMES,
+  UTE_PALETTE,
+  EMPTY_PALETTE,
   type Stage,
 } from "./sprites.js";
 
@@ -36,6 +39,7 @@ const TILE = {
   bush: 124,
   tree: 126,
   cloud: [153, 154, 155],
+  fence: 105,
   sign: 86,
 };
 
@@ -55,6 +59,9 @@ export class Site extends Phaser.Scene {
   private closed = 0;
   private beers!: Phaser.GameObjects.Container;
   private beerCount = -1;
+  private pallets!: Phaser.GameObjects.Container;
+  private empties!: Phaser.GameObjects.Container;
+  private ute!: Phaser.GameObjects.Container;
 
   preload() {
     this.load.spritesheet("tiles", "/kenney/tilemap_packed.png", {
@@ -67,6 +74,8 @@ export class Site extends Phaser.Scene {
     this.sheet("kelpie", KELPIE_FRAMES, KELPIE_PALETTE);
     this.sheet("slab", SLAB_FRAMES, SLAB_PALETTE);
     this.sheet("can", CAN_FRAMES, CAN_PALETTE);
+    this.sheet("empty", CAN_FRAMES, EMPTY_PALETTE);
+    this.sheet("ute", UTE_FRAMES, UTE_PALETTE);
     for (const [trade, colour] of Object.entries(TRADE_COLOUR))
       this.sheet(`tradie-${trade}`, TRADIE_FRAMES, {
         ...TRADIE_PALETTE,
@@ -137,12 +146,13 @@ export class Site extends Phaser.Scene {
     this.board = this.add.container(w * 0.58 - 225, h * 0.33 - 120);
     this.time.addEvent({ delay: 2500, loop: true, callback: () => this.drawBoard(this.boardTop + 1) });
 
+    this.pallets = this.add.container(w * 0.53, gy);
     this.add
-      .image(w * 0.72, gy, "tiles", TILE.crate)
+      .image(w * 0.53 - 30, gy, "tiles", TILE.fence)
       .setOrigin(0.5, 1)
-      .setScale(TS)
-      .setTint(0xcc3333);
-    this.add.text(w * 0.72, gy - 8, "esky", { fontSize: "10px", color: "#fff" }).setOrigin(0.5, 1);
+      .setScale(TS);
+    this.empties = this.add.container(w * 0.74, gy);
+    this.ute = this.add.container(w * 0.88, gy);
 
     this.rain = this.add.particles(0, 0, "drop", {
       x: { min: 0, max: w },
@@ -246,8 +256,8 @@ export class Site extends Phaser.Scene {
       role === "working"
         ? [w * 0.1 + n * 44, gy]
         : role === "waiting"
-          ? [w * 0.52 + (n % 8) * 24, gy - Math.floor(n / 8) * 60]
-          : [w * 0.74 + (n % 10) * 26, gy - 16 - Math.floor(n / 10) * 46];
+          ? [w * 0.53 + 150 + n * 30, gy]
+          : [w * 0.74 + 70 + n * 34, gy];
 
     const put = (item: Item, role: string, n: number) => {
       seen.add(item.id);
@@ -281,16 +291,28 @@ export class Site extends Phaser.Scene {
       a.role = role;
       a.label.setVisible(role === "working");
       a.body.setDepth(role === "working" ? 5 : 1);
-      if (role === "smoko") a.body.setFrame(2);
-      else a.body.setFrame(0);
+      a.body.setFrame(role === "smoko" ? 2 : role === "waiting" ? 3 : 0);
       this.tweens.add({ targets: a.body, x, y, duration: 600, ease: "Bounce.Out" });
       this.tweens.add({ targets: a.label, x, y: y + 2, duration: 600 });
       if (role === "working") this.wander(a);
       else a.body.anims.stop();
     };
     c.working.forEach((i, n) => put(i, "working", n));
-    c.waiting.forEach((i, n) => put(i, "waiting", n));
-    c.smoko.forEach((i, n) => put(i, "smoko", n));
+    c.waiting.slice(0, 3).forEach((i, n) => put(i, "waiting", n));
+    c.smoko.slice(0, 3).forEach((i, n) => put(i, "smoko", n));
+    this.pile(
+      this.pallets,
+      "tiles",
+      TILE.crate,
+      c.waiting,
+      4,
+      T * HS,
+      "waiting on materials",
+      TS === 3 ? HS : HS,
+    );
+    this.pile(this.empties, "empty", 0, c.smoko, 8, 9, "on smoko", 0.6, { x: -8, y: -18 * PX });
+    this.esky();
+    this.drive(c.gone);
 
     for (const [id, a] of this.actors)
       if (!seen.has(id)) {
@@ -310,7 +332,7 @@ export class Site extends Phaser.Scene {
     if (c.rain) this.rain.start();
     else this.rain.stop();
     this.hud.querySelector("#counts")!.textContent =
-      `${this.houseStage} · ${c.working.length} on the tools · ${c.ready.length} ready · ${c.waiting.length} waiting on materials · ${c.smoko.length} on smoko · ${c.inspectors.length} inspectors${c.rain ? " · ☔ rain" : ""}`;
+      `${this.houseStage} · ${c.working.length} on the tools · ${c.ready.length} ready · ${c.waiting.length} waiting on materials · ${c.smoko.length} on smoko · ${c.gone.length} gone home · ${c.inspectors.length} inspectors${c.rain ? " · ☔ rain" : ""}`;
 
     const target = c.worst && this.actors.get(c.worst.id);
     const tx = target ? target.body.x + 26 : w * 0.5;
@@ -324,6 +346,67 @@ export class Site extends Phaser.Scene {
       onComplete: () => (this.kelpie.anims.stop(), this.kelpie.setFrame(target ? 2 : 3)),
     });
     if (c.worst?.priority === 0 || c.rain) toast("woof! " + (c.worst?.id ?? ""));
+  }
+
+  pile(
+    box: Phaser.GameObjects.Container,
+    key: string,
+    frame: number,
+    items: Item[],
+    perRow: number,
+    step: number,
+    title: string,
+    scale: number,
+    offset = { x: 0, y: 0 },
+  ) {
+    box.removeAll(true);
+    items.forEach((_, i) => {
+      const row = Math.floor(i / perRow);
+      const img = this.add
+        .image(offset.x + (i % perRow) * step, offset.y - row * step, key, frame)
+        .setOrigin(0, 1)
+        .setScale(scale)
+        .setInteractive();
+      img.on("pointerdown", () => openBoard(items, title, false));
+      box.add(img);
+    });
+    if (items.length)
+      box.add(
+        this.add
+          .text(
+            offset.x + (perRow * step) / 2,
+            offset.y - Math.ceil(items.length / perRow) * step - 4,
+            `${items.length} ${title}`,
+            { fontSize: "10px", color: "#fff" },
+          )
+          .setOrigin(0.5, 1),
+      );
+  }
+
+  esky() {
+    if (this.empties.getByName("esky")) return;
+    const e = this.add
+      .image(0, 0, "tiles", TILE.crate)
+      .setOrigin(0, 1)
+      .setScale(TS)
+      .setTint(0xcc3333)
+      .setName("esky")
+      .setInteractive();
+    e.on("pointerdown", () => openBoard(this.current.smoko, "on smoko", false));
+    this.empties.addAt(e, 0);
+  }
+
+  drive(gone: Item[]) {
+    this.ute.removeAll(true);
+    if (!gone.length) return;
+    const u = this.add.image(0, 0, "ute", 0).setOrigin(0.5, 1).setInteractive();
+    u.on("pointerdown", () => openBoard(gone, "gone home", false));
+    this.ute.add(u);
+    this.ute.add(
+      this.add
+        .text(0, -12 * PX - 4, `${gone.length} gone home`, { fontSize: "10px", color: "#fff" })
+        .setOrigin(0.5, 1),
+    );
   }
 
   stackBeers(closed: number) {

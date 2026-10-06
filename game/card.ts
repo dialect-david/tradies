@@ -1,4 +1,4 @@
-import type { Item } from "../server/model.js";
+import { ageDays, type Item } from "../server/model.js";
 import { act, show } from "./client.js";
 
 const card = document.getElementById("card")!;
@@ -43,22 +43,22 @@ export function closeCard() {
 
 const esc = (s: string) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]!);
 
-export function openBoard(ready: Item[]) {
+export function openBoard(ready: Item[], title = "job board", claimable = true) {
   closeCard();
   board.classList.add("open");
   const chits = ready
     .map(
       (i) =>
-        `<div class="chit p${i.priority}" data-id="${i.id}"><b>P${i.priority}</b> <span class="trade">${i.trade}</span> <span class="title">${esc(i.title)}</span><div class="id">${i.id}</div><button data-claim="${i.id}">claim</button></div>`,
+        `<div class="chit p${i.priority}" data-id="${i.id}"><b>P${i.priority}</b> <span class="trade">${i.trade} · ${ageDays(i)}d</span> <span class="title">${esc(i.title)}</span><div class="id">${i.id}</div>${claimable ? `<button data-claim="${i.id}">claim</button>` : ""}</div>`,
     )
     .join("");
   board.innerHTML = `
-    <div class="head"><h3>job board · ${ready.length} ready</h3><button data-close>close</button></div>
-    <form class="new"><input name="title" placeholder="new job…" autocomplete="off" />
+    <div class="head"><h3>${title} · ${ready.length}</h3><button data-close>close</button></div>
+    <form class="new" ${claimable ? "" : "hidden"}><input name="title" placeholder="new job…" autocomplete="off" />
       <select name="priority"><option>2</option><option>0</option><option>1</option><option>3</option><option>4</option></select>
       <select name="kind"><option>task</option><option>bug</option><option>feature</option><option>chore</option></select>
       <button>pin it</button></form>
-    <div class="chits">${chits || "<i>nothing ready. pin a job.</i>"}</div>`;
+    <div class="chits">${chits || "<i>nobody here.</i>"}</div>`;
   board.querySelector("[data-close]")!.addEventListener("click", closeBoard);
   board.querySelector<HTMLFormElement>("form.new")!.addEventListener("submit", async (e) => {
     e.preventDefault();
