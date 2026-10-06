@@ -1,8 +1,8 @@
-// usage: node scripts/shot.mjs <url> <out.png> [waitMs]
+// usage: node scripts/shot.mjs <url> <out.png> [waitMs] [js to run before the shot]
 import { spawn } from "node:child_process";
 import { writeFileSync } from "node:fs";
 
-const [url, out, waitMs = "8000"] = process.argv.slice(2);
+const [url, out, waitMs = "8000", js] = process.argv.slice(2);
 const chrome = spawn(
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
   [
@@ -44,6 +44,10 @@ await send("Runtime.enable");
 await send("Page.enable");
 await send("Page.navigate", { url });
 await new Promise((r) => setTimeout(r, Number(waitMs)));
+if (js) {
+  await send("Runtime.evaluate", { expression: js, awaitPromise: true });
+  await new Promise((r) => setTimeout(r, 800));
+}
 const { data } = await send("Page.captureScreenshot", { format: "png" });
 writeFileSync(out, Buffer.from(data, "base64"));
 console.log("wrote", out);

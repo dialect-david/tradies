@@ -2,6 +2,7 @@ import type { Item } from "../server/model.js";
 import { act, show } from "./client.js";
 
 const card = document.getElementById("card")!;
+const board = document.getElementById("board")!;
 const toastEl = document.getElementById("toast")!;
 
 export function toast(msg: string) {
@@ -41,3 +42,55 @@ export function closeCard() {
 }
 
 const esc = (s: string) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]!);
+
+export function openBoard(ready: Item[]) {
+  closeCard();
+  board.classList.add("open");
+  const chits = ready
+    .map(
+      (i) =>
+        `<div class="chit p${i.priority}" data-id="${i.id}"><b>P${i.priority}</b> <span class="trade">${i.trade}</span> <span class="title">${esc(i.title)}</span><div class="id">${i.id}</div><button data-claim="${i.id}">claim</button></div>`,
+    )
+    .join("");
+  board.innerHTML = `
+    <div class="head"><h3>job board · ${ready.length} ready</h3><button data-close>close</button></div>
+    <form class="new"><input name="title" placeholder="new job…" autocomplete="off" />
+      <select name="priority"><option>2</option><option>0</option><option>1</option><option>3</option><option>4</option></select>
+      <select name="kind"><option>task</option><option>bug</option><option>feature</option><option>chore</option></select>
+      <button>pin it</button></form>
+    <div class="chits">${chits || "<i>nothing ready. pin a job.</i>"}</div>`;
+  board.querySelector("[data-close]")!.addEventListener("click", closeBoard);
+  board.querySelector<HTMLFormElement>("form.new")!.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const f = new FormData(e.target as HTMLFormElement);
+    const title = String(f.get("title") ?? "").trim();
+    if (!title) return toast("needs a title");
+    try {
+      toast(
+        await act("create", "", title, { priority: String(f.get("priority")), kind: String(f.get("kind")) }),
+      );
+      closeBoard();
+    } catch (err) {
+      toast(`strewth: ${(err as Error).message}`);
+    }
+  });
+  for (const b of board.querySelectorAll<HTMLButtonElement>("[data-claim]"))
+    b.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      try {
+        toast(await act("claim", b.dataset.claim!));
+        closeBoard();
+      } catch (err) {
+        toast(`strewth: ${(err as Error).message}`);
+      }
+    });
+  for (const c of board.querySelectorAll<HTMLElement>(".chit"))
+    c.addEventListener("click", () => {
+      const item = ready.find((i) => i.id === c.dataset.id);
+      if (item) void openCard(item);
+    });
+}
+
+export function closeBoard() {
+  board.classList.remove("open");
+}

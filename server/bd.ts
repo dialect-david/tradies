@@ -22,3 +22,7 @@ export async function closedCount(): Promise<number> {
   const out = await sh("bd", ["count", "--status", "closed"]);
   return Number(/\d+/.exec(out)?.[0] ?? 0);
 }
+
+export async function quick(title: string, priority = "2", type = "task"): Promise<string> {
+  return (await sh("bd", ["q", title, "-p", priority, "-t", type])).trim();
+}

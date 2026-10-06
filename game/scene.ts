@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import type { Item } from "../server/model.js";
 import { cast, TRADE_COLOUR, type Cast } from "./cast.js";
 import { items as fetchItems, onRefresh } from "./client.js";
-import { openCard, toast } from "./card.js";
+import { openCard, openBoard, toast } from "./card.js";
 import {
   CAN_FRAMES,
   CAN_PALETTE,
@@ -115,7 +115,12 @@ export class Site extends Phaser.Scene {
     this.add
       .image(w * 0.08 + 8 * T * HS + 24, gy, "tiles", TILE.sign)
       .setOrigin(0.5, 1)
-      .setScale(HS);
+      .setScale(HS)
+      .setInteractive()
+      .on("pointerdown", () => openBoard(this.current.ready));
+    this.add
+      .text(w * 0.08 + 8 * T * HS + 24, gy - 22 * HS, "jobs", { fontSize: "9px", color: "#fff" })
+      .setOrigin(0.5, 1);
     this.add
       .image(w * 0.035, gy, "tiles", TILE.tree)
       .setOrigin(0.5, 1)
@@ -173,8 +178,9 @@ export class Site extends Phaser.Scene {
       this.tweens.add({ targets: this.kelpie, y: gy - 30, duration: 150, yoyo: true });
     });
 
-    this.hud.innerHTML = `<span id="site"></span><span id="counts"></span><button id="smoko">smoko</button>`;
+    this.hud.innerHTML = `<span id="site"></span><span id="counts"></span><button id="jobs">job board</button><button id="smoko">smoko</button>`;
     this.hud.querySelector("#smoko")!.addEventListener("click", () => this.smoko());
+    this.hud.querySelector("#jobs")!.addEventListener("click", () => openBoard(this.current.ready));
 
     void this.refresh();
     onRefresh(() => void this.refresh());
@@ -232,7 +238,7 @@ export class Site extends Phaser.Scene {
   place(c: Cast) {
     const { width: w, height: h } = this.scale;
     const gy = h * GROUND;
-    const open = c.working.length + c.waiting.length + c.smoko.length + c.ready;
+    const open = c.working.length + c.waiting.length + c.smoko.length + c.ready.length;
     this.stackBeers(this.closed);
     this.buildHouse(stage(this.closed, this.current ? open : 0));
     const seen = new Set<string>();
@@ -304,7 +310,7 @@ export class Site extends Phaser.Scene {
     if (c.rain) this.rain.start();
     else this.rain.stop();
     this.hud.querySelector("#counts")!.textContent =
-      `${this.houseStage} · ${c.working.length} on the tools · ${c.ready} ready · ${c.waiting.length} waiting on materials · ${c.smoko.length} on smoko · ${c.inspectors.length} inspectors${c.rain ? " · ☔ rain" : ""}`;
+      `${this.houseStage} · ${c.working.length} on the tools · ${c.ready.length} ready · ${c.waiting.length} waiting on materials · ${c.smoko.length} on smoko · ${c.inspectors.length} inspectors${c.rain ? " · ☔ rain" : ""}`;
 
     const target = c.worst && this.actors.get(c.worst.id);
     const tx = target ? target.body.x + 26 : w * 0.5;

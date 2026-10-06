@@ -14,8 +14,13 @@ export async function show(id: string): Promise<string> {
   return (await fetch(`/api/show?id=${encodeURIComponent(id)}`)).text();
 }
 
-export async function act(type: string, id: string, text = ""): Promise<string> {
-  const r = await fetch("/api/act", { method: "POST", body: JSON.stringify({ type, id, text }) });
+export async function act(
+  type: string,
+  id: string,
+  text = "",
+  extra: Record<string, string> = {},
+): Promise<string> {
+  const r = await fetch("/api/act", { method: "POST", body: JSON.stringify({ type, id, text, ...extra }) });
   const j = (await r.json()) as { msg?: string; error?: string };
   if (!r.ok) throw new Error(j.error);
   return j.msg ?? "";

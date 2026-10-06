@@ -36,6 +36,8 @@ async function act(a: Record<string, string>): Promise<string> {
     case "merge":
       await gh.merge(a.id);
       return `${a.id} certified`;
+    case "create":
+      return `${await bd.quick(a.text ?? "", a.priority || "2", a.kind || "task")} pinned to the board`;
   }
   throw new Error(`unknown action ${a.type}`);
 }

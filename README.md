@@ -17,6 +17,7 @@ A construction site over beads (`bd`) and GitHub PRs (`gh`), in the browser. We'
 | smoko button                            | everyone sits for ten minutes                  |
 
 Card: claim / note / close for beads, merge for PRs.
+Job board (click the site sign or the HUD button): ready beads as chits by priority, claim on each, "pin it" creates one via `bd q`.
 
 Art: tiles from Kenney's Pixel Platformer (CC0, `game/public/kenney`); tradies and the Kelpie are pixel strings in `game/sprites.ts`.
 Every closed bead is a beer; 24 make a slab, stacked beside the house. Closing one flies a tinnie onto the pile.

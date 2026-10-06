@@ -34,7 +34,7 @@ describe("cast", () => {
     expect(c.smoko.map((i) => i.id)).toEqual(["old"]);
     expect(c.inspectors.map((i) => i.id)).toEqual(["#1"]);
     expect(c.rain).toBe(true);
-    expect(c.ready).toBe(2);
+    expect(c.ready.map((i) => i.id)).toEqual(["fresh", "old"]);
   });
   it("kelpie goes to rain first, then P0, then the oldest smoko", () => {
     const rain = item({ id: "#1", kind: "pr", blocked: true });

@@ -84,6 +84,103 @@
         padding: 4px 10px;
         cursor: pointer;
       }
+      #board {
+        position: absolute;
+        top: 30px;
+        left: 30px;
+        width: 520px;
+        max-height: 80vh;
+        overflow: auto;
+        background: #3b2a1a;
+        border: 6px solid #8b5a2b;
+        padding: 10px;
+        display: none;
+        box-shadow: 0 8px 24px #0008;
+      }
+      #board.open {
+        display: block;
+      }
+      #board .head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      #board h3 {
+        margin: 0;
+        color: #f1c40f;
+      }
+      #board form.new {
+        display: flex;
+        gap: 6px;
+        margin: 8px 0;
+      }
+      #board input,
+      #board select {
+        font: inherit;
+        background: #fff8dc;
+        color: #222;
+        border: 1px solid #555;
+        padding: 4px;
+      }
+      #board input {
+        flex: 1;
+      }
+      #board button {
+        font: inherit;
+        background: #333;
+        color: #eee;
+        border: 1px solid #555;
+        padding: 4px 10px;
+        cursor: pointer;
+      }
+      #board .chits {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      #board .chit {
+        position: relative;
+        width: 236px;
+        background: #fff8dc;
+        color: #222;
+        padding: 8px 8px 30px;
+        box-shadow: 2px 2px 0 #0006;
+        transform: rotate(-1deg);
+        cursor: pointer;
+        font-size: 12px;
+      }
+      #board .chit:nth-child(even) {
+        transform: rotate(1.2deg);
+        background: #fffacd;
+      }
+      #board .chit.p0 {
+        background: #ffb3b3;
+      }
+      #board .chit.p1 {
+        background: #ffd9a8;
+      }
+      #board .chit .title {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      #board .chit .trade {
+        color: #666;
+      }
+      #board .chit .id {
+        position: absolute;
+        left: 8px;
+        bottom: 8px;
+        color: #777;
+        font-size: 10px;
+      }
+      #board .chit button {
+        position: absolute;
+        right: 6px;
+        bottom: 6px;
+        padding: 2px 8px;
+      }
       #toast {
         position: absolute;
         top: 12px;
@@ -103,6 +200,7 @@
   <body>
     <div id="game"></div>
     <div id="card"></div>
+    <div id="board"></div>
     <div id="toast"></div>
     <div id="hud"></div>
     <script type="module" src="/main.ts"></script>

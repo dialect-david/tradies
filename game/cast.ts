@@ -1,4 +1,4 @@
-import { ageDays, isStale, type Item } from "../server/model.js";
+import { ageDays, byUrgency, isStale, type Item } from "../server/model.js";
 
 export type Role = "working" | "smoko" | "waiting" | "inspector" | "board";
 
@@ -9,7 +9,7 @@ export type Cast = {
   inspectors: Item[];
   rain: boolean;
   worst?: Item;
-  ready: number;
+  ready: Item[];
 };
 
 export function cast(items: Item[], now = new Date()): Cast {
@@ -19,7 +19,7 @@ export function cast(items: Item[], now = new Date()): Cast {
   const waiting = beads.filter((i) => i.blocked && i.status !== "in_progress");
   const smoko = beads.filter((i) => isStale(i, now) && !working.includes(i) && !waiting.includes(i));
   const rain = prs.some((i) => i.blocked);
-  const ready = beads.filter((i) => !i.blocked && i.status === "open").length;
+  const ready = beads.filter((i) => !i.blocked && i.status === "open").sort(byUrgency);
   const worst = [...items].sort((a, b) => score(b, now) - score(a, now))[0];
   return {
     working,
