@@ -1,12 +1,12 @@
 import { readFileSync } from "node:fs";
-import { homedir } from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { DEFAULTS, type Config } from "./defaults.js";
 
 export { DEFAULTS, type Config };
 
-export const CONFIG_PATH = path.join(homedir(), ".config", "tradies", "config.json");
+export const CONFIG_PATH = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "config.json");
 
 export function parseConfig(text: string | undefined): Config {
   if (!text) return DEFAULTS;
