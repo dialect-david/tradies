@@ -333,7 +333,7 @@ export class Site extends Phaser.Scene {
     const label =
       house.id === SHED
         ? `the shed · ${house.items.length}`
-        : `${shortTitle(house.title)}\n${house.id.replace(/^[a-z]+-/, "")} · ${house.closed}/${house.total}`;
+        : `${shortTitle(house.title)}\n${house.closed}/${house.total}`;
     if (house.stage === lot.stage) {
       (lot.box.getByName("label") as Phaser.GameObjects.Text | null)?.setText(label);
       return;
@@ -376,7 +376,7 @@ export class Site extends Phaser.Scene {
     if (at >= 6) for (const c of [-1, W]) (tile(c, 1, TILE.bush), tile(c, 0, TILE.fence));
     lot.box.add(
       this.add
-        .text((W * TILE_PX) / 2, -(H + 3) * TILE_PX + 8, label, {
+        .text((W * TILE_PX) / 2, -(H + 3) * TILE_PX - 6, label, {
           fontSize: "10px",
           color: "#fff",
           backgroundColor: "#0006",
