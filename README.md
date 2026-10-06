@@ -28,7 +28,7 @@ Job board (click the site sign or the HUD button): ready beads as chits by prior
 
 Art: houses from Kenney's Tiny Town, ground and props from Kenney's Pixel Platformer (both CC0, `game/public/kenney`); tradies and the Kelpie are pixel strings in `game/sprites.ts`. Roof colour and wall material vary per epic.
 Every closed bead is a beer; 24 make a slab, stacked beside the house. Closing one flies a tinnie onto the pile.
-The street is wider than the screen: drag, scroll wheel, or arrow keys to pan. The yard sits past the last house, ordered by how much you need to act: waiting on you, jobs, smoko, materials, plans, beers, ute.
+The street is wider than the screen: drag, scroll wheel, or arrow keys to pan. The yard sits past the last house, ordered by how much you need to act: waiting on you, smoko, jobs, materials, plans, beers, ute (clear WIP before picking up new work).
 
 PR testing: private repo `dialect-david/tradies-scratch`, open a PR there and run the game from its clone.
 

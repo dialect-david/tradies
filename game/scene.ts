@@ -313,8 +313,8 @@ export class Site extends Phaser.Scene {
     const yard = width + 40;
     this.gate.setX(yard);
     this.signoff.setX(yard + 30);
-    this.sign.setX(yard + 200);
-    this.empties.setX(yard + 260);
+    this.empties.setX(yard + 200);
+    this.sign.setX(yard + 460);
     this.pallets.setX(yard + 520);
     this.plans.setX(yard + 780);
     this.beers.setX(yard + 840);
