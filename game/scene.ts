@@ -63,6 +63,8 @@ export class Site extends Phaser.Scene {
   private pallets!: Phaser.GameObjects.Container;
   private empties!: Phaser.GameObjects.Container;
   private ute!: Phaser.GameObjects.Container;
+  private cars = new Map<string, Phaser.GameObjects.Container>();
+  private roadY = 0;
   private dusk!: Phaser.GameObjects.Rectangle;
   private sun!: Phaser.GameObjects.Arc;
 
@@ -79,6 +81,7 @@ export class Site extends Phaser.Scene {
     this.sheet("can", CAN_FRAMES, CAN_PALETTE);
     this.sheet("empty", CAN_FRAMES, EMPTY_PALETTE);
     this.sheet("ute", UTE_FRAMES, UTE_PALETTE);
+    this.sheet("car", UTE_FRAMES, { ...UTE_PALETTE, w: "#e8eef5", t: "#2c3e50" });
     for (const [trade, colour] of Object.entries(TRADE_COLOUR))
       this.sheet(`tradie-${trade}`, TRADIE_FRAMES, {
         ...TRADIE_PALETTE,
@@ -110,6 +113,9 @@ export class Site extends Phaser.Scene {
       for (let y = gy + T * TS; y < h; y += T * TS)
         this.add.image(x, y, "tiles", TILE.dirt).setOrigin(0, 0).setScale(TS);
     }
+    this.roadY = gy + T * TS * 2 + 8;
+    this.add.rectangle(w / 2, this.roadY - 22, w, 44, 0x4a4a4a).setDepth(1);
+    for (let x = 10; x < w; x += 60) this.add.rectangle(x, this.roadY - 22, 30, 3, 0xdddddd).setDepth(1);
     for (let i = 0; i < 5; i++) {
       const c = this.add.container(Phaser.Math.Between(0, w), Phaser.Math.Between(40, 220), [
         this.add.image(0, 0, "tiles", TILE.cloud[0]!).setOrigin(0, 0).setScale(TS).setFlipY(true),
@@ -335,6 +341,7 @@ export class Site extends Phaser.Scene {
     this.pile(this.empties, "empty", 0, c.smoko, 8, 9, "on smoko", 0.6, { x: -8, y: -18 * PX });
     this.esky();
     this.drive(c.gone);
+    this.inspect(c.inspectors);
 
     for (const [id, a] of this.actors)
       if (!seen.has(id)) {
@@ -416,6 +423,49 @@ export class Site extends Phaser.Scene {
       .setInteractive();
     e.on("pointerdown", () => openBoard(this.current.smoko, "on smoko", false));
     this.empties.addAt(e, 0);
+  }
+
+  inspect(prs: Item[]) {
+    const { width: w } = this.scale;
+    const seen = new Set<string>();
+    prs.forEach((pr, n) => {
+      seen.add(pr.id);
+      const x = w * 0.12 + n * 150;
+      let car = this.cars.get(pr.id);
+      if (!car) {
+        car = this.add.container(-120, this.roadY).setDepth(2);
+        const body = this.add.image(0, 0, "car", 0).setOrigin(0.5, 1).setInteractive();
+        body.on("pointerdown", () => void openCard(pr));
+        const who = this.add.sprite(-60, 0, "tradie-inspector", 0).setOrigin(0.5, 1).setInteractive();
+        who.on("pointerdown", () => void openCard(pr));
+        const label = this.add
+          .text(0, 4, "", { fontSize: "9px", color: "#fff", backgroundColor: "#0008" })
+          .setOrigin(0.5, 0);
+        car.add([body, who, label]);
+        this.cars.set(pr.id, car);
+        this.tweens.add({ targets: car, x, duration: 2500, ease: "Quad.Out" });
+      } else this.tweens.add({ targets: car, x, duration: 800 });
+      const ci = pr.labels.find((l) => l.startsWith("ci:"))?.slice(3);
+      const mood =
+        pr.status === "draft" ? "L plates" : pr.status === "approved" ? "signed off ✓" : "inspecting";
+      (car.getAt(2) as Phaser.GameObjects.Text).setText(
+        `${pr.id} · ${mood}${ci === "fail" ? " · ☔ failed" : ci === "pending" ? " · checking" : ""}`,
+      );
+      (car.getAt(0) as Phaser.GameObjects.Image).setTint(
+        ci === "fail" ? 0xff8080 : pr.status === "approved" ? 0xa0ffa0 : 0xffffff,
+      );
+    });
+    for (const [id, car] of this.cars)
+      if (!seen.has(id)) {
+        this.cars.delete(id);
+        this.tweens.add({
+          targets: car,
+          x: w + 150,
+          duration: 2000,
+          ease: "Quad.In",
+          onComplete: () => car.destroy(),
+        });
+      }
   }
 
   drive(gone: Item[]) {

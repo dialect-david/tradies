@@ -25,4 +25,6 @@ Art: tiles from Kenney's Pixel Platformer (CC0, `game/public/kenney`); tradies a
 Every closed bead is a beer; 24 make a slab, stacked beside the house. Closing one flies a tinnie onto the pile.
 House stage = closed beads over all beads: site → slab → frame → roof → lockup → fitout → done (only at zero open).
 
-Next: inspector car for PRs, materials truck when a bead unblocks, knock-off summary, per-epic rooms.
+PR testing: private repo `dialect-david/tradies-scratch`, open a PR there and run the game from its clone.
+
+Next: tradies work the house, per-epic rooms, Kelpie speech bubbles.
