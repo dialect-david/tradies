@@ -50,6 +50,7 @@ export class Site extends Phaser.Scene {
   private board!: Phaser.GameObjects.Container;
   private boardRows: Item[] = [];
   private boardTop = 0;
+  private boardChars = 76;
   private kelpie!: Phaser.GameObjects.Sprite;
   private rain!: Phaser.GameObjects.Particles.ParticleEmitter;
   private house!: Phaser.GameObjects.Container;
@@ -101,22 +102,33 @@ export class Site extends Phaser.Scene {
   create() {
     const { width: w, height: h } = this.scale;
     const gy = h * GROUND;
+    const boardW = Math.min(1100, w * 0.62);
     for (let x = 0; x < w + T * TS; x += T * TS) {
       this.add.image(x, gy, "tiles", TILE.grass).setOrigin(0, 0).setScale(TS);
       for (let y = gy + T * TS; y < h; y += T * TS)
         this.add.image(x, y, "tiles", TILE.dirt).setOrigin(0, 0).setScale(TS);
     }
     for (let i = 0; i < 5; i++) {
-      const c = this.add
-        .image(Phaser.Math.Between(0, w), Phaser.Math.Between(40, 220), "tiles", TILE.cloud[i % 3]!)
-        .setScale(TS * 1.5)
-        .setAlpha(0.9);
+      const c = this.add.container(Phaser.Math.Between(0, w), Phaser.Math.Between(40, 220), [
+        this.add.image(0, 0, "tiles", TILE.cloud[0]!).setOrigin(0, 0).setScale(TS).setFlipY(true),
+        this.add
+          .image(T * TS, 0, "tiles", TILE.cloud[1]!)
+          .setOrigin(0, 0)
+          .setScale(TS)
+          .setFlipY(true),
+        this.add
+          .image(2 * T * TS, 0, "tiles", TILE.cloud[2]!)
+          .setOrigin(0, 0)
+          .setScale(TS)
+          .setFlipY(true),
+      ]);
+      c.setAlpha(0.9);
       this.tweens.add({
         targets: c,
         x: c.x + w + 200,
         duration: Phaser.Math.Between(60000, 120000),
         repeat: -1,
-        onRepeat: () => c.setX(-100),
+        onRepeat: () => c.setX(-200),
       });
     }
     this.house = this.add.container(w * 0.08, gy);
@@ -136,18 +148,19 @@ export class Site extends Phaser.Scene {
       .setScale(TS);
 
     this.add
-      .rectangle(w * 0.6, 150, 640, 220, 0x111111, 0.82)
+      .rectangle(w * 0.5, 150, boardW, 220, 0x111111, 0.82)
       .setStrokeStyle(4, 0xf1c40f)
       .setDepth(3);
     this.add
-      .text(w * 0.6, 28, "ON THE TOOLS", {
+      .text(w * 0.5, 28, "ON THE TOOLS", {
         color: "#f1c40f",
         fontSize: "18px",
         fontStyle: "bold",
       })
       .setOrigin(0.5)
       .setDepth(3);
-    this.board = this.add.container(w * 0.6 - 305, 52).setDepth(3);
+    this.board = this.add.container(w * 0.5 - boardW / 2 + 16, 52).setDepth(3);
+    this.boardChars = Math.floor((boardW - 32) / 7.9);
     this.time.addEvent({ delay: 2500, loop: true, callback: () => this.drawBoard(this.boardTop + 1) });
 
     this.pallets = this.add.container(w * 0.53, gy);
@@ -442,7 +455,7 @@ export class Site extends Phaser.Scene {
   shout() {
     const { width: w, height: h } = this.scale;
     const can = this.add
-      .image(w * 0.6, 150, "can", 0)
+      .image(w * 0.5, 150, "can", 0)
       .setScale(2)
       .setDepth(20);
     this.tweens.add({
@@ -468,7 +481,10 @@ export class Site extends Phaser.Scene {
     for (let n = 0; n < Math.min(fit, rows.length); n++) {
       const i = rows[(this.boardTop + n) % rows.length]!;
       const t = this.add
-        .text(0, n * 22, `◐ ${i.id}  ${i.title}`.slice(0, 76), { fontSize: "13px", color: "#eee" })
+        .text(0, n * 22, `◐ ${i.id}  ${i.title}`.slice(0, this.boardChars), {
+          fontSize: "13px",
+          color: "#eee",
+        })
         .setInteractive();
       t.on("pointerdown", () => void openCard(i));
       this.board.add(t);
