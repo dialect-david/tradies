@@ -1,5 +1,6 @@
 import { ageDays, type Item } from "../server/model.js";
 import { act, show } from "./client.js";
+import { score, type Cast } from "./cast.js";
 
 const card = document.getElementById("card")!;
 const board = document.getElementById("board")!;
@@ -90,7 +91,9 @@ export function openBoard(ready: Item[], title = "job board", claimable = true) 
 }
 
 export function closeBoard() {
-  board.classList.remove("open");
+  board.classList.remove("open", "knockoff");
+  knockoffClose?.();
+  knockoffClose = undefined;
 }
 
 document.addEventListener("pointerdown", (e) => {
@@ -101,3 +104,33 @@ document.addEventListener("pointerdown", (e) => {
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") (closeCard(), closeBoard());
 });
+
+export function openKnockoff(today: Item[], c: Cast, onClose: () => void) {
+  closeCard();
+  board.classList.add("open", "knockoff");
+  const now = new Date();
+  const row = (i: Item, extra = "") =>
+    `<div class="line" data-id="${i.id}"><b>${i.id}</b> ${esc(i.title.slice(0, 70))}${extra}</div>`;
+  const worry = [...c.working, ...c.waiting, ...c.smoko, ...c.inspectors]
+    .sort((a, b) => score(b, now) - score(a, now))
+    .slice(0, 3);
+  board.innerHTML = `
+    <div class="head"><h3>knock-off · ${now.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "short" })}</h3></div>
+    <h4>${today.length ? `${today.length} beer${today.length === 1 ? "" : "s"} cracked ${"🍺".repeat(Math.min(today.length, 12))}` : "dry day. none closed."}</h4>
+    ${today.map((i) => row(i, i.closeReason ? `<div class="why">${esc(i.closeReason.slice(0, 120))}</div>` : "")).join("")}
+    <h4>the Kelpie's worried about</h4>
+    ${worry.map((i) => row(i, ` <span class="why">${ageDays(i)}d · P${i.priority}</span>`)).join("") || "<i>nothing. good girl.</i>"}
+    <h4>${c.smoko.length} still on smoko, ${c.waiting.length} waiting on materials, ${c.ready.length} ready for tomorrow</h4>
+    ${c.ready
+      .slice(0, 3)
+      .map((i) => row(i))
+      .join("")}`;
+  for (const l of board.querySelectorAll<HTMLElement>(".line"))
+    l.addEventListener("click", () => {
+      const item = [...today, ...worry, ...c.ready].find((i) => i.id === l.dataset.id);
+      if (item) void openCard(item);
+    });
+  knockoffClose = onClose;
+}
+
+let knockoffClose: (() => void) | undefined;

@@ -1,8 +1,8 @@
 import Phaser from "phaser";
 import type { Item } from "../server/model.js";
 import { cast, TRADE_COLOUR, type Cast } from "./cast.js";
-import { items as fetchItems, onRefresh } from "./client.js";
-import { openCard, openBoard, toast } from "./card.js";
+import { items as fetchItems, knockoff, onRefresh } from "./client.js";
+import { openCard, openBoard, openKnockoff, toast } from "./card.js";
 import {
   CAN_FRAMES,
   CAN_PALETTE,
@@ -63,6 +63,8 @@ export class Site extends Phaser.Scene {
   private pallets!: Phaser.GameObjects.Container;
   private empties!: Phaser.GameObjects.Container;
   private ute!: Phaser.GameObjects.Container;
+  private dusk!: Phaser.GameObjects.Rectangle;
+  private sun!: Phaser.GameObjects.Arc;
 
   preload() {
     this.load.spritesheet("tiles", "/kenney/tilemap_packed.png", {
@@ -170,6 +172,8 @@ export class Site extends Phaser.Scene {
       .setScale(TS);
     this.empties = this.add.container(w * 0.74, gy);
     this.ute = this.add.container(w * 0.88, gy);
+    this.sun = this.add.circle(w * 0.15, 90, 34, 0xffe066).setDepth(0);
+    this.dusk = this.add.rectangle(w / 2, h / 2, w, h, 0x2a1a3e, 0).setDepth(9);
 
     this.rain = this.add.particles(0, 0, "drop", {
       x: { min: 0, max: w },
@@ -205,9 +209,10 @@ export class Site extends Phaser.Scene {
       this.tweens.add({ targets: this.kelpie, y: gy - 30, duration: 150, yoyo: true });
     });
 
-    this.hud.innerHTML = `<span id="site"></span><span id="counts"></span><button id="jobs">job board</button><button id="smoko">smoko</button>`;
+    this.hud.innerHTML = `<span id="site"></span><span id="counts"></span><button id="jobs">job board</button><button id="smoko">smoko</button><button id="knockoff">knock-off</button>`;
     this.hud.querySelector("#smoko")!.addEventListener("click", () => this.smoko());
     this.hud.querySelector("#jobs")!.addEventListener("click", () => openBoard(this.current.ready));
+    this.hud.querySelector("#knockoff")!.addEventListener("click", () => void this.knockoff());
 
     void this.refresh();
     onRefresh(() => void this.refresh());
@@ -415,10 +420,10 @@ export class Site extends Phaser.Scene {
 
   drive(gone: Item[]) {
     this.ute.removeAll(true);
-    if (!gone.length) return;
     const u = this.add.image(0, 0, "ute", 0).setOrigin(0.5, 1).setInteractive();
     u.on("pointerdown", () => openBoard(gone, "gone home", false));
     this.ute.add(u);
+    if (!gone.length) return;
     this.ute.add(
       this.add
         .text(0, -12 * PX - 4, `${gone.length} gone home`, { fontSize: "10px", color: "#fff" })
@@ -509,6 +514,44 @@ export class Site extends Phaser.Scene {
     });
     a.body.anims.stop();
     a.body.setFrame(0);
+  }
+
+  async knockoff() {
+    const { height: h } = this.scale;
+    this.tweens.add({ targets: this.dusk, fillAlpha: 0.5, duration: 2500 });
+    this.tweens.add({ targets: this.sun, y: h * GROUND + 40, duration: 3000, ease: "Sine.In" });
+    for (const a of this.actors.values()) {
+      this.tweens.killTweensOf([a.body, a.label]);
+      a.body.play(`${a.body.texture.key}-walk`, true);
+      a.body.setFlipX(false);
+      this.tweens.add({
+        targets: [a.body, a.label],
+        x: this.ute.x - 20 + Math.random() * 60,
+        duration: 2500,
+        onComplete: () => (a.body.anims.stop(), a.body.setFrame(0)),
+      });
+    }
+    this.kelpie.play("kelpie-run");
+    this.kelpie.setFlipX(false);
+    this.tweens.add({
+      targets: this.kelpie,
+      x: this.ute.x + 70,
+      duration: 2000,
+      onComplete: () => (this.kelpie.anims.stop(), this.kelpie.setFrame(3)),
+    });
+    try {
+      const { today } = await knockoff();
+      openKnockoff(today, this.current, () => this.day());
+    } catch (e) {
+      toast(`strewth: ${(e as Error).message}`);
+      this.day();
+    }
+  }
+
+  day() {
+    this.tweens.add({ targets: this.dusk, fillAlpha: 0, duration: 1500 });
+    this.tweens.add({ targets: this.sun, y: 90, duration: 1500 });
+    this.place(this.current);
   }
 
   smoko() {

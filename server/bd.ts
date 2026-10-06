@@ -26,3 +26,17 @@ export async function closedCount(): Promise<number> {
 export async function quick(title: string, priority = "2", type = "task"): Promise<string> {
   return (await sh("bd", ["q", title, "-p", priority, "-t", type])).trim();
 }
+
+export async function closedSince(since: Date): Promise<Item[]> {
+  const beads = await json<Bead[]>("bd", [
+    "list",
+    "--json",
+    "--limit",
+    "0",
+    "--status",
+    "closed",
+    "--closed-after",
+    since.toISOString(),
+  ]);
+  return beads.map(fromBead).sort((a, b) => (b.closedAt?.getTime() ?? 0) - (a.closedAt?.getTime() ?? 0));
+}

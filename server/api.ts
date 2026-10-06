@@ -53,6 +53,11 @@ export function api(): Plugin {
             const [beads, prs, closed] = await Promise.all([bd.listBeads(), gh.listPrs(), bd.closedCount()]);
             return send(res, 200, { site: site.split("/").pop(), closed, items: [...beads, ...prs] });
           }
+          if (url.pathname === "/knockoff") {
+            const start = new Date();
+            start.setHours(0, 0, 0, 0);
+            return send(res, 200, { since: start, today: await bd.closedSince(start) });
+          }
           if (url.pathname === "/show") {
             const id = url.searchParams.get("id") ?? "";
             return send(res, 200, id.startsWith("#") ? await gh.view(id) : await bd.show(id), "text/plain");

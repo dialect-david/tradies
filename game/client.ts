@@ -29,3 +29,11 @@ export async function act(
 export function onRefresh(fn: () => void) {
   new EventSource("/api/events").onmessage = (e) => e.data === "refresh" && fn();
 }
+
+export async function knockoff(): Promise<{ since: Date; today: Item[] }> {
+  const r = await fetch("/api/knockoff");
+  if (!r.ok) throw new Error((await r.json()).error);
+  const k = (await r.json()) as { since: string; today: Item[] };
+  for (const i of k.today) ((i.updatedAt = new Date(i.updatedAt)), (i.closedAt = new Date(i.closedAt!)));
+  return { since: new Date(k.since), today: k.today };
+}

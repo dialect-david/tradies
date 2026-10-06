@@ -14,6 +14,8 @@ export type Item = {
   parent?: string;
   labels: string[];
   url?: string;
+  closedAt?: Date;
+  closeReason?: string;
 };
 
 export type Bead = {
@@ -25,6 +27,8 @@ export type Bead = {
   owner?: string;
   assignee?: string;
   updated_at: string;
+  closed_at?: string;
+  close_reason?: string;
   labels?: string[];
   dependencies?: { depends_on_id: string; type: string }[];
   dependency_count?: number;
@@ -55,6 +59,8 @@ export function fromBead(b: Bead): Item {
     trade: b.issue_type,
     owner: b.assignee ?? b.owner,
     updatedAt: new Date(b.updated_at),
+    closedAt: b.closed_at ? new Date(b.closed_at) : undefined,
+    closeReason: b.close_reason,
     blocked,
     parent,
     labels: b.labels ?? [],
