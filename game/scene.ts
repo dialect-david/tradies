@@ -102,6 +102,8 @@ export class Site extends Phaser.Scene {
   private road!: Phaser.GameObjects.Rectangle;
   private lines!: Phaser.GameObjects.TileSprite;
   private worldW = 0;
+  private onSmoko = false;
+  private smokoTimer?: Phaser.Time.TimerEvent;
   private dusk!: Phaser.GameObjects.Rectangle;
   private sun!: Phaser.GameObjects.Arc;
 
@@ -286,7 +288,9 @@ export class Site extends Phaser.Scene {
     this.input.keyboard?.on("keydown-RIGHT", () => (cam.scrollX += 200));
 
     this.hud.innerHTML = `<span id="site"></span><span id="counts"></span><button id="jobs">job board</button><button id="smoko">smoko</button><button id="knockoff">knock-off</button>`;
-    this.hud.querySelector("#smoko")!.addEventListener("click", () => this.smoko());
+    this.hud
+      .querySelector("#smoko")!
+      .addEventListener("click", () => (this.onSmoko ? this.backToWork() : this.smoko()));
     this.hud.querySelector("#jobs")!.addEventListener("click", () => openBoard(this.current.ready));
     this.hud.querySelector("#knockoff")!.addEventListener("click", () => void this.knockoff());
 
@@ -302,7 +306,7 @@ export class Site extends Phaser.Scene {
       this.current = cast(items);
       this.hud.querySelector("#site")!.textContent = `🏗 ${site}`;
       this.street(layoutStreet(epics, items));
-      this.place(this.current);
+      if (!this.onSmoko) this.place(this.current);
     } catch (e) {
       toast(`strewth: ${(e as Error).message}`);
     }
@@ -933,6 +937,8 @@ export class Site extends Phaser.Scene {
   }
 
   smoko() {
+    this.onSmoko = true;
+    this.hud.querySelector("#smoko")!.textContent = "back to work";
     toast("smoko. ten minutes.");
     this.cameras.main.pan(this.empties.x + 100, this.scale.height / 2, 1500, Phaser.Math.Easing.Sine.InOut);
     const { height: h } = this.scale;
@@ -975,6 +981,15 @@ export class Site extends Phaser.Scene {
       onRepeat: () => this.kelpie.setFlipX(false),
       onComplete: () => (this.kelpie.anims.stop(), this.kelpie.setFrame(2)),
     });
-    this.time.delayedCall(10 * 60 * 1000, () => this.place(this.current));
+    this.smokoTimer = this.time.delayedCall(10 * 60 * 1000, () => this.backToWork());
+  }
+
+  backToWork() {
+    if (!this.onSmoko) return;
+    this.onSmoko = false;
+    this.smokoTimer?.remove();
+    this.hud.querySelector("#smoko")!.textContent = "smoko";
+    toast("righto, back to it");
+    this.place(this.current);
   }
 }
