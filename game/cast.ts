@@ -1,5 +1,5 @@
 import { ageDays, byUrgency, isStale, type Item } from "../server/model.js";
-import { DEFAULTS, type Config } from "../server/config.js";
+import { DEFAULTS, type Config } from "../server/defaults.js";
 
 export const needsSomeone = (i: Item, cfg: Config = DEFAULTS) =>
   i.labels.some((l) => cfg.foremanLabels.some((p) => l.startsWith(p)));

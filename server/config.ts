@@ -2,9 +2,9 @@ import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
 
-export type Config = { foremanLabels: string[]; staleDays: number; goneDays: number };
+import { DEFAULTS, type Config } from "./defaults.js";
 
-export const DEFAULTS: Config = { foremanLabels: ["needs-"], staleDays: 7, goneDays: 30 };
+export { DEFAULTS, type Config };
 
 export const CONFIG_PATH = path.join(homedir(), ".config", "tradies", "config.json");
 

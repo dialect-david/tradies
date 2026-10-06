@@ -1,7 +1,7 @@
 import type { Item } from "../server/model.js";
 
 import type { Epic } from "./street.js";
-import type { Config } from "../server/config.js";
+import type { Config } from "../server/defaults.js";
 
 export type Site = { site: string; closed: number; epics: Epic[]; config: Config; items: Item[] };
 
