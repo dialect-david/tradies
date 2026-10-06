@@ -136,6 +136,27 @@ export const TRADIE_FRAMES: string[][] = [
     "...kk..kk...",
     "..kkk..kkk..",
   ],
+  [
+    "....HHHHHH..",
+    "...HHHHHHHH.",
+    "..HHHHHHHHHH",
+    "...ssssssss.",
+    "...soos.oos.",
+    "...ssssssss.",
+    "....ssssss..",
+    "..vvvvvvvv..",
+    ".vvvvvvvvvv.",
+    ".sVVVVVVVVs.",
+    ".svvvvvvvvs.",
+    "...vvvvvv...",
+    "...bbbbbb...",
+    "...bbbbbb...",
+    "...bb..bb...",
+    "...ss..ss...",
+    "...ss..ss...",
+    "...kk..kk...",
+    "..kkk..kkk..",
+  ],
 ];
 
 export const KELPIE_PALETTE = { o: outline, r: "#9b5a2a", d: "#6b3a14", t: "#d9a066", w: "#ffffff" };

@@ -6,6 +6,7 @@ export type Role = "working" | "smoko" | "waiting" | "inspector" | "board";
 
 export type Cast = {
   working: Item[];
+  asleep: Item[];
   smoko: Item[];
   gone: Item[];
   waiting: Item[];
@@ -20,6 +21,7 @@ export function cast(items: Item[], now = new Date()): Cast {
   const prs = items.filter((i) => i.kind === "pr");
   const byScore = (a: Item, b: Item) => score(b, now) - score(a, now);
   const working = beads.filter((i) => i.status === "in_progress");
+  const asleep = working.filter((i) => isStale(i, now));
   const waiting = beads.filter((i) => i.blocked && i.status !== "in_progress").sort(byScore);
   const idle = beads.filter((i) => isStale(i, now) && !working.includes(i) && !waiting.includes(i));
   const gone = idle.filter((i) => ageDays(i, now) >= GONE_DAYS).sort(byScore);
@@ -29,6 +31,7 @@ export function cast(items: Item[], now = new Date()): Cast {
   const worst = [...items].sort(byScore)[0];
   return {
     working,
+    asleep,
     smoko,
     gone,
     waiting,
@@ -46,6 +49,7 @@ export function score(i: Item, now: Date): number {
   if (i.priority === 1) s += 10;
   const age = ageDays(i, now);
   if (isStale(i, now)) s += age >= GONE_DAYS ? 2 : Math.min(40, age);
+  if (i.status === "in_progress" && isStale(i, now)) s += 30;
   if (i.blocked) s += 5;
   return s;
 }

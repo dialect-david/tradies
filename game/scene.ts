@@ -466,11 +466,13 @@ export class Site extends Phaser.Scene {
       a.home = this.lotOf(item).house.id;
       a.label.setVisible(role === "working");
       a.body.setDepth(role === "working" ? 5 : 1);
-      a.body.setFrame(role === "smoko" ? 2 : role === "waiting" ? 3 : 0);
+      const napping = role === "working" && c.asleep.includes(item);
+      a.body.setFrame(napping ? 6 : role === "smoko" ? 2 : role === "waiting" ? 3 : 0);
       this.tweens.add({ targets: a.body, x, y, duration: 600, ease: "Bounce.Out" });
       this.tweens.add({ targets: a.label, x, y: y + 2, duration: 600 });
       this.settle(a);
-      if (role === "working") this.wander(a);
+      if (napping) this.snooze(a);
+      else if (role === "working") this.wander(a);
       else a.body.anims.stop();
     };
     c.working.forEach((i, n) => put(i, "working", n));
@@ -500,7 +502,7 @@ export class Site extends Phaser.Scene {
     if (c.rain) this.rain.start();
     else this.rain.stop();
     this.hud.querySelector("#counts")!.textContent =
-      `${this.lots.size - 1} houses · ${c.working.length} on the tools · ${c.ready.length} ready · ${c.waiting.length} waiting on materials · ${c.smoko.length} on smoko · ${c.gone.length} gone home · ${c.inspectors.length} inspectors${c.rain ? " · ☔ rain" : ""}`;
+      `${this.lots.size - 1} houses · ${c.working.length} on the tools${c.asleep.length ? ` (${c.asleep.length} asleep)` : ""} · ${c.ready.length} ready · ${c.waiting.length} waiting on materials · ${c.smoko.length} on smoko · ${c.gone.length} gone home · ${c.inspectors.length} inspectors${c.rain ? " · ☔ rain" : ""}`;
 
     const target = c.worst && this.actors.get(c.worst.id);
     const tx = target ? target.body.x + 26 : w * 0.5;
@@ -679,10 +681,15 @@ export class Site extends Phaser.Scene {
     for (let n = 0; n < Math.min(fit, rows.length); n++) {
       const i = rows[(this.boardTop + n) % rows.length]!;
       const t = this.add
-        .text(0, n * 22, `◐ ${i.id}  ${i.title}`.slice(0, this.boardChars), {
-          fontSize: "13px",
-          color: "#eee",
-        })
+        .text(
+          0,
+          n * 22,
+          `${this.current.asleep.includes(i) ? "💤" : "◐"} ${i.id}  ${i.title}`.slice(0, this.boardChars),
+          {
+            fontSize: "13px",
+            color: "#eee",
+          },
+        )
         .setInteractive();
       t.on("pointerdown", () => void openCard(i));
       this.board.add(t);
@@ -759,6 +766,26 @@ export class Site extends Phaser.Scene {
           : hammer(Phaser.Math.Between(1500, 4000), () => this.wander(a)),
       );
     });
+  }
+
+  snooze(a: Actor) {
+    const gen = a.gen;
+    const z = () => {
+      if (a.gen !== gen || !this.actors.has(a.item.id)) return;
+      const t = this.add
+        .text(a.body.x + 10, a.body.y - 60, "z", { fontSize: "12px", color: "#fff" })
+        .setDepth(6);
+      this.tweens.add({
+        targets: t,
+        y: t.y - 30,
+        x: t.x + 8,
+        alpha: 0,
+        duration: 1600,
+        onComplete: () => t.destroy(),
+      });
+      this.time.delayedCall(900, z);
+    };
+    z();
   }
 
   settle(a: Actor) {

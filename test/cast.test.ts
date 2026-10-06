@@ -31,6 +31,7 @@ describe("cast", () => {
       now,
     );
     expect(c.working.map((i) => i.id)).toEqual(["w", "stale-w"]);
+    expect(c.asleep.map((i) => i.id)).toEqual(["stale-w"]);
     expect(c.waiting.map((i) => i.id)).toEqual(["wait"]);
     expect(c.smoko.map((i) => i.id)).toEqual(["old"]);
     expect(c.gone.map((i) => i.id)).toEqual(["gone"]);
@@ -44,6 +45,8 @@ describe("cast", () => {
     const old = item({ id: "old", updatedAt: new Date("2026-09-20") });
     const gone = item({ id: "gone", updatedAt: new Date("2026-06-01") });
     expect(cast([gone, old], now).worst?.id).toBe("old");
+    const napping = item({ id: "nap", status: "in_progress", updatedAt: new Date("2026-09-25") });
+    expect(cast([old, napping], now).worst?.id).toBe("nap");
     expect(score(gone, now)).toBe(2);
     expect(cast([old, p0, rain], now).worst?.id).toBe("#1");
     expect(cast([old, p0], now).worst?.id).toBe("p0");
