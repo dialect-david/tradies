@@ -924,28 +924,56 @@ export class Site extends Phaser.Scene {
     toast("smoko. ten minutes.");
     this.cameras.main.pan(this.empties.x + 100, this.scale.height / 2, 1500, Phaser.Math.Easing.Sine.InOut);
     const { height: h } = this.scale;
-    for (const a of this.actors.values()) {
+    const gy = h * GROUND;
+    const esky = this.empties.x + 27;
+    [...this.actors.values()].forEach((a, n) => {
       this.tweens.killTweensOf([a.body, a.label]);
       this.settle(a);
       a.role = "smoko";
-      a.body.anims.stop();
-      a.body.setFrame(2);
-      this.tweens.add({
-        targets: a.body,
-        x: this.empties.x + 60 + Math.random() * 160,
-        y: h * GROUND - 20,
-        duration: 1200,
+      a.body.setAlpha(1);
+      a.label.setVisible(false);
+      const seat = esky + 70 + n * 30 + Math.random() * 12;
+      const walk = (x: number, then: () => void) => {
+        a.body.setFlipX(x < a.body.x);
+        a.body.play(`${a.body.texture.key}-walk`, true);
+        this.tweens.add({
+          targets: [a.body, a.label],
+          x,
+          y: (t: Phaser.GameObjects.GameObject) => (t === a.body ? gy : gy + 2),
+          duration: Math.min(4000, Math.abs(x - a.body.x) * 2 + 300),
+          delay: n * 150,
+          onComplete: () => (a.body.anims.stop(), a.body.setFrame(0), then()),
+        });
+      };
+      walk(esky, () => {
+        const can = this.add.image(a.body.x + 12, a.body.y - 24, "can", 0).setDepth(6);
+        this.tweens.add({ targets: can, y: can.y - 10, duration: 150, yoyo: true });
+        this.time.delayedCall(400, () =>
+          walk(seat, () => {
+            a.body.setFrame(2);
+            can.setPosition(a.body.x + 16, a.body.y - 14);
+          }),
+        );
+        this.tweens.add({
+          targets: can,
+          x: seat + 16,
+          y: gy - 14,
+          delay: 400,
+          duration: Math.min(4000, Math.abs(seat - esky) * 2 + 300),
+        });
+        this.time.delayedCall(10 * 60 * 1000, () => can.destroy());
       });
-    }
+    });
     this.kelpie.play("kelpie-run");
     this.tweens.add({
       targets: this.kelpie,
-      x: { from: 100, to: this.worldW - 100 },
+      x: { from: esky - 200, to: esky + 400 },
       duration: 1500,
       yoyo: true,
       repeat: 5,
       onYoyo: () => this.kelpie.setFlipX(true),
       onRepeat: () => this.kelpie.setFlipX(false),
+      onComplete: () => (this.kelpie.anims.stop(), this.kelpie.setFrame(2)),
     });
     this.time.delayedCall(10 * 60 * 1000, () => this.place(this.current));
   }
