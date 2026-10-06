@@ -63,6 +63,7 @@ type Actor = {
   home: string;
   gen: number;
   puff?: Phaser.GameObjects.Particles.ParticleEmitter;
+  can?: Phaser.GameObjects.Image;
 };
 
 type Lot = {
@@ -504,7 +505,7 @@ export class Site extends Phaser.Scene {
           alpha: 0,
           y: "-=40",
           duration: 500,
-          onComplete: () => (a.body.destroy(), a.label.destroy()),
+          onComplete: () => (a.body.destroy(), a.label.destroy(), a.can?.destroy()),
         });
         this.actors.delete(id);
       }
@@ -852,8 +853,19 @@ export class Site extends Phaser.Scene {
     z();
   }
 
+  update() {
+    for (const a of this.actors.values())
+      if (a.can)
+        a.can.setPosition(
+          a.body.x + (a.body.flipX ? -14 : 14),
+          a.body.y - (String(a.body.frame.name) === "2" ? 14 : 26),
+        );
+  }
+
   settle(a: Actor) {
     a.gen++;
+    a.can?.destroy();
+    a.can = undefined;
     if (a.puff) this.dustOff(a, a.puff);
     a.body.anims.stop();
     a.body.setAlpha(1);
@@ -946,22 +958,10 @@ export class Site extends Phaser.Scene {
         });
       };
       walk(esky, () => {
-        const can = this.add.image(a.body.x + 12, a.body.y - 24, "can", 0).setDepth(6);
-        this.tweens.add({ targets: can, y: can.y - 10, duration: 150, yoyo: true });
-        this.time.delayedCall(400, () =>
-          walk(seat, () => {
-            a.body.setFrame(2);
-            can.setPosition(a.body.x + 16, a.body.y - 14);
-          }),
-        );
-        this.tweens.add({
-          targets: can,
-          x: seat + 16,
-          y: gy - 14,
-          delay: 400,
-          duration: Math.min(4000, Math.abs(seat - esky) * 2 + 300),
-        });
-        this.time.delayedCall(10 * 60 * 1000, () => can.destroy());
+        a.can?.destroy();
+        a.can = this.add.image(a.body.x + 12, a.body.y - 24, "can", 0).setDepth(6);
+        this.tweens.add({ targets: a.can, y: a.can.y - 10, duration: 150, yoyo: true });
+        this.time.delayedCall(400, () => walk(seat, () => a.body.setFrame(2)));
       });
     });
     this.kelpie.play("kelpie-run");
