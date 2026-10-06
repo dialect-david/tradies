@@ -76,6 +76,8 @@ export class Site extends Phaser.Scene {
     const g = this.make.graphics({}, false);
     g.fillStyle(0x7fb3ff).fillRect(0, 0, 2, 10);
     g.generateTexture("drop", 2, 10);
+    g.clear().fillStyle(0xd9c7a0).fillCircle(3, 3, 3);
+    g.generateTexture("dust", 6, 6);
     this.sheet("kelpie", KELPIE_FRAMES, KELPIE_PALETTE);
     this.sheet("slab", SLAB_FRAMES, SLAB_PALETTE);
     this.sheet("can", CAN_FRAMES, CAN_PALETTE);
@@ -198,12 +200,16 @@ export class Site extends Phaser.Scene {
       repeat: -1,
     });
     for (const key of [...Object.keys(TRADE_COLOUR).map((t) => `tradie-${t}`), "tradie-inspector"])
-      this.anims.create({
-        key: `${key}-walk`,
-        frames: this.anims.generateFrameNumbers(key, { frames: [0, 1] }),
-        frameRate: 4,
-        repeat: -1,
-      });
+      for (const [name, frames, rate] of [
+        ["walk", [0, 1], 4],
+        ["hammer", [4, 5], 6],
+      ] as const)
+        this.anims.create({
+          key: `${key}-${name}`,
+          frames: this.anims.generateFrameNumbers(key, { frames: [...frames] }),
+          frameRate: rate,
+          repeat: -1,
+        });
 
     this.kelpie = this.add
       .sprite(w * 0.5, gy, "kelpie", 2)
@@ -547,23 +553,60 @@ export class Site extends Phaser.Scene {
   }
 
   wander(a: Actor) {
-    const dx = Phaser.Math.Between(-40, 40);
-    a.body.setFlipX(dx < 0);
-    a.body.play(`${a.body.texture.key}-walk`, true);
-    this.tweens.add({
-      targets: [a.body, a.label],
-      x: `+=${dx}`,
-      duration: Math.abs(dx) * 40 + 200,
-      delay: Phaser.Math.Between(0, 2500),
-      onStart: () => a.body.play(`${a.body.texture.key}-walk`, true),
-      onComplete: () => {
+    const alive = () => a.role === "working" && this.actors.get(a.item.id) === a;
+    const houseL = this.house.x + 10;
+    const houseR = this.house.x + 8 * T * HS - 10;
+    const door = this.house.x + 3.5 * T * HS;
+    const insideOk = ["lockup", "fitout", "done"].includes(this.houseStage ?? "");
+    const roll = Math.random();
+    const to = roll < 0.2 && insideOk ? door : Phaser.Math.Between(houseL, houseR);
+    const walk = (x: number, then: () => void) => {
+      a.body.setFlipX(x < a.body.x);
+      a.body.play(`${a.body.texture.key}-walk`, true);
+      this.tweens.add({
+        targets: [a.body, a.label],
+        x,
+        duration: Math.abs(x - a.body.x) * 12 + 200,
+        onComplete: () => {
+          a.body.anims.stop();
+          a.body.setFrame(0);
+          if (alive()) then();
+        },
+      });
+    };
+    const hammer = (ms: number, then: () => void) => {
+      a.body.play(`${a.body.texture.key}-hammer`, true);
+      const puff = this.add.particles(a.body.x + (a.body.flipX ? -14 : 14), a.body.y - 30, "dust", {
+        speed: { min: 20, max: 60 },
+        angle: { min: 200, max: 340 },
+        lifespan: 500,
+        scale: { start: 1, end: 0 },
+        frequency: 160,
+        quantity: 2,
+      });
+      this.time.delayedCall(ms, () => {
+        puff.stop();
+        this.time.delayedCall(600, () => puff.destroy());
         a.body.anims.stop();
         a.body.setFrame(0);
-        if (a.role === "working" && this.actors.get(a.item.id) === a) this.wander(a);
-      },
+        if (alive()) then();
+      });
+    };
+    const inside = (then: () => void) => {
+      this.tweens.add({ targets: [a.body, a.label], alpha: 0, duration: 400 });
+      this.time.delayedCall(Phaser.Math.Between(3000, 7000), () => {
+        this.tweens.add({ targets: [a.body, a.label], alpha: 1, duration: 400 });
+        if (alive()) then();
+      });
+    };
+    this.time.delayedCall(Phaser.Math.Between(300, 2000), () => {
+      if (!alive()) return;
+      walk(to, () =>
+        to === door
+          ? inside(() => this.wander(a))
+          : hammer(Phaser.Math.Between(1500, 4000), () => this.wander(a)),
+      );
     });
-    a.body.anims.stop();
-    a.body.setFrame(0);
   }
 
   async knockoff() {

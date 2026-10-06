@@ -28,4 +28,6 @@ House stage = closed beads over all beads: site → slab → frame → roof → 
 
 PR testing: private repo `dialect-david/tradies-scratch`, open a PR there and run the game from its clone.
 
-Next: tradies work the house, per-epic rooms, Kelpie speech bubbles.
+Working tradies walk the house front, hammer with dust, and once there is a door they go inside for a bit.
+
+Next: per-epic rooms, Kelpie speech bubbles.
