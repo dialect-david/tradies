@@ -25,7 +25,8 @@ const GROUND = 0.78;
 const T = 18;
 const TS = 3;
 const PX = 3;
-const HS = TILE_PX / T;
+const TT = 16;
+const HS = TILE_PX / TT;
 const TILE = {
   grass: 1,
   dirt: 121,
@@ -41,6 +42,16 @@ const TILE = {
   cloud: [153, 154, 155],
   fence: 105,
   sign: 86,
+};
+const TOWN = {
+  post: 47,
+  beam: 100,
+  roof: { red: [52, 53, 54, 67], grey: [48, 49, 50, 63] },
+  wall: { wood: { plain: 75, window: 73, opening: 74 }, stone: { plain: 79, window: 77, opening: 78 } },
+  door: 85,
+  doorLit: 84,
+  fenceL: 44,
+  fenceR: 46,
 };
 const STAGES: Stage[] = ["site", "slab", "frame", "roof", "lockup", "fitout", "done"];
 
@@ -93,6 +104,7 @@ export class Site extends Phaser.Scene {
 
   preload() {
     this.load.spritesheet("tiles", "/kenney/tilemap_packed.png", { frameWidth: T, frameHeight: T });
+    this.load.spritesheet("town", "/kenney/tiny-town.png", { frameWidth: TT, frameHeight: TT });
     const g = this.make.graphics({}, false);
     g.fillStyle(0x7fb3ff).fillRect(0, 0, 2, 10);
     g.generateTexture("drop", 2, 10);
@@ -342,41 +354,57 @@ export class Site extends Phaser.Scene {
     lot.box.removeAll(true);
     lot.door = undefined;
     lot.doorUsers = 0;
-    const W = house.id === SHED ? 2 : HOUSE_W;
-    const H = house.id === SHED ? 1 : 2;
-    const tile = (col: number, row: number, frame: number) => {
+    const shed = house.id === SHED;
+    const W = shed ? 2 : HOUSE_W;
+    const H = shed ? 1 : 2;
+    const seed = [...house.id].reduce((n, ch) => n + ch.charCodeAt(0), 0);
+    const roof = shed || seed % 2 ? TOWN.roof.grey : TOWN.roof.red;
+    const wall = shed || seed % 3 === 0 ? TOWN.wall.wood : TOWN.wall.stone;
+    const SLAB = 10;
+    const tile = (col: number, row: number, frame: number, sheet = "town") => {
       const img = this.add
-        .image(col * TILE_PX, -row * TILE_PX, "tiles", frame)
+        .image(col * TILE_PX, -(row - 1) * TILE_PX - SLAB, sheet, frame)
         .setOrigin(0, 1)
         .setScale(HS)
         .setInteractive();
-      img.on("pointerdown", () =>
-        openBoard(house.items, house.id === SHED ? "the shed" : house.title.slice(0, 60), true),
-      );
+      img.on("pointerdown", () => openBoard(house.items, shed ? "the shed" : house.title.slice(0, 60), true));
       lot.box.add(img);
       return img;
     };
     const at = STAGES.indexOf(house.stage);
     const mid = Math.floor(W / 2);
-    if (at >= 1) for (let c = 0; c < W; c++) tile(c, 0, TILE.plank);
-    if (at >= 2) {
-      for (let r = 1; r <= H; r++) for (const c of [0, W - 1]) tile(c, r, TILE.pole);
-      for (let c = 0; c < W; c++) tile(c, H + 1, TILE.beam);
+    if (at >= 1) {
+      const slab = this.add
+        .rectangle(-6, 0, W * TILE_PX + 12, 10, 0xbdbdbd)
+        .setOrigin(0, 1)
+        .setStrokeStyle(2, 0x6e6e6e)
+        .setInteractive();
+      slab.on("pointerdown", () =>
+        openBoard(house.items, shed ? "the shed" : house.title.slice(0, 60), true),
+      );
+      lot.box.add(slab);
     }
-    if (at >= 3) {
-      for (let c = 0; c < W; c++) tile(c, H + 1, TILE.roof);
-      if (W > 2) tile(mid, H + 2, TILE.roof);
+    if (at >= 2 && at < 4) {
+      for (let r = 1; r <= H; r++) for (const c of [0, W - 1]) tile(c, r, TOWN.post);
+      for (let c = 0; c < W; c++) tile(c, H + 1, TOWN.beam);
     }
     if (at >= 4) {
-      for (let r = 1; r <= H; r++) for (let c = 0; c < W; c++) if (c !== mid || r > 1) tile(c, r, TILE.crate);
-      lot.box.add(this.add.rectangle(mid * TILE_PX, -TILE_PX, TILE_PX, TILE_PX, 0x1a1008).setOrigin(0, 1));
-      lot.door = tile(mid, 1, TILE.door);
+      for (let r = 1; r <= H; r++)
+        for (let c = 0; c < W; c++) tile(c, r, c === mid && r === 1 ? wall.opening : wall.plain);
+      lot.door = tile(mid, 1, at >= 5 ? TOWN.doorLit : TOWN.door);
     }
-    if (at >= 5 && H > 1) for (const c of [0, W - 1]) tile(c, 2, TILE.window);
-    if (at >= 6) for (const c of [-1, W]) (tile(c, 1, TILE.bush), tile(c, 0, TILE.fence));
+    if (at >= 3) {
+      for (let c = 0; c < W; c++) tile(c, H + 1, roof[c === 0 ? 0 : c === W - 1 ? 2 : 1]!);
+      if (W > 2) tile(mid, H + 2, roof[3]!);
+    }
+    if (at >= 5 && H > 1) for (const c of [0, W - 1]) tile(c, 2, wall.window);
+    if (at >= 6) {
+      tile(-1, 1, TOWN.fenceL);
+      tile(W, 1, TOWN.fenceR);
+    }
     lot.box.add(
       this.add
-        .text((W * TILE_PX) / 2, -(H + 3) * TILE_PX - 6, label, {
+        .text((W * TILE_PX) / 2, -(H + 2) * TILE_PX - 16, label, {
           fontSize: "10px",
           color: "#fff",
           backgroundColor: "#0006",
@@ -448,7 +476,7 @@ export class Site extends Phaser.Scene {
     c.working.forEach((i, n) => put(i, "working", n));
     c.waiting.slice(0, 3).forEach((i, n) => put(i, "waiting", n));
     c.smoko.slice(0, 3).forEach((i, n) => put(i, "smoko", n));
-    this.pile(this.pallets, "tiles", TILE.crate, c.waiting, 4, TILE_PX, "waiting on materials", HS);
+    this.pile(this.pallets, "tiles", TILE.crate, c.waiting, 4, T * TS, "waiting on materials", TS);
     this.pile(this.empties, "empty", 0, c.smoko, 8, 9, "on smoko", 0.6, { x: -8, y: -18 * PX });
     this.esky();
     this.drive(c.gone);
