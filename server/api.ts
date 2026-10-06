@@ -4,6 +4,7 @@ import * as bd from "./bd.js";
 import * as gh from "./gh.js";
 import { site } from "./shell.js";
 import { loadConfig } from "./config.js";
+import { houses } from "./houses.js";
 import { watch } from "node:fs";
 import path from "node:path";
 
@@ -53,18 +54,19 @@ export function api(): Plugin {
         const url = new URL(req.url ?? "/", "http://x");
         try {
           if (url.pathname === "/items") {
-            const [beads, prs, closed, epics, actor] = await Promise.all([
+            const [beads, prs, closed, all, actor] = await Promise.all([
               bd.listBeads(),
               gh.listPrs(),
               bd.closedCount(),
-              bd.epics(),
+              bd.allBeads(),
               bd.actor(),
             ]);
+            const config = loadConfig(undefined, actor);
             return send(res, 200, {
               site: site.split("/").pop(),
               closed,
-              epics,
-              config: loadConfig(undefined, actor),
+              epics: houses(all, config),
+              config,
               items: [...beads, ...prs],
             });
           }

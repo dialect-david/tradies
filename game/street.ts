@@ -31,7 +31,7 @@ export function epicOf(item: Item, byId: Map<string, Item>, epics: Set<string>):
 export function layoutStreet(epics: Epic[], items: Item[]): { houses: House[]; shed: House; width: number } {
   const ids = new Set(epics.map((e) => e.id));
   const byId = new Map(items.map((i) => [i.id, i]));
-  const beads = items.filter((i) => i.kind === "bead" && i.trade !== "epic");
+  const beads = items.filter((i) => i.kind === "bead" && !ids.has(i.id));
   const homes = new Map<string, Item[]>();
   for (const b of beads) {
     const home = epicOf(b, byId, ids);

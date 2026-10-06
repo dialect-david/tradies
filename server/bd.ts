@@ -41,28 +41,15 @@ export async function closedSince(since: Date): Promise<Item[]> {
   return beads.map(fromBead).sort((a, b) => (b.closedAt?.getTime() ?? 0) - (a.closedAt?.getTime() ?? 0));
 }
 
-export type Epic = { id: string; title: string; status: string; closed: number; total: number };
-
-export async function epics(): Promise<Epic[]> {
-  type Row = {
-    epic: { id: string; title: string; status: string };
-    total_children: number;
-    closed_children: number;
-  };
-  const [open, done] = await Promise.all([
-    json<Row[]>("bd", ["epic", "status", "--json"]),
-    json<Bead[]>("bd", ["list", "--json", "--limit", "0", "--status", "closed", "--type", "epic"]),
+export async function allBeads(): Promise<Bead[]> {
+  return json<Bead[]>("bd", [
+    "list",
+    "--json",
+    "--limit",
+    "0",
+    "--status",
+    "open,in_progress,blocked,deferred,closed",
   ]);
-  return [
-    ...open.map((r) => ({
-      id: r.epic.id,
-      title: r.epic.title,
-      status: r.epic.status,
-      closed: r.closed_children,
-      total: r.total_children,
-    })),
-    ...done.map((b) => ({ id: b.id, title: b.title, status: "closed", closed: 1, total: 1 })),
-  ];
 }
 
 export async function actor(): Promise<string | undefined> {
