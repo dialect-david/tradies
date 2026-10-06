@@ -103,6 +103,7 @@ export class Site extends Phaser.Scene {
   private lines!: Phaser.GameObjects.TileSprite;
   private worldW = 0;
   private onSmoko = false;
+  private knockedOff = false;
   private smokoTimer?: Phaser.Time.TimerEvent;
   private dusk!: Phaser.GameObjects.Rectangle;
   private sun!: Phaser.GameObjects.Arc;
@@ -292,7 +293,9 @@ export class Site extends Phaser.Scene {
       .querySelector("#smoko")!
       .addEventListener("click", () => (this.onSmoko ? this.backToWork() : this.smoko()));
     this.hud.querySelector("#jobs")!.addEventListener("click", () => openBoard(this.current.ready));
-    this.hud.querySelector("#knockoff")!.addEventListener("click", () => void this.knockoff());
+    this.hud
+      .querySelector("#knockoff")!
+      .addEventListener("click", () => (this.knockedOff ? this.day() : void this.knockoff()));
 
     (window as unknown as { site: Site }).site = this;
     void this.refresh();
@@ -306,7 +309,7 @@ export class Site extends Phaser.Scene {
       this.current = cast(items);
       this.hud.querySelector("#site")!.textContent = `🏗 ${site}`;
       this.street(layoutStreet(epics, items));
-      if (!this.onSmoko) this.place(this.current);
+      if (!this.onSmoko && !this.knockedOff) this.place(this.current);
     } catch (e) {
       toast(`strewth: ${(e as Error).message}`);
     }
@@ -897,6 +900,9 @@ export class Site extends Phaser.Scene {
   }
 
   async knockoff() {
+    if (this.onSmoko) this.backToWork();
+    this.knockedOff = true;
+    this.hud.querySelector("#knockoff")!.textContent = "new day";
     const { height: h } = this.scale;
     this.tweens.add({ targets: this.dusk, fillAlpha: 0.5, duration: 2500 });
     this.tweens.add({ targets: this.sun, y: h * GROUND + 40, duration: 3000, ease: "Sine.In" });
@@ -923,7 +929,7 @@ export class Site extends Phaser.Scene {
     this.cameras.main.pan(this.ute.x, h / 2, 2500, Phaser.Math.Easing.Sine.InOut);
     try {
       const { today } = await knockoff();
-      openKnockoff(today, this.current, () => this.day());
+      openKnockoff(today, this.current, () => {});
     } catch (e) {
       toast(`strewth: ${(e as Error).message}`);
       this.day();
@@ -931,6 +937,11 @@ export class Site extends Phaser.Scene {
   }
 
   day() {
+    if (!this.knockedOff) return;
+    this.knockedOff = false;
+    this.hud.querySelector("#knockoff")!.textContent = "knock-off";
+    toast("new day. kettle's on.");
+    this.cameras.main.pan(this.scale.width / 2, this.scale.height / 2, 1500, Phaser.Math.Easing.Sine.InOut);
     this.tweens.add({ targets: this.dusk, fillAlpha: 0, duration: 1500 });
     this.tweens.add({ targets: this.sun, y: 90, duration: 1500 });
     this.place(this.current);
