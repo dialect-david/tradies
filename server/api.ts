@@ -3,6 +3,8 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import * as bd from "./bd.js";
 import * as gh from "./gh.js";
 import { site } from "./shell.js";
+import { watch } from "node:fs";
+import path from "node:path";
 
 type Res = ServerResponse<IncomingMessage>;
 const listeners = new Set<Res>();
@@ -80,6 +82,15 @@ export function api(): Plugin {
         }
       });
       setInterval(notify, 30_000).unref();
+      let timer: NodeJS.Timeout | undefined;
+      try {
+        watch(path.join(site, ".beads"), () => {
+          clearTimeout(timer);
+          timer = setTimeout(notify, 300);
+        }).unref();
+      } catch {
+        /* no .beads here; the 30s tick still runs */
+      }
     },
   };
 }

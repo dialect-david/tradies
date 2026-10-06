@@ -4,6 +4,7 @@ A construction site over beads (`bd`) and GitHub PRs (`gh`), in the browser. We'
 
 - `yarn --cwd ~/Projects/tradies start` from any beads workspace: opens http://localhost:5173
 - state lives in bd and gh only; every action is a shell-out from the Vite dev server (`server/api.ts`)
+- the site refreshes when anything under `.beads/` changes (a terminal `bd close` flies the tinnie within a second; `bd q` has no file signal and waits for the 30s tick)
 - `node scripts/shot.mjs <url> <out.png> [ms]` screenshots the running game with headless Chrome, console included
 
 | On site                                     | Real                                                                       |
