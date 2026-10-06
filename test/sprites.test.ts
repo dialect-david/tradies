@@ -16,3 +16,18 @@ describe("sprites", () => {
     expect(stage(10, 0)).toBe("done");
   });
 });
+
+import { CAN_FRAMES, SLAB_FRAMES, slabs } from "../game/sprites.js";
+
+describe("beers", () => {
+  it("a slab is 24 closed beads, the rest are loose tinnies", () => {
+    expect(slabs(0)).toEqual({ slabs: 0, cans: 0 });
+    expect(slabs(23)).toEqual({ slabs: 0, cans: 23 });
+    expect(slabs(24)).toEqual({ slabs: 1, cans: 0 });
+    expect(slabs(515)).toEqual({ slabs: 21, cans: 11 });
+  });
+  it("sprites are rectangular", () => {
+    expect(frameSize(SLAB_FRAMES)).toEqual({ w: 22, h: 9 });
+    expect(frameSize(CAN_FRAMES)).toEqual({ w: 4, h: 6 });
+  });
+});

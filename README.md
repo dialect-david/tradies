@@ -19,6 +19,7 @@ A construction site over beads (`bd`) and GitHub PRs (`gh`), in the browser. We'
 Card: claim / note / close for beads, merge for PRs.
 
 Art: tiles from Kenney's Pixel Platformer (CC0, `game/public/kenney`); tradies and the Kelpie are pixel strings in `game/sprites.ts`.
+Every closed bead is a beer; 24 make a slab, stacked beside the house. Closing one flies a tinnie onto the pile.
 House stage = closed beads over all beads: site → slab → frame → roof → lockup → fitout → done (only at zero open).
 
 Next: inspector car for PRs, materials truck when a bead unblocks, knock-off summary, per-epic rooms.

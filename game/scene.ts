@@ -4,9 +4,14 @@ import { cast, TRADE_COLOUR, type Cast } from "./cast.js";
 import { items as fetchItems, onRefresh } from "./client.js";
 import { openCard, toast } from "./card.js";
 import {
+  CAN_FRAMES,
+  CAN_PALETTE,
   KELPIE_FRAMES,
   KELPIE_PALETTE,
   paint,
+  SLAB_FRAMES,
+  SLAB_PALETTE,
+  slabs,
   stage,
   TRADIE_FRAMES,
   TRADIE_PALETTE,
@@ -48,6 +53,8 @@ export class Site extends Phaser.Scene {
   private hud = document.getElementById("hud")!;
   private current: Cast = cast([]);
   private closed = 0;
+  private beers!: Phaser.GameObjects.Container;
+  private beerCount = -1;
 
   preload() {
     this.load.spritesheet("tiles", "/kenney/tilemap_packed.png", {
@@ -58,6 +65,8 @@ export class Site extends Phaser.Scene {
     g.fillStyle(0x7fb3ff).fillRect(0, 0, 2, 10);
     g.generateTexture("drop", 2, 10);
     this.sheet("kelpie", KELPIE_FRAMES, KELPIE_PALETTE);
+    this.sheet("slab", SLAB_FRAMES, SLAB_PALETTE);
+    this.sheet("can", CAN_FRAMES, CAN_PALETTE);
     for (const [trade, colour] of Object.entries(TRADE_COLOUR))
       this.sheet(`tradie-${trade}`, TRADIE_FRAMES, {
         ...TRADIE_PALETTE,
@@ -102,6 +111,7 @@ export class Site extends Phaser.Scene {
       });
     }
     this.house = this.add.container(w * 0.08, gy);
+    this.beers = this.add.container(w * 0.36, gy);
     this.add
       .image(w * 0.08 + 8 * T * HS + 24, gy, "tiles", TILE.sign)
       .setOrigin(0.5, 1)
@@ -223,13 +233,14 @@ export class Site extends Phaser.Scene {
     const { width: w, height: h } = this.scale;
     const gy = h * GROUND;
     const open = c.working.length + c.waiting.length + c.smoko.length + c.ready;
+    this.stackBeers(this.closed);
     this.buildHouse(stage(this.closed, this.current ? open : 0));
     const seen = new Set<string>();
     const spot = (role: string, n: number) =>
       role === "working"
         ? [w * 0.1 + n * 44, gy]
         : role === "waiting"
-          ? [w * 0.45 + (n % 12) * 30, gy - Math.floor(n / 12) * 40]
+          ? [w * 0.52 + (n % 8) * 24, gy - Math.floor(n / 8) * 60]
           : [w * 0.74 + (n % 10) * 26, gy - 16 - Math.floor(n / 10) * 46];
 
     const put = (item: Item, role: string, n: number) => {
@@ -307,6 +318,49 @@ export class Site extends Phaser.Scene {
       onComplete: () => (this.kelpie.anims.stop(), this.kelpie.setFrame(target ? 2 : 3)),
     });
     if (c.worst?.priority === 0 || c.rain) toast("woof! " + (c.worst?.id ?? ""));
+  }
+
+  stackBeers(closed: number) {
+    if (closed === this.beerCount) return;
+    const grew = this.beerCount >= 0 && closed > this.beerCount;
+    this.beerCount = closed;
+    this.beers.removeAll(true);
+    const { slabs: n, cans } = slabs(closed);
+    const SW = 22 * PX;
+    const SH = 9 * PX;
+    const perRow = 3;
+    for (let i = 0; i < n; i++) {
+      const row = Math.floor(i / perRow);
+      const col = i % perRow;
+      this.beers.add(this.add.image(col * SW + (row % 2) * (SW / 2), -row * SH, "slab", 0).setOrigin(0, 1));
+    }
+    const top = -Math.ceil(n / perRow) * SH;
+    for (let i = 0; i < cans; i++) this.beers.add(this.add.image(i * 5 * PX, top, "can", 0).setOrigin(0, 1));
+    const label = this.add
+      .text((perRow * SW) / 2, top - 8 * PX, `${closed} beers · ${n} slab${n === 1 ? "" : "s"}`, {
+        fontSize: "11px",
+        color: "#fff",
+      })
+      .setOrigin(0.5, 1);
+    this.beers.add(label);
+    if (grew) this.shout();
+  }
+
+  shout() {
+    const { width: w, height: h } = this.scale;
+    const can = this.add
+      .image(w * 0.58, h * 0.33, "can", 0)
+      .setScale(2)
+      .setDepth(20);
+    this.tweens.add({
+      targets: can,
+      x: this.beers.x + 40,
+      y: this.beers.y - 60,
+      duration: 900,
+      ease: "Quad.In",
+      onComplete: () => can.destroy(),
+    });
+    toast("one for the esky");
   }
 
   drawBoard(top: number) {

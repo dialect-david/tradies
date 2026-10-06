@@ -157,3 +157,27 @@ export function stage(closed: number, open: number): Stage {
   if (!open) return "done";
   return STAGES[Math.min(5, Math.floor((closed / total) * 6))]!;
 }
+
+export const SLAB_PALETTE = { o: outline, c: "#c8963e", d: "#a3772c", g: "#ffd700", w: "#ffffff" };
+export const SLAB_FRAMES: string[][] = [
+  [
+    "oooooooooooooooooooooo",
+    "occccccccccccccccccccо".replace("о", "o"),
+    "ocddddddddddddddddddco",
+    "ocdggggggggggggggggdco",
+    "ocdgwwgwgwwgwgwwgwgdco",
+    "ocdggggggggggggggggdco",
+    "ocddddddddddddddddddco",
+    "occccccccccccccccccccо".replace("о", "o"),
+    "oooooooooooooooooooooo",
+  ],
+];
+
+export const CAN_PALETTE = { o: outline, g: "#2e8b57", s: "#cfcfcf", y: "#ffd700" };
+export const CAN_FRAMES: string[][] = [["osso", "oggo", "oyyo", "oggo", "oggo", "osso"]];
+
+export const SLAB_SIZE = 24;
+
+export function slabs(closed: number): { slabs: number; cans: number } {
+  return { slabs: Math.floor(closed / SLAB_SIZE), cans: closed % SLAB_SIZE };
+}
