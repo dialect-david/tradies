@@ -5,6 +5,7 @@ import { current, initial, reduce, visible, type Action, type Effect, type State
 import { ageDays, isStale, type Item } from "./model.js";
 import * as bd from "./bd.js";
 import * as gh from "./gh.js";
+import { site } from "./shell.js";
 
 const TRADE: Record<string, string> = {
   bug: "🔧",
