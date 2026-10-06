@@ -822,6 +822,7 @@ export class Site extends Phaser.Scene {
     this.tweens.add({ targets: this.sun, y: h * GROUND + 40, duration: 3000, ease: "Sine.In" });
     for (const a of this.actors.values()) {
       this.tweens.killTweensOf([a.body, a.label]);
+      this.settle(a);
       a.body.play(`${a.body.texture.key}-walk`, true);
       a.body.setFlipX(false);
       this.tweens.add({
@@ -857,9 +858,11 @@ export class Site extends Phaser.Scene {
 
   smoko() {
     toast("smoko. ten minutes.");
+    this.cameras.main.pan(this.empties.x + 100, this.scale.height / 2, 1500, "Sine.InOut");
     const { height: h } = this.scale;
     for (const a of this.actors.values()) {
       this.tweens.killTweensOf([a.body, a.label]);
+      this.settle(a);
       a.role = "smoko";
       a.body.anims.stop();
       a.body.setFrame(2);
