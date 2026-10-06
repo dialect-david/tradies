@@ -1,0 +1,110 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>tradies</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: #1b1b1b;
+        color: #eee;
+        font:
+          14px/1.4 ui-monospace,
+          Menlo,
+          monospace;
+        overflow: hidden;
+      }
+      #game {
+        position: absolute;
+        inset: 0;
+      }
+      #hud {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 8px 12px;
+        background: #000a;
+        display: flex;
+        gap: 16px;
+        align-items: center;
+      }
+      #hud button {
+        font: inherit;
+        background: #333;
+        color: #eee;
+        border: 1px solid #555;
+        padding: 4px 10px;
+        cursor: pointer;
+      }
+      #card {
+        position: absolute;
+        top: 40px;
+        right: 40px;
+        width: 420px;
+        background: #222;
+        border: 2px solid #777;
+        padding: 12px;
+        display: none;
+      }
+      #card.open {
+        display: block;
+      }
+      #card h3 {
+        margin: 0 0 6px;
+        font-size: 15px;
+      }
+      #card pre {
+        white-space: pre-wrap;
+        max-height: 50vh;
+        overflow: auto;
+        font-size: 12px;
+        color: #bbb;
+      }
+      #card input {
+        width: 100%;
+        box-sizing: border-box;
+        font: inherit;
+        background: #111;
+        color: #eee;
+        border: 1px solid #555;
+        padding: 4px;
+        margin: 6px 0;
+      }
+      #card .row {
+        display: flex;
+        gap: 8px;
+      }
+      #card button {
+        font: inherit;
+        background: #333;
+        color: #eee;
+        border: 1px solid #555;
+        padding: 4px 10px;
+        cursor: pointer;
+      }
+      #toast {
+        position: absolute;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #000c;
+        padding: 6px 14px;
+        border-radius: 4px;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      #toast.show {
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game"></div>
+    <div id="card"></div>
+    <div id="toast"></div>
+    <div id="hud"></div>
+    <script type="module" src="/main.ts"></script>
+  </body>
+</html>

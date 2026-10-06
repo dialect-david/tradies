@@ -3,27 +3,22 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "bin": {
-    "tradies": "./bin/tradies.js"
-  },
   "scripts": {
-    "start": "tsx src/cli.tsx",
+    "start": "vite",
     "test": "vitest run",
     "check:types": "tsc --noEmit",
     "check:format": "prettier --write .",
     "check:all": "yarn test && yarn check:types && prettier --check ."
   },
   "dependencies": {
-    "ink": "^6",
-    "ink-text-input": "^6",
-    "react": "^19"
+    "phaser": "^4.2.1"
   },
   "devDependencies": {
     "@types/node": "^24",
-    "@types/react": "^19",
     "prettier": "^3",
     "tsx": "^4",
     "typescript": "^5",
+    "vite": "^8.3.2",
     "vitest": "^3"
   }
 }
