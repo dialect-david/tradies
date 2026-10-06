@@ -48,8 +48,8 @@ export function api(): Plugin {
         const url = new URL(req.url ?? "/", "http://x");
         try {
           if (url.pathname === "/items") {
-            const [beads, prs] = await Promise.all([bd.listBeads(), gh.listPrs()]);
-            return send(res, 200, { site: site.split("/").pop(), items: [...beads, ...prs] });
+            const [beads, prs, closed] = await Promise.all([bd.listBeads(), gh.listPrs(), bd.closedCount()]);
+            return send(res, 200, { site: site.split("/").pop(), closed, items: [...beads, ...prs] });
           }
           if (url.pathname === "/show") {
             const id = url.searchParams.get("id") ?? "";

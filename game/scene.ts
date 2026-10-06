@@ -3,36 +3,131 @@ import type { Item } from "../server/model.js";
 import { cast, TRADE_COLOUR, type Cast } from "./cast.js";
 import { items as fetchItems, onRefresh } from "./client.js";
 import { openCard, toast } from "./card.js";
+import {
+  KELPIE_FRAMES,
+  KELPIE_PALETTE,
+  paint,
+  stage,
+  TRADIE_FRAMES,
+  TRADIE_PALETTE,
+  type Stage,
+} from "./sprites.js";
 
 const GROUND = 0.78;
+const T = 18;
+const TS = 3;
+const PX = 3;
+const HS = 2;
+const TILE = {
+  grass: 1,
+  dirt: 121,
+  plank: 48,
+  crate: 6,
+  pole: 69,
+  beam: 47,
+  roof: 13,
+  window: 151,
+  door: 130,
+  bush: 124,
+  tree: 126,
+  cloud: [153, 154, 155],
+  sign: 86,
+};
 
-type Actor = { item: Item; body: Phaser.GameObjects.Rectangle; label: Phaser.GameObjects.Text; role: string };
+type Actor = { item: Item; body: Phaser.GameObjects.Sprite; label: Phaser.GameObjects.Text; role: string };
 
 export class Site extends Phaser.Scene {
   private actors = new Map<string, Actor>();
   private board!: Phaser.GameObjects.Container;
   private boardRows: Item[] = [];
   private boardTop = 0;
-  private kelpie!: Phaser.GameObjects.Rectangle;
+  private kelpie!: Phaser.GameObjects.Sprite;
   private rain!: Phaser.GameObjects.Particles.ParticleEmitter;
-  private house!: Phaser.GameObjects.Rectangle;
+  private house!: Phaser.GameObjects.Container;
+  private houseStage?: Stage;
   private hud = document.getElementById("hud")!;
   private current: Cast = cast([]);
+  private closed = 0;
+
+  preload() {
+    this.load.spritesheet("tiles", "/kenney/tilemap_packed.png", {
+      frameWidth: T,
+      frameHeight: T,
+    });
+    const g = this.make.graphics({}, false);
+    g.fillStyle(0x7fb3ff).fillRect(0, 0, 2, 10);
+    g.generateTexture("drop", 2, 10);
+    this.sheet("kelpie", KELPIE_FRAMES, KELPIE_PALETTE);
+    for (const [trade, colour] of Object.entries(TRADE_COLOUR))
+      this.sheet(`tradie-${trade}`, TRADIE_FRAMES, {
+        ...TRADIE_PALETTE,
+        H: "#" + colour.toString(16).padStart(6, "0"),
+      });
+    this.sheet("tradie-inspector", TRADIE_FRAMES, {
+      ...TRADIE_PALETTE,
+      H: "#ffffff",
+      v: "#2c3e50",
+      V: "#2c3e50",
+    });
+  }
+
+  sheet(key: string, frames: string[][], palette: Record<string, string>) {
+    const w = frames[0]![0]!.length;
+    const h = frames[0]!.length;
+    const tex = this.textures.createCanvas(key, w * frames.length * PX, h * PX)!;
+    paint(tex.context, frames, palette, PX);
+    frames.forEach((_, i) => tex.add(i, 0, i * w * PX, 0, w * PX, h * PX));
+    tex.refresh();
+  }
 
   create() {
     const { width: w, height: h } = this.scale;
-    this.add.rectangle(w / 2, h * GROUND, w, h * (1 - GROUND), 0x5d4a2a).setOrigin(0.5, 0);
-    this.house = this.add.rectangle(w * 0.2, h * GROUND, 200, 20, 0xaaaaaa).setOrigin(0.5, 1);
-    this.add.text(w * 0.2, h * GROUND + 8, "the house", { color: "#ccc" }).setOrigin(0.5, 0);
-    this.add.rectangle(w * 0.85, h * GROUND - 20, 120, 40, 0x8b0000).setStrokeStyle(2, 0xffffff);
-    this.add.text(w * 0.85, h * GROUND - 20, "esky", { color: "#fff" }).setOrigin(0.5);
-
-    this.add.rectangle(w / 2, h * 0.35, 460, 260, 0x111111, 0.85).setStrokeStyle(3, 0xffffff);
+    const gy = h * GROUND;
+    for (let x = 0; x < w + T * TS; x += T * TS) {
+      this.add.image(x, gy, "tiles", TILE.grass).setOrigin(0, 0).setScale(TS);
+      for (let y = gy + T * TS; y < h; y += T * TS)
+        this.add.image(x, y, "tiles", TILE.dirt).setOrigin(0, 0).setScale(TS);
+    }
+    for (let i = 0; i < 5; i++) {
+      const c = this.add
+        .image(Phaser.Math.Between(0, w), Phaser.Math.Between(40, 220), "tiles", TILE.cloud[i % 3]!)
+        .setScale(TS * 1.5)
+        .setAlpha(0.9);
+      this.tweens.add({
+        targets: c,
+        x: c.x + w + 200,
+        duration: Phaser.Math.Between(60000, 120000),
+        repeat: -1,
+        onRepeat: () => c.setX(-100),
+      });
+    }
+    this.house = this.add.container(w * 0.08, gy);
     this.add
-      .text(w / 2, h * 0.35 - 150, "ON THE TOOLS", { color: "#fff", fontSize: "18px", fontStyle: "bold" })
+      .image(w * 0.08 + 8 * T * HS + 24, gy, "tiles", TILE.sign)
+      .setOrigin(0.5, 1)
+      .setScale(HS);
+    this.add
+      .image(w * 0.035, gy, "tiles", TILE.tree)
+      .setOrigin(0.5, 1)
+      .setScale(TS);
+
+    this.add.rectangle(w * 0.58, h * 0.33, 480, 260, 0x111111, 0.82).setStrokeStyle(4, 0xf1c40f);
+    this.add
+      .text(w * 0.58, h * 0.33 - 150, "ON THE TOOLS", {
+        color: "#f1c40f",
+        fontSize: "18px",
+        fontStyle: "bold",
+      })
       .setOrigin(0.5);
-    this.board = this.add.container(w / 2 - 215, h * 0.35 - 120);
+    this.board = this.add.container(w * 0.58 - 225, h * 0.33 - 120);
     this.time.addEvent({ delay: 2500, loop: true, callback: () => this.drawBoard(this.boardTop + 1) });
+
+    this.add
+      .image(w * 0.72, gy, "tiles", TILE.crate)
+      .setOrigin(0.5, 1)
+      .setScale(TS)
+      .setTint(0xcc3333);
+    this.add.text(w * 0.72, gy - 8, "esky", { fontSize: "10px", color: "#fff" }).setOrigin(0.5, 1);
 
     this.rain = this.add.particles(0, 0, "drop", {
       x: { min: 0, max: w },
@@ -44,31 +139,41 @@ export class Site extends Phaser.Scene {
       emitting: false,
     });
 
+    this.anims.create({
+      key: "kelpie-run",
+      frames: this.anims.generateFrameNumbers("kelpie", { frames: [0, 1] }),
+      frameRate: 8,
+      repeat: -1,
+    });
+    for (const key of [...Object.keys(TRADE_COLOUR).map((t) => `tradie-${t}`), "tradie-inspector"])
+      this.anims.create({
+        key: `${key}-walk`,
+        frames: this.anims.generateFrameNumbers(key, { frames: [0, 1] }),
+        frameRate: 4,
+        repeat: -1,
+      });
+
     this.kelpie = this.add
-      .rectangle(w * 0.5, h * GROUND, 28, 18, 0x8b4513)
+      .sprite(w * 0.5, gy, "kelpie", 2)
       .setOrigin(0.5, 1)
-      .setInteractive();
+      .setInteractive()
+      .setDepth(10);
     this.kelpie.on("pointerdown", () => {
       toast("good girl");
-      this.tweens.add({ targets: this.kelpie, y: h * GROUND - 30, duration: 150, yoyo: true });
+      this.tweens.add({ targets: this.kelpie, y: gy - 30, duration: 150, yoyo: true });
     });
 
-    this.hud.innerHTML = `<span id="site"></span><span id="counts"></span><button id="smoko">smoko</button><span id="clock"></span>`;
+    this.hud.innerHTML = `<span id="site"></span><span id="counts"></span><button id="smoko">smoko</button>`;
     this.hud.querySelector("#smoko")!.addEventListener("click", () => this.smoko());
 
     void this.refresh();
     onRefresh(() => void this.refresh());
   }
 
-  preload() {
-    const g = this.make.graphics({}, false);
-    g.fillStyle(0x7fb3ff).fillRect(0, 0, 2, 10);
-    g.generateTexture("drop", 2, 10);
-  }
-
   async refresh() {
     try {
-      const { site, items } = await fetchItems();
+      const { site, closed, items } = await fetchItems();
+      this.closed = closed;
       this.current = cast(items);
       this.hud.querySelector("#site")!.textContent = `🏗 ${site}`;
       this.place(this.current);
@@ -77,39 +182,94 @@ export class Site extends Phaser.Scene {
     }
   }
 
+  buildHouse(s: Stage) {
+    if (s === this.houseStage) return;
+    this.houseStage = s;
+    this.house.removeAll(true);
+    const tile = (col: number, row: number, frame: number, tint?: number) => {
+      const img = this.add
+        .image(col * T * HS, -row * T * HS, "tiles", frame)
+        .setOrigin(0, 1)
+        .setScale(HS);
+      if (tint) img.setTint(tint);
+      this.house.add(img);
+      return img;
+    };
+    const W = 8;
+    const H = 3;
+    const at = ["site", "slab", "frame", "roof", "lockup", "fitout", "done"].indexOf(s);
+    if (at >= 1) for (let c = 0; c < W; c++) tile(c, 0, TILE.plank);
+    if (at >= 2) {
+      for (let r = 1; r <= H; r++) for (const c of [0, W - 1, Math.floor(W / 2)]) tile(c, r, TILE.pole);
+      for (let c = 0; c < W; c++) tile(c, H + 1, TILE.beam);
+    }
+    if (at >= 3) for (let c = 0; c < W; c++) tile(c, H + 2, TILE.roof);
+    if (at >= 4) {
+      for (let r = 1; r <= H; r++) for (let c = 0; c < W; c++) if (c !== 3 || r > 1) tile(c, r, TILE.crate);
+      tile(3, 1, TILE.door);
+    }
+    if (at >= 5) for (const c of [1, W - 2]) tile(c, 2, TILE.window);
+    if (at >= 6) for (const c of [-1, W]) tile(c, 1, TILE.bush);
+    const label = this.add
+      .text((W * T * HS) / 2, -(H + 3) * T * HS - 4, s === "done" ? "lockup party" : s, {
+        fontSize: "11px",
+        color: "#fff",
+      })
+      .setOrigin(0.5, 1);
+    this.house.add(label);
+  }
+
   place(c: Cast) {
     const { width: w, height: h } = this.scale;
+    const gy = h * GROUND;
+    const open = c.working.length + c.waiting.length + c.smoko.length + c.ready;
+    this.buildHouse(stage(this.closed, this.current ? open : 0));
     const seen = new Set<string>();
     const spot = (role: string, n: number) =>
       role === "working"
-        ? [w * 0.08 + n * 40, h * GROUND]
+        ? [w * 0.1 + n * 44, gy]
         : role === "waiting"
-          ? [w * 0.45 + (n % 12) * 28, h * GROUND - Math.floor(n / 12) * 34]
-          : [w * 0.78 + (n % 8) * 18, h * GROUND - 44 - Math.floor(n / 8) * 16];
+          ? [w * 0.45 + (n % 12) * 30, gy - Math.floor(n / 12) * 40]
+          : [w * 0.74 + (n % 10) * 26, gy - 16 - Math.floor(n / 10) * 46];
 
     const put = (item: Item, role: string, n: number) => {
       seen.add(item.id);
-      const [x, y] = spot(role, n);
+      const [x, y] = spot(role, n) as [number, number];
       let a = this.actors.get(item.id);
       if (!a) {
-        const body = this.add
-          .rectangle(x, h * -0.1, 16, role === "smoko" ? 12 : 28, TRADE_COLOUR[item.trade] ?? 0xffffff)
-          .setOrigin(0.5, 1)
-          .setInteractive();
+        const key =
+          item.kind === "pr"
+            ? "tradie-inspector"
+            : `tradie-${item.trade in TRADE_COLOUR ? item.trade : "task"}`;
+        const body = this.add.sprite(x, -40, key, 0).setOrigin(0.5, 1).setInteractive();
         const label = this.add
-          .text(x, y + 2, item.id.replace(/^[a-z]+-/, ""), { fontSize: "9px", color: "#ddd" })
+          .text(x, y + 2, item.id.replace(/^[a-z]+-/, ""), {
+            fontSize: "9px",
+            color: "#fff",
+            backgroundColor: "#0008",
+          })
           .setOrigin(0.5, 0);
         body.on("pointerdown", () => void openCard(item));
-        body.on("pointerover", () => label.setText(item.title.slice(0, 40)));
-        body.on("pointerout", () => label.setText(item.id.replace(/^[a-z]+-/, "")));
+        body.on("pointerover", () => label.setText(item.title.slice(0, 40)).setVisible(true).setDepth(20));
+        body.on("pointerout", () =>
+          label
+            .setText(item.id.replace(/^[a-z]+-/, ""))
+            .setVisible(role === "working")
+            .setDepth(0),
+        );
         a = { item, body, label, role };
         this.actors.set(item.id, a);
       }
       a.item = item;
       a.role = role;
+      a.label.setVisible(role === "working");
+      a.body.setDepth(role === "working" ? 5 : 1);
+      if (role === "smoko") a.body.setFrame(2);
+      else a.body.setFrame(0);
       this.tweens.add({ targets: a.body, x, y, duration: 600, ease: "Bounce.Out" });
       this.tweens.add({ targets: a.label, x, y: y + 2, duration: 600 });
       if (role === "working") this.wander(a);
+      else a.body.anims.stop();
     };
     c.working.forEach((i, n) => put(i, "working", n));
     c.waiting.forEach((i, n) => put(i, "waiting", n));
@@ -130,17 +290,21 @@ export class Site extends Phaser.Scene {
     this.boardRows = c.working;
     this.drawBoard(0);
 
-    c.rain ? this.rain.start() : this.rain.stop();
+    if (c.rain) this.rain.start();
+    else this.rain.stop();
     this.hud.querySelector("#counts")!.textContent =
-      `${c.working.length} on the tools · ${c.ready} ready · ${c.waiting.length} waiting on materials · ${c.smoko.length} on smoko · ${c.inspectors.length} inspectors${c.rain ? " · ☔ rain" : ""}`;
+      `${this.houseStage} · ${c.working.length} on the tools · ${c.ready} ready · ${c.waiting.length} waiting on materials · ${c.smoko.length} on smoko · ${c.inspectors.length} inspectors${c.rain ? " · ☔ rain" : ""}`;
 
     const target = c.worst && this.actors.get(c.worst.id);
-    const tx = target ? target.body.x + 20 : w * 0.5;
+    const tx = target ? target.body.x + 26 : w * 0.5;
+    this.kelpie.play("kelpie-run");
+    this.kelpie.setFlipX(tx < this.kelpie.x);
     this.tweens.add({
       targets: this.kelpie,
       x: tx,
       duration: Math.abs(tx - this.kelpie.x) * 2 + 200,
       ease: "Sine.InOut",
+      onComplete: () => (this.kelpie.anims.stop(), this.kelpie.setFrame(target ? 2 : 3)),
     });
     if (c.worst?.priority === 0 || c.rain) toast("woof! " + (c.worst?.id ?? ""));
   }
@@ -165,33 +329,49 @@ export class Site extends Phaser.Scene {
   }
 
   wander(a: Actor) {
-    const dx = Phaser.Math.Between(-30, 30);
+    const dx = Phaser.Math.Between(-40, 40);
+    a.body.setFlipX(dx < 0);
+    a.body.play(`${a.body.texture.key}-walk`, true);
     this.tweens.add({
       targets: [a.body, a.label],
       x: `+=${dx}`,
-      duration: Phaser.Math.Between(1500, 4000),
-      delay: Phaser.Math.Between(0, 2000),
-      ease: "Sine.InOut",
-      onComplete: () => a.role === "working" && this.actors.get(a.item.id) === a && this.wander(a),
+      duration: Math.abs(dx) * 40 + 200,
+      delay: Phaser.Math.Between(0, 2500),
+      onStart: () => a.body.play(`${a.body.texture.key}-walk`, true),
+      onComplete: () => {
+        a.body.anims.stop();
+        a.body.setFrame(0);
+        if (a.role === "working" && this.actors.get(a.item.id) === a) this.wander(a);
+      },
     });
+    a.body.anims.stop();
+    a.body.setFrame(0);
   }
 
   smoko() {
     toast("smoko. ten minutes.");
     const { width: w, height: h } = this.scale;
-    for (const a of this.actors.values())
+    for (const a of this.actors.values()) {
+      this.tweens.killTweensOf([a.body, a.label]);
+      a.role = "smoko";
+      a.body.anims.stop();
+      a.body.setFrame(2);
       this.tweens.add({
         targets: a.body,
-        x: w * 0.85 - 60 + Math.random() * 120,
-        y: h * GROUND - 40,
+        x: w * 0.78 + Math.random() * 160,
+        y: h * GROUND - 20,
         duration: 1200,
       });
+    }
+    this.kelpie.play("kelpie-run");
     this.tweens.add({
       targets: this.kelpie,
       x: { from: w * 0.1, to: w * 0.9 },
       duration: 1500,
       yoyo: true,
       repeat: 5,
+      onYoyo: () => this.kelpie.setFlipX(true),
+      onRepeat: () => this.kelpie.setFlipX(false),
     });
     this.time.delayedCall(10 * 60 * 1000, () => this.place(this.current));
   }

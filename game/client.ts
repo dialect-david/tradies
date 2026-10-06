@@ -1,6 +1,6 @@
 import type { Item } from "../server/model.js";
 
-export type Site = { site: string; items: Item[] };
+export type Site = { site: string; closed: number; items: Item[] };
 
 export async function items(): Promise<Site> {
   const r = await fetch("/api/items");

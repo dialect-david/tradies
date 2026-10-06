@@ -17,3 +17,8 @@ export const claim = (id: string) => sh("bd", ["update", id, "--claim"]);
 export const close = (id: string, reason: string) => sh("bd", ["close", id, "--reason", reason]);
 export const note = (id: string, text: string) => sh("bd", ["note", id, text]);
 export const show = (id: string) => sh("bd", ["show", id]);
+
+export async function closedCount(): Promise<number> {
+  const out = await sh("bd", ["count", "--status", "closed"]);
+  return Number(/\d+/.exec(out)?.[0] ?? 0);
+}
