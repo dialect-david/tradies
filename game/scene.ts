@@ -531,6 +531,7 @@ export class Site extends Phaser.Scene {
     c.smoko.slice(0, 3).forEach((i, n) => put(i, "smoko", n));
     this.pile(this.pallets, "tiles", TILE.crate, c.waiting, 4, T * TS, "waiting on materials", TS);
     this.pile(this.empties, "empty", 0, c.smoko, 8, 9, "on smoko", 0.6, { x: -8, y: -18 * PX });
+    (this.sign.getAt(1) as Phaser.GameObjects.Text).setText(`${c.ready.length} jobs`);
     this.esky();
     this.signOff(c.needsYou);
     this.shelve(c.deferred);
