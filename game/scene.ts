@@ -233,9 +233,8 @@ export class Site extends Phaser.Scene {
       .setDepth(3)
       .setScrollFactor(0);
     this.boardChars = Math.floor((boardW - 32) / 7.9);
-    const cardEl = document.getElementById("card")!;
-    cardEl.style.left = `${Math.round(w * 0.5 - boardW / 2)}px`;
-    cardEl.style.width = `${Math.round(boardW)}px`;
+    document.documentElement.style.setProperty("--panel-left", `${Math.round(w * 0.5 - boardW / 2)}px`);
+    document.documentElement.style.setProperty("--panel-width", `${Math.round(boardW)}px`);
     this.time.addEvent({ delay: 2500, loop: true, callback: () => this.drawBoard(this.boardTop + 1) });
 
     this.sign = this.add.container(0, gy, [

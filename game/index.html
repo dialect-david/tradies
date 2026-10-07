@@ -41,8 +41,8 @@
       #card {
         position: absolute;
         top: 212px;
-        left: 40px;
-        width: 600px;
+        left: var(--panel-left, 40px);
+        width: var(--panel-width, 600px);
         box-sizing: border-box;
         max-height: calc(100vh - 270px);
         overflow: auto;
@@ -53,6 +53,10 @@
       }
       #card.open {
         display: block;
+      }
+      body.board-open #card {
+        left: 500px;
+        width: calc(100vw - 540px);
       }
       #card h3 {
         margin: 0 0 6px;
@@ -87,10 +91,11 @@
       }
       #board {
         position: absolute;
-        top: 30px;
-        left: 30px;
-        width: 520px;
-        max-height: 80vh;
+        top: 212px;
+        left: 40px;
+        width: 440px;
+        box-sizing: border-box;
+        max-height: calc(100vh - 270px);
         overflow: auto;
         background: #3b2a1a;
         border: 6px solid #8b5a2b;
@@ -141,7 +146,8 @@
       }
       #board .chit {
         position: relative;
-        width: 236px;
+        width: 100%;
+        box-sizing: border-box;
         background: #fff8dc;
         color: #222;
         padding: 8px 8px 30px;
@@ -193,7 +199,7 @@
         scrollbar-color: #444 #222;
       }
       #board.knockoff {
-        width: 560px;
+        width: 440px;
         background: #1c1a2e;
         border-color: #e07b39;
         color: #eee;

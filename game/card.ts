@@ -73,6 +73,7 @@ const esc = (s: string) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt
 export function openBoard(ready: Item[], title = "job board", claimable = true) {
   closeCard();
   board.classList.add("open");
+  document.body.classList.add("board-open");
   const chits = ready
     .map(
       (i) =>
@@ -120,6 +121,7 @@ export function openBoard(ready: Item[], title = "job board", claimable = true) 
 
 export function closeBoard() {
   board.classList.remove("open", "knockoff");
+  document.body.classList.remove("board-open");
   knockoffClose?.();
   knockoffClose = undefined;
 }
@@ -139,6 +141,7 @@ document.addEventListener("keydown", (e) => {
 export function openKnockoff(today: Item[], c: Cast, onClose: () => void, title = "knock-off", site = "") {
   closeCard();
   board.classList.add("open", "knockoff");
+  document.body.classList.add("board-open");
   const now = new Date();
   const row = (i: Item, extra = "") =>
     `<div class="line" data-id="${i.id}"><b>${idChip(i.id)}</b> ${esc(i.title.slice(0, 70))}${extra}</div>`;
