@@ -18,6 +18,11 @@ import {
   UTE_FRAMES,
   UTE_PALETTE,
   EMPTY_PALETTE,
+  ROOF_FRAMES,
+  ROOF_PALETTE,
+  ROOF_COLOURS,
+  TRUSS_FRAMES,
+  TRUSS_PALETTE,
   type Stage,
 } from "./sprites.js";
 
@@ -45,8 +50,6 @@ const TILE = {
 };
 const TOWN = {
   post: 47,
-  beam: 100,
-  roof: { red: [52, 53, 54, 67], grey: [48, 49, 50, 63] },
   wall: { wood: { plain: 75, window: 73, opening: 74 }, stone: { plain: 79, window: 77, opening: 78 } },
   door: 85,
   doorLit: 84,
@@ -136,6 +139,9 @@ export class Site extends Phaser.Scene {
       v: "#2c3e50",
       V: "#2c3e50",
     });
+    this.sheet("roof-red", ROOF_FRAMES, { ...ROOF_PALETTE, ...ROOF_COLOURS.red });
+    this.sheet("roof-grey", ROOF_FRAMES, { ...ROOF_PALETTE, ...ROOF_COLOURS.grey });
+    this.sheet("truss", TRUSS_FRAMES, TRUSS_PALETTE);
     this.sheet("supervisor", TRADIE_FRAMES, {
       ...TRADIE_PALETTE,
       H: "#ffffff",
@@ -391,7 +397,7 @@ export class Site extends Phaser.Scene {
     const W = shed ? 2 : HOUSE_W;
     const H = shed ? 1 : 2;
     const seed = [...house.id].reduce((n, ch) => n + ch.charCodeAt(0), 0);
-    const roof = shed || seed % 2 ? TOWN.roof.grey : TOWN.roof.red;
+    const roofKey = shed || seed % 2 ? "roof-grey" : "roof-red";
     const wall = shed || seed % 3 === 0 ? TOWN.wall.wood : TOWN.wall.stone;
     const SLAB = 10;
     const tile = (col: number, row: number, frame: number, sheet = "town") => {
@@ -417,19 +423,27 @@ export class Site extends Phaser.Scene {
       );
       lot.box.add(slab);
     }
+    const roofScale = (W * TILE_PX + 24) / (56 * PX);
+    const roofY = -H * TILE_PX - SLAB;
+    const topper = (key: string) => {
+      const img = this.add
+        .image((W * TILE_PX) / 2, roofY, key, 0)
+        .setOrigin(0.5, 1)
+        .setScale(roofScale)
+        .setInteractive();
+      img.on("pointerdown", () => openBoard(house.items, shed ? "the shed" : house.title.slice(0, 60), true));
+      lot.box.add(img);
+    };
     if (at >= 2 && at < 4) {
       for (let r = 1; r <= H; r++) for (const c of [0, W - 1]) tile(c, r, TOWN.post);
-      for (let c = 0; c < W; c++) tile(c, H + 1, TOWN.beam);
+      if (at === 2) topper("truss");
     }
     if (at >= 4) {
       for (let r = 1; r <= H; r++)
         for (let c = 0; c < W; c++) tile(c, r, c === mid && r === 1 ? wall.opening : wall.plain);
       lot.door = tile(mid, 1, at >= 5 ? TOWN.doorLit : TOWN.door);
     }
-    if (at >= 3) {
-      for (let c = 0; c < W; c++) tile(c, H + 1, roof[c === 0 ? 0 : c === W - 1 ? 2 : 1]!);
-      if (W > 2) tile(mid, H + 2, roof[3]!);
-    }
+    if (at >= 3) topper(roofKey);
     if (at >= 5 && H > 1) for (const c of [0, W - 1]) tile(c, 2, wall.window);
     if (at >= 6) {
       tile(-1, 1, TOWN.fenceL);
@@ -437,7 +451,7 @@ export class Site extends Phaser.Scene {
     }
     lot.box.add(
       this.add
-        .text((W * TILE_PX) / 2, -(H + 2) * TILE_PX - 16, label, {
+        .text((W * TILE_PX) / 2, roofY - 18 * PX * roofScale - 8, label, {
           fontSize: "10px",
           color: "#fff",
           backgroundColor: "#0006",

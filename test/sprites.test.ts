@@ -33,3 +33,12 @@ describe("beers", () => {
     expect(frameSize(UTE_FRAMES)).toEqual({ w: 32, h: 12 });
   });
 });
+
+import { ROOF_FRAMES, TRUSS_FRAMES } from "../game/sprites.js";
+
+describe("roof", () => {
+  it("roof and truss are the same size, three house tiles wide plus eaves", () => {
+    expect(frameSize(ROOF_FRAMES)).toEqual({ w: 56, h: 18 });
+    expect(frameSize(TRUSS_FRAMES)).toEqual({ w: 56, h: 18 });
+  });
+});

@@ -316,3 +316,56 @@ export const UTE_FRAMES: string[][] = [
     "...oooo..............oooo.......",
   ],
 ];
+
+export const ROOF_PALETTE = { o: outline, c: "#6b6b6b" };
+export const ROOF_COLOURS = {
+  red: { r: "#c0392b", d: "#8e2a1f" },
+  grey: { r: "#8d9aa0", d: "#5f6b70" },
+};
+export const TRUSS_PALETTE = { t: "#8b5a2b" };
+
+export const ROOF_FRAMES: string[][] = [
+  [
+    "...........................ooo..........................",
+    "..........................orrro.........ooooo...........",
+    "........................odddddddo.......occco...........",
+    "......................orrrrdrrrrrdo.....occco...........",
+    "....................odrrrrrdrrrrrdrro...occco...........",
+    "..................odddddddddddddddddddo.occco...........",
+    "................ordrrrrrdrrrrrdrrrrrdrrroccco...........",
+    "...............orrdrrrrrdrrrrrdrrrrrdrrroccco...........",
+    ".............odddddddddddddddddddddddddddddo............",
+    "...........orrrdrrrrrdrrrrrdrrrrrdrrrrrdrrrrro..........",
+    ".........orrrrrdrrrrrdrrrrrdrrrrrdrrrrrdrrrrrdro........",
+    ".......odddddddddddddddddddddddddddddddddddddddddo......",
+    ".....odrrrrrdrrrrrdrrrrrdrrrrrdrrrrrdrrrrrdrrrrrdrro....",
+    "...orrdrrrrrdrrrrrdrrrrrdrrrrrdrrrrrdrrrrrdrrrrrdrrrro..",
+    "..odddddddddddddddddddddddddddddddddddddddddddddddddddo.",
+    ".ordrrrrrdrrrrrdrrrrrdrrrrrdrrrrrdrrrrrdrrrrrdrrrrrdrrro",
+    "oooooooooooooooooooooooooooooooooooooooooooooooooooooooo",
+    "oddddddddddddddddddddddddddddddddddddddddddddddddddddddo",
+  ],
+];
+
+export const TRUSS_FRAMES: string[][] = [
+  [
+    "...........................ttt..........................",
+    "..........................tt.tt.........................",
+    "........................tt.....tt.......................",
+    "......................tt...tt....tt.....................",
+    "....................tt.....tt......tt...................",
+    "..................tt.......ttt.......tt.................",
+    "................tt........ttt.t........tt...............",
+    "...............tt........t.tt..t........tt..............",
+    ".............tt.........t..tt...t.........tt............",
+    "...........tt..........t...tt....t..........tt..........",
+    ".........tt...........t....tt.....t...........tt........",
+    ".......tt............t.....tt......t............tt......",
+    ".....tt.............t......tt.......t.............tt....",
+    "...tt..............t.......tt........t..............tt..",
+    "..tt..............t........tt.........t..............tt.",
+    ".tt..............t.........tt..........t..............tt",
+    "tttttttttttttttttttttttttttttttttttttttttttttttttttttttt",
+    "........................................................",
+  ],
+];
