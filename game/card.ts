@@ -6,6 +6,19 @@ const card = document.getElementById("card")!;
 const board = document.getElementById("board")!;
 const toastEl = document.getElementById("toast")!;
 
+export const idChip = (id: string) => `<span class="copy" data-copy="${id}" title="copy id">${id} ⧉</span>`;
+
+export function wireCopy(root: HTMLElement) {
+  for (const el of root.querySelectorAll<HTMLElement>("[data-copy]"))
+    el.addEventListener("click", (e) => {
+      e.stopPropagation();
+      void navigator.clipboard.writeText(el.dataset.copy!).then(
+        () => toast(`copied ${el.dataset.copy}`),
+        () => toast("couldn't copy"),
+      );
+    });
+}
+
 export function toast(msg: string) {
   toastEl.textContent = msg;
   toastEl.classList.add("show");
@@ -14,14 +27,15 @@ export function toast(msg: string) {
 
 export async function openCard(item: Item) {
   card.classList.add("open");
-  card.innerHTML = `<h3>${item.id} · ${esc(item.title)}</h3><pre>loading…</pre>`;
+  card.innerHTML = `<h3>${idChip(item.id)} ${esc(item.title)}</h3><pre>loading…</pre>`;
   const detail = await show(item.id);
   const beadActions = `
     <div class="row"><button data-act="claim">claim</button></div>
     <input data-text placeholder="note or close reason" />
     <div class="row"><button data-act="note">note</button><button data-act="close">close bead</button></div>`;
   const prActions = `<div class="row"><button data-act="merge">merge</button></div>`;
-  card.innerHTML = `<h3>${item.id} · ${esc(item.title)}</h3><pre>${esc(detail)}</pre>${item.kind === "bead" ? beadActions : prActions}`;
+  card.innerHTML = `<h3>${idChip(item.id)} ${esc(item.title)}</h3><pre>${esc(detail)}</pre>${item.kind === "bead" ? beadActions : prActions}`;
+  wireCopy(card);
   for (const b of card.querySelectorAll<HTMLButtonElement>("[data-act]")) {
     b.addEventListener("click", async () => {
       const text = card.querySelector<HTMLInputElement>("[data-text]")?.value ?? "";
@@ -49,7 +63,7 @@ export function openBoard(ready: Item[], title = "job board", claimable = true) 
   const chits = ready
     .map(
       (i) =>
-        `<div class="chit p${i.priority}" data-id="${i.id}"><b>P${i.priority}</b> <span class="trade">${i.trade} · ${ageDays(i)}d</span> <span class="title">${esc(i.title)}</span><div class="id">${i.id}</div>${claimable ? `<button data-claim="${i.id}">claim</button>` : ""}</div>`,
+        `<div class="chit p${i.priority}" data-id="${i.id}"><b>P${i.priority}</b> <span class="trade">${i.trade} · ${ageDays(i)}d</span> <span class="title">${esc(i.title)}</span><div class="id">${idChip(i.id)}</div>${claimable ? `<button data-claim="${i.id}">claim</button>` : ""}</div>`,
     )
     .join("");
   board.innerHTML = `
@@ -83,6 +97,7 @@ export function openBoard(ready: Item[], title = "job board", claimable = true) 
         toast(`strewth: ${(err as Error).message}`);
       }
     });
+  wireCopy(board);
   for (const c of board.querySelectorAll<HTMLElement>(".chit"))
     c.addEventListener("click", () => {
       const item = ready.find((i) => i.id === c.dataset.id);
@@ -110,7 +125,7 @@ export function openKnockoff(today: Item[], c: Cast, onClose: () => void, title 
   board.classList.add("open", "knockoff");
   const now = new Date();
   const row = (i: Item, extra = "") =>
-    `<div class="line" data-id="${i.id}"><b>${i.id}</b> ${esc(i.title.slice(0, 70))}${extra}</div>`;
+    `<div class="line" data-id="${i.id}"><b>${idChip(i.id)}</b> ${esc(i.title.slice(0, 70))}${extra}</div>`;
   const worry = [...c.working, ...c.waiting, ...c.smoko, ...c.inspectors, ...c.needsYou]
     .sort((a, b) => score(b, now, c.cfg) - score(a, now, c.cfg))
     .slice(0, 3);
@@ -126,6 +141,7 @@ export function openKnockoff(today: Item[], c: Cast, onClose: () => void, title 
       .slice(0, 3)
       .map((i) => row(i))
       .join("")}`;
+  wireCopy(board);
   for (const l of board.querySelectorAll<HTMLElement>(".line"))
     l.addEventListener("click", () => {
       const item = [...today, ...worry, ...c.ready, ...c.needsYou].find((i) => i.id === l.dataset.id);
