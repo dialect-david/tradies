@@ -18,6 +18,26 @@ const item = (over: Partial<Item>): Item => ({
 });
 
 describe("cast", () => {
+  it("keeps houses off the yard unless the foreman is asked", () => {
+    const houses = new Set(["h1", "h2", "h3"]);
+    const c = cast(
+      [
+        item({ id: "h1" }),
+        item({ id: "h2", status: "in_progress", updatedAt: new Date("2026-09-01") }),
+        item({ id: "h3", labels: ["needs-dave"] }),
+        item({ id: "job" }),
+      ],
+      now,
+      DEFAULTS,
+      houses,
+    );
+    expect(c.ready.map((i) => i.id)).toEqual(["job"]);
+    expect(c.working).toEqual([]);
+    expect(c.asleep).toEqual([]);
+    expect(c.needsYou.map((i) => i.id)).toEqual(["h3"]);
+    expect(c.worst?.id).toBe("h3");
+  });
+
   it("puts each bead in one place", () => {
     const c = cast(
       [

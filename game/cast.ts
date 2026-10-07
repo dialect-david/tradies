@@ -22,14 +22,20 @@ export type Cast = {
   cfg: Config;
 };
 
-export function cast(items: Item[], now = new Date(), cfg: Config = DEFAULTS): Cast {
+export function cast(
+  items: Item[],
+  now = new Date(),
+  cfg: Config = DEFAULTS,
+  houses: ReadonlySet<string> = new Set(),
+): Cast {
   const stale = (i: Item) => isStale(i, now, cfg.staleDays);
-  const all = items.filter((i) => i.kind === "bead");
+  const house = (i: Item) => houses.has(i.id);
+  const all = items.filter((i) => i.kind === "bead" && (!house(i) || needsSomeone(i, cfg)));
   const deferred = all.filter((i) => i.status === "deferred");
   const beads = all.filter((i) => i.status !== "deferred");
   const prs = items.filter((i) => i.kind === "pr");
   const byScore = (a: Item, b: Item) => score(b, now, cfg) - score(a, now, cfg);
-  const working = beads.filter((i) => i.status === "in_progress");
+  const working = beads.filter((i) => i.status === "in_progress" && !house(i));
   const asleep = working.filter(stale);
   const needsYou = beads.filter((i) => needsSomeone(i, cfg) && i.status !== "in_progress").sort(byScore);
   const waiting = beads
@@ -44,7 +50,7 @@ export function cast(items: Item[], now = new Date(), cfg: Config = DEFAULTS): C
   const ready = beads
     .filter((i) => !i.blocked && i.status === "open" && !needsYou.includes(i))
     .sort(byUrgency);
-  const worst = [...items].sort(byScore)[0];
+  const worst = [...prs, ...all].sort(byScore)[0];
   return {
     working,
     asleep,

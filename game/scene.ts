@@ -329,7 +329,7 @@ export class Site extends Phaser.Scene {
     try {
       const { site, closed, epics, config, items } = await fetchItems();
       this.closed = closed;
-      this.current = cast(items, new Date(), config);
+      this.current = cast(items, new Date(), config, new Set(epics.map((e) => e.id)));
       this.siteName = site;
       this.hud.querySelector("#site")!.textContent = `🏗 ${site}`;
       this.street(layoutStreet(epics, items));
