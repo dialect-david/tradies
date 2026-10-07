@@ -24,7 +24,7 @@ A construction site over beads (`bd`) and GitHub PRs (`gh`), in the browser. We'
 | supervisor with a clipboard, by the first house  | click for the briefing: the knock-off card without the sun going down                                                                                                                                   |
 | smoko button                                     | everyone sits for ten minutes                                                                                                                                                                           |
 
-Card: claim / note / close for beads, merge for PRs.
+Card: claim / note / close for beads, merge for PRs. Every id is a copy chip. 'copy prompt' and 'copy plan prompt' put a ready-to-paste Claude Code prompt for that bead on the clipboard; the briefing and knock-off cards have 'copy as markdown'.
 Job board (click the site sign or the HUD button): ready beads as chits by priority, claim on each, "pin it" creates one via `bd q`.
 
 Art: houses from Kenney's Tiny Town, ground and props from Kenney's Pixel Platformer (both CC0, `game/public/kenney`); tradies and the Kelpie are pixel strings in `game/sprites.ts`. Roof colour and wall material vary per epic.

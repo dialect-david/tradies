@@ -102,6 +102,7 @@ export class Site extends Phaser.Scene {
   private road!: Phaser.GameObjects.Rectangle;
   private lines!: Phaser.GameObjects.TileSprite;
   private worldW = 0;
+  private siteName = "";
   private onSmoko = false;
   private knockedOff = false;
   private smokoTimer?: Phaser.Time.TimerEvent;
@@ -321,6 +322,7 @@ export class Site extends Phaser.Scene {
       const { site, closed, epics, config, items } = await fetchItems();
       this.closed = closed;
       this.current = cast(items, new Date(), config);
+      this.siteName = site;
       this.hud.querySelector("#site")!.textContent = `🏗 ${site}`;
       this.street(layoutStreet(epics, items));
       if (!this.onSmoko && !this.knockedOff) this.place(this.current);
@@ -915,7 +917,7 @@ export class Site extends Phaser.Scene {
   async briefing() {
     try {
       const { today } = await knockoff();
-      openKnockoff(today, this.current, () => {}, "briefing");
+      openKnockoff(today, this.current, () => {}, "briefing", this.siteName);
     } catch (e) {
       toast(`strewth: ${(e as Error).message}`);
     }
@@ -951,7 +953,7 @@ export class Site extends Phaser.Scene {
     this.cameras.main.pan(this.ute.x, h / 2, 2500, Phaser.Math.Easing.Sine.InOut);
     try {
       const { today } = await knockoff();
-      openKnockoff(today, this.current, () => {});
+      openKnockoff(today, this.current, () => {}, "knock-off", this.siteName);
     } catch (e) {
       toast(`strewth: ${(e as Error).message}`);
       this.day();
