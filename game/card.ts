@@ -129,6 +129,9 @@ document.addEventListener("pointerdown", (e) => {
   if (!card.contains(t)) closeCard();
   if (!board.contains(t)) closeBoard();
 });
+for (const el of [card, board, document.getElementById("hud")!])
+  for (const type of ["pointerdown", "pointerup", "mousedown", "mouseup", "click", "wheel"])
+    el.addEventListener(type, (e) => e.stopPropagation());
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") (closeCard(), closeBoard());
 });
