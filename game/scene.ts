@@ -213,7 +213,7 @@ export class Site extends Phaser.Scene {
     boss.on("pointerout", () => boss.setFrame(7));
 
     this.add
-      .rectangle(w * 0.5, 150, boardW, 220, 0x111111, 0.82)
+      .rectangle(w * 0.5, 118, boardW, 156, 0x111111, 0.82)
       .setStrokeStyle(4, 0xf1c40f)
       .setDepth(3)
       .setScrollFactor(0);
@@ -227,6 +227,9 @@ export class Site extends Phaser.Scene {
       .setDepth(3)
       .setScrollFactor(0);
     this.boardChars = Math.floor((boardW - 32) / 7.9);
+    const cardEl = document.getElementById("card")!;
+    cardEl.style.left = `${Math.round(w * 0.5 - boardW / 2)}px`;
+    cardEl.style.width = `${Math.round(boardW)}px`;
     this.time.addEvent({ delay: 2500, loop: true, callback: () => this.drawBoard(this.boardTop + 1) });
 
     this.sign = this.add.container(0, gy, [
@@ -742,7 +745,7 @@ export class Site extends Phaser.Scene {
     const { width: w } = this.scale;
     const cam = this.cameras.main;
     const can = this.add
-      .image(cam.scrollX + w * 0.5, 150, "can", 0)
+      .image(cam.scrollX + w * 0.5, 118, "can", 0)
       .setScale(2)
       .setDepth(20);
     this.tweens.add({
@@ -758,7 +761,7 @@ export class Site extends Phaser.Scene {
 
   drawBoard(top: number) {
     const rows = this.boardRows;
-    const fit = 9;
+    const fit = 6;
     this.boardTop = rows.length > fit ? top % rows.length : 0;
     this.board.removeAll(true);
     if (!rows.length) {
