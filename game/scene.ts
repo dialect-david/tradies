@@ -135,6 +135,13 @@ export class Site extends Phaser.Scene {
       v: "#2c3e50",
       V: "#2c3e50",
     });
+    this.sheet("supervisor", TRADIE_FRAMES, {
+      ...TRADIE_PALETTE,
+      H: "#ffffff",
+      v: "#f4f4f4",
+      V: "#f4f4f4",
+      b: "#4a3b2a",
+    });
   }
 
   sheet(key: string, frames: string[][], palette: Record<string, string>) {
@@ -196,6 +203,13 @@ export class Site extends Phaser.Scene {
       });
     }
     this.add.image(24, gy, "tiles", TILE.tree).setOrigin(0.5, 1).setScale(TS);
+    const boss = this.add.sprite(66, gy, "supervisor", 7).setOrigin(0.5, 1).setInteractive().setDepth(5);
+    this.add
+      .text(66, gy + 2, "supervisor", { fontSize: "9px", color: "#fff", backgroundColor: "#0008" })
+      .setOrigin(0.5, 0);
+    boss.on("pointerdown", () => void this.briefing());
+    boss.on("pointerover", () => boss.setFrame(0));
+    boss.on("pointerout", () => boss.setFrame(7));
 
     this.add
       .rectangle(w * 0.5, 150, boardW, 220, 0x111111, 0.82)
@@ -896,6 +910,15 @@ export class Site extends Phaser.Scene {
       ease: "Quad.Out",
       onComplete: then,
     });
+  }
+
+  async briefing() {
+    try {
+      const { today } = await knockoff();
+      openKnockoff(today, this.current, () => {}, "briefing");
+    } catch (e) {
+      toast(`strewth: ${(e as Error).message}`);
+    }
   }
 
   async knockoff() {

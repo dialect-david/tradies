@@ -21,6 +21,7 @@ A construction site over beads (`bd`) and GitHub PRs (`gh`), in the browser. We'
 | inspector's car on the road, inspector beside it | an open PR: inspecting, L plates for draft, signed off when approved; red tint on failed CI; merge drives it off                                                                                        |
 | rain                                             | a PR with red CI                                                                                                                                                                                        |
 | Kelpie                                           | parks next to the worst thing on site; pat her                                                                                                                                                          |
+| supervisor with a clipboard, by the first house  | click for the briefing: the knock-off card without the sun going down                                                                                                                                   |
 | smoko button                                     | everyone sits for ten minutes                                                                                                                                                                           |
 
 Card: claim / note / close for beads, merge for PRs.

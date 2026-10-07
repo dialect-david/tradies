@@ -105,7 +105,7 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") (closeCard(), closeBoard());
 });
 
-export function openKnockoff(today: Item[], c: Cast, onClose: () => void) {
+export function openKnockoff(today: Item[], c: Cast, onClose: () => void, title = "knock-off") {
   closeCard();
   board.classList.add("open", "knockoff");
   const now = new Date();
@@ -115,7 +115,7 @@ export function openKnockoff(today: Item[], c: Cast, onClose: () => void) {
     .sort((a, b) => score(b, now, c.cfg) - score(a, now, c.cfg))
     .slice(0, 3);
   board.innerHTML = `
-    <div class="head"><h3>knock-off · ${now.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "short" })}</h3></div>
+    <div class="head"><h3>${title} · ${now.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "short" })}</h3></div>
     <h4>${today.length ? `${today.length} beer${today.length === 1 ? "" : "s"} cracked ${"🍺".repeat(Math.min(today.length, 12))}` : "dry day. none closed."}</h4>
     ${today.map((i) => row(i, i.closeReason ? `<div class="why">${esc(i.closeReason.slice(0, 120))}</div>` : "")).join("")}
     ${c.needsYou.length ? `<h4>${c.needsYou.length} waiting on the foreman</h4>${c.needsYou.map((i) => row(i)).join("")}` : ""}
