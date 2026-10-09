@@ -16,7 +16,7 @@ export type House = {
 export const HOUSE_W = 3;
 export const TILE_PX = 48;
 export const HOUSE_PITCH = HOUSE_W * TILE_PX + 44;
-export const STREET_START = 60;
+export const STREET_START = 130;
 export const SHED = "shed";
 
 export function epicOf(item: Item, byId: Map<string, Item>, epics: Set<string>): string {
