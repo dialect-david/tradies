@@ -39,7 +39,7 @@ Config in `config.json` at the repo root; missing file means these defaults:
 
 A bead is "waiting on the foreman" when it is blocked and assigned to the foreman (`bd assign <id> <you>`), or carries a label starting with one of `foremanLabels`. `foreman` defaults to `BEADS_ACTOR`, else git `user.name`; set it in config to override. With neither in a workspace the gate is simply empty. House signs strip any leading `word:` from an epic title.
 
-PR testing: private repo `dialect-david/tradies-scratch`, open a PR there and run the game from its clone.
+PR testing: point the game at any clone with a GitHub remote and open a PR there.
 
 Working tradies walk the house front, hammer with dust, and once there is a door they go inside for a bit.
 
