@@ -804,6 +804,7 @@ export class Site extends Phaser.Scene {
             color: "#eee",
           },
         )
+        .setScrollFactor(0)
         .setInteractive();
       t.on("pointerdown", () => void openCard(i));
       this.board.add(t);
