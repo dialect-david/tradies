@@ -47,7 +47,8 @@ Opens http://localhost:5173. State lives in `bd` and `gh` only; the site refresh
 | supervisor with a clipboard                | click for the briefing; knock-off is the same at dusk                                                                                                                                                 |
 | smoko                                      | everyone sits down for ten minutes                                                                                                                                                                    |
 | health & safety officer, by the supervisor | `reviewAfter` commits since `refs/reviewed`; click to copy a report-only review prompt; the report lands as a git note (`--ref=reviewed`) on the marker and shows in the card; SITE STOPPED at double |
-| new day                                    | beads labelled `today`: the few picked for you to start on (the backlog stays at the gate)                                                                                                            |
+| cones at a house                           | open review findings (`hs` label) parented to that epic; unparented ones at the shed; click for the list                                                                                              |
+| new day, toolbox at the gate               | beads labelled `today`: the few picked for you to start on (the backlog stays at the gate); the toolbox or the `today` button reopens it                                                              |
 
 ## Controls
 
@@ -65,7 +66,8 @@ Layered, later wins, each file optional. Defaults:
   "staleDays": 7,
   "goneDays": 30,
   "reviewAfter": 15,
-  "reviewSkill": "/code-review {from}..{to}"
+  "reviewSkill": "/code-review {from}..{to}",
+  "hazardLabels": ["hs"]
 }
 ```
 

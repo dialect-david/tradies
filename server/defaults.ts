@@ -8,6 +8,7 @@ export type Config = {
   reviewAfter: number;
   /** Skill line for the review prompt; {from} and {to} are shas. */
   reviewSkill: string;
+  hazardLabels: string[];
 };
 
 export const DEFAULTS: Config = {
@@ -18,4 +19,5 @@ export const DEFAULTS: Config = {
   goneDays: 30,
   reviewAfter: 15,
   reviewSkill: "/code-review {from}..{to}",
+  hazardLabels: ["hs"],
 };

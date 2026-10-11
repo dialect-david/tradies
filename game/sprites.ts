@@ -319,6 +319,11 @@ export const TOOLBOX_FRAMES: string[][] = [
   ],
 ];
 
+export const CONE_PALETTE = { o: outline, c: "#ff6a00", w: "#ffffff" };
+export const CONE_FRAMES: string[][] = [
+  ["...oo...", "..occo..", "..occo..", ".owwwwo.", ".occcco.", ".occcco.", "owwwwwwo", "oooooooo"],
+];
+
 export const SLAB_SIZE = 24;
 
 export function slabs(closed: number): { slabs: number; cans: number } {

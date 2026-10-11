@@ -21,6 +21,8 @@ export type Cast = {
   ready: Item[];
   /** Picked for the new-day board: open beads carrying a today label, wherever they live. */
   today: Item[];
+  /** Open review findings; cones at the house they belong to. */
+  hazards: Item[];
   cfg: Config;
 };
 
@@ -58,7 +60,13 @@ export function cast(
       (i) => i.kind === "bead" && i.status !== "closed" && i.labels.some((l) => cfg.todayLabels.includes(l)),
     )
     .sort(byUrgency);
+  const hazards = items
+    .filter(
+      (i) => i.kind === "bead" && i.status !== "closed" && i.labels.some((l) => cfg.hazardLabels.includes(l)),
+    )
+    .sort(byUrgency);
   return {
+    hazards,
     working,
     asleep,
     needsYou,

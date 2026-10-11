@@ -82,7 +82,7 @@ export function openReview(r: Review, site: string, cfg: Config) {
   card
     .querySelector("[data-review]")!
     .addEventListener("click", () =>
-      copyText(reviewPrompt(r, site, cfg.reviewSkill), "review prompt copied"),
+      copyText(reviewPrompt(r, site, cfg.reviewSkill, cfg.hazardLabels[0] ?? "hs"), "review prompt copied"),
     );
 }
 

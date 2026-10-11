@@ -126,3 +126,18 @@ describe("new day", () => {
     expect(c.today.map((i) => i.id).sort()).toEqual(["in-house", "yard"]);
   });
 });
+
+describe("hazards", () => {
+  it("picks open beads with a hazard label", () => {
+    const c = cast(
+      [
+        item({ id: "h", labels: ["hs"] }),
+        item({ id: "c", labels: ["hs"], status: "closed" }),
+        item({ id: "j" }),
+      ],
+      now,
+      DEFAULTS,
+    );
+    expect(c.hazards.map((i) => i.id)).toEqual(["h"]);
+  });
+});

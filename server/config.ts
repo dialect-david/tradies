@@ -19,7 +19,7 @@ export function parseConfig(text: string | undefined): Partial<Config> {
   if (!text) return {};
   const raw = JSON.parse(text) as Partial<Record<keyof Config, unknown>>;
   const out: Partial<Config> = {};
-  for (const k of ["foremanLabels", "todayLabels", "houseTypes"] as const)
+  for (const k of ["foremanLabels", "todayLabels", "houseTypes", "hazardLabels"] as const)
     if (Array.isArray(raw[k]))
       out[k] = (raw[k] as unknown[]).filter((l): l is string => typeof l === "string" && l.length > 0);
   for (const k of ["staleDays", "goneDays", "reviewAfter"] as const) {

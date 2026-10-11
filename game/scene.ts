@@ -25,6 +25,8 @@ import {
   TRUSS_FRAMES,
   TRUSS_PALETTE,
   TOOLBOX_FRAMES,
+  CONE_FRAMES,
+  CONE_PALETTE,
   TOOLBOX_PALETTE,
   type Stage,
 } from "./sprites.js";
@@ -146,6 +148,7 @@ export class Site extends Phaser.Scene {
       V: "#2c3e50",
     });
     this.sheet("toolbox", TOOLBOX_FRAMES, TOOLBOX_PALETTE);
+    this.sheet("cone", CONE_FRAMES, CONE_PALETTE);
     this.sheet("tradie-officer", TRADIE_FRAMES, { ...TRADIE_PALETTE, H: "#ffffff", v: "#c6ff00" });
     this.sheet("roof-red", ROOF_FRAMES, { ...ROOF_PALETTE, ...ROOF_COLOURS.red });
     this.sheet("roof-grey", ROOF_FRAMES, { ...ROOF_PALETTE, ...ROOF_COLOURS.grey });
@@ -588,6 +591,7 @@ export class Site extends Phaser.Scene {
     this.shelve(c.deferred);
     this.drive(c.gone);
     this.inspect(c.inspectors);
+    this.cones(c.hazards);
     (this.toolbox.getAt(0) as Phaser.GameObjects.Sprite).setFrame(c.today.length ? 1 : 0);
     (this.toolbox.getByName("label") as Phaser.GameObjects.Text).setText(
       c.today.length ? `${c.today.length} today` : "toolbox",
@@ -626,6 +630,7 @@ export class Site extends Phaser.Scene {
       c.inspectors.length ? `${c.inspectors.length} inspectors` : "",
       c.rain ? "☔ rain" : "",
       uninspected ? `${this.review!.commits} commits uninspected` : "",
+      c.hazards.length ? `⚠ ${c.hazards.length} hazards` : "",
     ]
       .filter(Boolean)
       .join(" · ");
@@ -680,6 +685,22 @@ export class Site extends Phaser.Scene {
           )
           .setOrigin(0.5, 1),
       );
+  }
+
+  cones(hazards: Item[]) {
+    for (const lot of this.lots.values()) {
+      for (const old of lot.box.list.filter((g) => g.name === "cone")) old.destroy();
+      const here = hazards.filter((h) => lot.house.items.some((i) => i.id === h.id));
+      here.slice(0, 6).forEach((_, n) => {
+        const cone = this.add
+          .image(-14 + n * 14, 0, "cone", 0)
+          .setOrigin(0.5, 1)
+          .setName("cone")
+          .setInteractive();
+        cone.on("pointerdown", () => openBoard(here, "hazards", true));
+        lot.box.add(cone);
+      });
+    }
   }
 
   toolboxTalk() {
