@@ -1,4 +1,4 @@
-// usage: node scripts/shot.mjs <url> <out.png> [waitMs] [js to run before the shot]
+// usage: [CLICK=x,y [AFTER=js]] node scripts/shot.mjs <url> <out.png> [waitMs] [js to run before the shot]
 import { spawn } from "node:child_process";
 import { writeFileSync } from "node:fs";
 
@@ -48,6 +48,16 @@ if (js) {
   const r = await send("Runtime.evaluate", { expression: js, awaitPromise: true, returnByValue: true });
   console.log("eval:", JSON.stringify(r?.result?.value));
   await new Promise((r) => setTimeout(r, 800));
+}
+if (process.env.CLICK) {
+  const [x, y] = process.env.CLICK.split(",").map(Number);
+  for (const type of ["mouseMoved", "mousePressed", "mouseReleased"])
+    await send("Input.dispatchMouseEvent", { type, x, y, button: "left", clickCount: 1 });
+  await new Promise((r) => setTimeout(r, 600));
+  if (process.env.AFTER) {
+    const r = await send("Runtime.evaluate", { expression: process.env.AFTER, returnByValue: true });
+    console.log("after:", JSON.stringify(r?.result?.value));
+  }
 }
 const { data } = await send("Page.captureScreenshot", { format: "png" });
 writeFileSync(out, Buffer.from(data, "base64"));

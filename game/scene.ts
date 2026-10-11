@@ -421,6 +421,14 @@ export class Site extends Phaser.Scene {
         openBoard(house.items, shed ? "the shed" : house.title.slice(0, 60), true),
       );
       lot.box.add(slab);
+    } else {
+      const dirt = this.add
+        .rectangle(-6, 0, W * TILE_PX + 12, 8, 0x8d6e4a)
+        .setOrigin(0, 1)
+        .setInteractive();
+      dirt.on("pointerdown", () => openBoard(house.items, house.title.slice(0, 60), true));
+      lot.box.add(dirt);
+      for (const c of [0, W]) lot.box.add(this.add.rectangle(c * TILE_PX, -8, 3, 14, 0xffffff).setOrigin(0.5, 1));
     }
     const roofScale = (W * TILE_PX + 24) / (56 * PX);
     const roofY = -H * TILE_PX - SLAB;
@@ -450,7 +458,7 @@ export class Site extends Phaser.Scene {
     }
     lot.box.add(
       this.add
-        .text((W * TILE_PX) / 2, roofY - 18 * PX * roofScale - 8, label, {
+        .text((W * TILE_PX) / 2, at ? roofY - 18 * PX * roofScale - 8 : -24, label, {
           fontSize: "10px",
           color: "#fff",
           backgroundColor: "#0006",
@@ -458,7 +466,9 @@ export class Site extends Phaser.Scene {
           wordWrap: { width: W * TILE_PX + 36 },
         })
         .setOrigin(0.5, 1)
-        .setName("label"),
+        .setName("label")
+        .setInteractive()
+        .on("pointerdown", () => openBoard(house.items, shed ? "the shed" : house.title.slice(0, 60), true)),
     );
   }
 
