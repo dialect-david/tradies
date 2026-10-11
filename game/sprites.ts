@@ -291,6 +291,34 @@ export const SLAB_FRAMES: string[][] = [
 export const CAN_PALETTE = { o: outline, g: "#2e8b57", s: "#cfcfcf", y: "#ffd700" };
 export const CAN_FRAMES: string[][] = [["osso", "oggo", "oyyo", "oggo", "oggo", "osso"]];
 
+export const TOOLBOX_PALETTE = { o: outline, r: "#c0392b", d: "#8e2a1f", m: "#9a9a9a", y: "#f1c40f" };
+export const TOOLBOX_FRAMES: string[][] = [
+  [
+    "....oooooo....",
+    "....o....o....",
+    "oooooooooooooo",
+    "orrrrrrrrrrrro",
+    "oddddddddddddo",
+    "orrrrrrrrrrrro",
+    "orrrrryyrrrrro",
+    "orrrrrrrrrrrro",
+    "oddddddddddddo",
+    "oooooooooooooo",
+  ],
+  [
+    "oooooooooooooo",
+    "orrrrrrrrrrrro",
+    "oooooooooooooo",
+    "omymmyymmymmmo",
+    "oooooooooooooo",
+    "orrrrrrrrrrrro",
+    "orrrrryyrrrrro",
+    "orrrrrrrrrrrro",
+    "oddddddddddddo",
+    "oooooooooooooo",
+  ],
+];
+
 export const SLAB_SIZE = 24;
 
 export function slabs(closed: number): { slabs: number; cans: number } {

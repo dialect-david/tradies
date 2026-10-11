@@ -24,6 +24,8 @@ import {
   ROOF_COLOURS,
   TRUSS_FRAMES,
   TRUSS_PALETTE,
+  TOOLBOX_FRAMES,
+  TOOLBOX_PALETTE,
   type Stage,
 } from "./sprites.js";
 
@@ -95,6 +97,7 @@ export class Site extends Phaser.Scene {
   private pallets!: Phaser.GameObjects.Container;
   private gate!: Phaser.GameObjects.Image;
   private officer!: Phaser.GameObjects.Container;
+  private toolbox!: Phaser.GameObjects.Container;
   private review?: Review;
   private reviewAfter = 0;
   private signoff!: Phaser.GameObjects.Container;
@@ -143,6 +146,7 @@ export class Site extends Phaser.Scene {
       v: "#2c3e50",
       V: "#2c3e50",
     });
+    this.sheet("toolbox", TOOLBOX_FRAMES, TOOLBOX_PALETTE);
     this.sheet("tradie-officer", TRADIE_FRAMES, { ...TRADIE_PALETTE, H: "#ffffff", v: "#c6ff00" });
     this.sheet("roof-red", ROOF_FRAMES, { ...ROOF_PALETTE, ...ROOF_COLOURS.red });
     this.sheet("roof-grey", ROOF_FRAMES, { ...ROOF_PALETTE, ...ROOF_COLOURS.grey });
@@ -253,8 +257,19 @@ export class Site extends Phaser.Scene {
     ]);
     this.beers = this.add.container(0, gy);
     this.gate = this.add.image(0, gy, "tiles", TILE.fence).setOrigin(0.5, 1).setScale(TS);
+    this.toolbox = this.add.container(0, gy, [
+      this.add
+        .sprite(0, 0, "toolbox", 0)
+        .setOrigin(0.5, 1)
+        .setInteractive()
+        .on("pointerdown", () => this.toolboxTalk()),
+      this.add
+        .text(0, 2, "toolbox", { fontSize: "9px", color: "#fff", backgroundColor: "#0008" })
+        .setName("label")
+        .setOrigin(0.5, 0),
+    ]);
     this.officer = this.add
-      .container(0, gy, [
+      .container(104, gy, [
         this.add
           .sprite(0, 0, "tradie-officer", 7)
           .setOrigin(0.5, 1)
@@ -334,11 +349,12 @@ export class Site extends Phaser.Scene {
     this.input.keyboard?.on("keydown-LEFT", () => (cam.scrollX -= 200));
     this.input.keyboard?.on("keydown-RIGHT", () => (cam.scrollX += 200));
 
-    this.hud.innerHTML = `<span id="site"></span><span id="counts"></span><button id="jobs">job board</button><button id="smoko">smoko</button><button id="knockoff">knock-off</button>`;
+    this.hud.innerHTML = `<span id="site"></span><span id="counts"></span><button id="jobs">job board</button><button id="today">today</button><button id="smoko">smoko</button><button id="knockoff">knock-off</button>`;
     this.hud
       .querySelector("#smoko")!
       .addEventListener("click", () => (this.onSmoko ? this.backToWork() : this.smoko()));
     this.hud.querySelector("#jobs")!.addEventListener("click", () => openBoard(this.current.ready));
+    this.hud.querySelector("#today")!.addEventListener("click", () => this.toolboxTalk());
     this.hud
       .querySelector("#knockoff")!
       .addEventListener("click", () => (this.knockedOff ? this.day() : void this.knockoff()));
@@ -369,7 +385,7 @@ export class Site extends Phaser.Scene {
     const gy = h * GROUND;
     const yard = width + 40;
     this.gate.setX(yard);
-    this.officer.setX(yard + 280);
+    this.toolbox.setX(yard - 70);
     this.signoff.setX(yard + 30);
     this.empties.setX(yard + 170);
     this.sign.setX(yard + 360);
@@ -574,6 +590,10 @@ export class Site extends Phaser.Scene {
     this.shelve(c.deferred);
     this.drive(c.gone);
     this.inspect(c.inspectors);
+    (this.toolbox.getAt(0) as Phaser.GameObjects.Sprite).setFrame(c.today.length ? 1 : 0);
+    (this.toolbox.getByName("label") as Phaser.GameObjects.Text).setText(
+      c.today.length ? `${c.today.length} today` : "toolbox",
+    );
     const uninspected = (this.review?.commits ?? 0) >= this.reviewAfter;
     this.officer.setVisible(uninspected);
     (this.officer.getByName("stop") as Phaser.GameObjects.Text).setVisible(
@@ -662,6 +682,11 @@ export class Site extends Phaser.Scene {
           )
           .setOrigin(0.5, 1),
       );
+  }
+
+  toolboxTalk() {
+    if (!this.current.today.length) return toast("nothing in the toolbox. label a bead today.");
+    openBoard(this.current.today, "today", false);
   }
 
   esky() {
@@ -1026,7 +1051,7 @@ export class Site extends Phaser.Scene {
     this.knockedOff = false;
     this.hud.querySelector("#knockoff")!.textContent = "knock-off";
     toast("new day. kettle's on.");
-    if (this.current.today.length) openBoard(this.current.today, "new day", false);
+    if (this.current.today.length) openBoard(this.current.today, "today", false);
     this.cameras.main.pan(this.scale.width / 2, this.scale.height / 2, 1500, Phaser.Math.Easing.Sine.InOut);
     this.tweens.add({ targets: this.dusk, fillAlpha: 0, duration: 1500 });
     this.tweens.add({ targets: this.sun, y: 90, duration: 1500 });
