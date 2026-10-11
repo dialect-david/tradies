@@ -1,39 +1,43 @@
 import { readFileSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { DEFAULTS, type Config } from "./defaults.js";
+import { site } from "./shell.js";
 
 export { DEFAULTS, type Config };
 
-export const CONFIG_PATH = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "config.json");
+/** Lowest to highest precedence: tool install, workspace, user. */
+export const CONFIG_PATHS = [
+  path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "config.json"),
+  path.join(site, ".tradies.json"),
+  path.join(os.homedir(), ".config", "tradies.json"),
+];
 
-export function parseConfig(text: string | undefined): Config {
-  if (!text) return DEFAULTS;
+export function parseConfig(text: string | undefined): Partial<Config> {
+  if (!text) return {};
   const raw = JSON.parse(text) as Partial<Record<keyof Config, unknown>>;
-  const strings = (v: unknown, d: string[]) =>
-    Array.isArray(v) ? v.filter((l): l is string => typeof l === "string" && l.length > 0) : d;
-  const list = strings(raw.foremanLabels, DEFAULTS.foremanLabels);
-  const houseTypes = strings(raw.houseTypes, DEFAULTS.houseTypes);
-  const todayLabels = strings(raw.todayLabels, DEFAULTS.todayLabels);
-  const days = (v: unknown, d: number) => (typeof v === "number" && v > 0 ? v : d);
-  const foreman = typeof raw.foreman === "string" && raw.foreman.trim() ? raw.foreman.trim() : undefined;
-  return {
-    foremanLabels: list,
-    todayLabels,
-    foreman,
-    houseTypes,
-    staleDays: days(raw.staleDays, DEFAULTS.staleDays),
-    goneDays: days(raw.goneDays, DEFAULTS.goneDays),
-  };
+  const out: Partial<Config> = {};
+  for (const k of ["foremanLabels", "todayLabels", "houseTypes"] as const)
+    if (Array.isArray(raw[k]))
+      out[k] = (raw[k] as unknown[]).filter((l): l is string => typeof l === "string" && l.length > 0);
+  for (const k of ["staleDays", "goneDays", "reviewAfter"] as const) {
+    const v = raw[k];
+    if (typeof v === "number" && v > 0) out[k] = v;
+  }
+  if (typeof raw.foreman === "string" && raw.foreman.trim()) out.foreman = raw.foreman.trim();
+  return out;
 }
 
-export function loadConfig(file = CONFIG_PATH, actor?: string): Config {
-  let cfg = DEFAULTS;
-  try {
-    cfg = parseConfig(readFileSync(file, "utf8"));
-  } catch {
-    /* no file: defaults */
+export function loadConfig(files = CONFIG_PATHS, actor?: string): Config {
+  const cfg = { ...DEFAULTS };
+  for (const file of files) {
+    try {
+      Object.assign(cfg, parseConfig(readFileSync(file, "utf8")));
+    } catch {
+      /* no file: skip layer */
+    }
   }
   return { ...cfg, foreman: cfg.foreman ?? actor };
 }

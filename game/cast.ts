@@ -54,7 +54,9 @@ export function cast(
     .sort(byUrgency);
   const worst = [...prs, ...all].sort(byScore)[0];
   const today = items
-    .filter((i) => i.kind === "bead" && i.status !== "closed" && i.labels.some((l) => cfg.todayLabels.includes(l)))
+    .filter(
+      (i) => i.kind === "bead" && i.status !== "closed" && i.labels.some((l) => cfg.todayLabels.includes(l)),
+    )
     .sort(byUrgency);
   return {
     working,

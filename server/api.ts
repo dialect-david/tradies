@@ -2,6 +2,7 @@ import type { Plugin, ViteDevServer } from "vite";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import * as bd from "./bd.js";
 import * as gh from "./gh.js";
+import * as git from "./git.js";
 import { site } from "./shell.js";
 import { loadConfig } from "./config.js";
 import { houses } from "./houses.js";
@@ -26,24 +27,24 @@ async function body(req: IncomingMessage): Promise<Record<string, string>> {
   return s ? (JSON.parse(s) as Record<string, string>) : {};
 }
 
+/** run does the work and returns the id to name in the toast. */
+type Action = { run: (id: string, a: Record<string, string>) => Promise<string>; done: string };
+
+export const ACTIONS: Record<string, Action> = {
+  claim: { run: (id) => bd.claim(id).then(() => id), done: "on the tools" },
+  close: { run: (id, a) => bd.close(id, a.text).then(() => id), done: "knocked off" },
+  note: { run: (id, a) => bd.note(id, a.text).then(() => id), done: "noted" },
+  merge: { run: (id) => gh.merge(id).then(() => id), done: "certified" },
+  create: {
+    run: (_, a) => bd.quick(a.text ?? "", a.priority || "2", a.kind || "task"),
+    done: "pinned to the board",
+  },
+};
+
 async function act(a: Record<string, string>): Promise<string> {
-  switch (a.type) {
-    case "claim":
-      await bd.claim(a.id);
-      return `${a.id} on the tools`;
-    case "close":
-      await bd.close(a.id, a.text);
-      return `${a.id} knocked off`;
-    case "note":
-      await bd.note(a.id, a.text);
-      return `${a.id} noted`;
-    case "merge":
-      await gh.merge(a.id);
-      return `${a.id} certified`;
-    case "create":
-      return `${await bd.quick(a.text ?? "", a.priority || "2", a.kind || "task")} pinned to the board`;
-  }
-  throw new Error(`unknown action ${a.type}`);
+  const action = ACTIONS[a.type];
+  if (!action) throw new Error(`unknown action ${a.type}`);
+  return `${await action.run(a.id, a)} ${action.done}`;
 }
 
 export function api(): Plugin {
@@ -67,6 +68,7 @@ export function api(): Plugin {
               closed,
               epics: houses(all, config),
               config,
+              review: await git.review(config.reviewAfter),
               items: [...beads, ...prs],
             });
           }

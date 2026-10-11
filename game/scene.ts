@@ -2,7 +2,8 @@ import Phaser from "phaser";
 import type { Item } from "../server/model.js";
 import { cast, TRADE_COLOUR, type Cast } from "./cast.js";
 import { items as fetchItems, knockoff, onRefresh } from "./client.js";
-import { openCard, openBoard, openKnockoff, toast } from "./card.js";
+import { openCard, openBoard, openKnockoff, openReview, toast } from "./card.js";
+import type { Review } from "../server/review.js";
 import { HOUSE_W, layoutStreet, SHED, shortTitle, TILE_PX, type House } from "./street.js";
 import {
   CAN_FRAMES,
@@ -93,6 +94,9 @@ export class Site extends Phaser.Scene {
   private beerCount = -1;
   private pallets!: Phaser.GameObjects.Container;
   private gate!: Phaser.GameObjects.Image;
+  private officer!: Phaser.GameObjects.Container;
+  private review?: Review;
+  private reviewAfter = 0;
   private signoff!: Phaser.GameObjects.Container;
   private plans!: Phaser.GameObjects.Container;
   private empties!: Phaser.GameObjects.Container;
@@ -139,6 +143,7 @@ export class Site extends Phaser.Scene {
       v: "#2c3e50",
       V: "#2c3e50",
     });
+    this.sheet("tradie-officer", TRADIE_FRAMES, { ...TRADIE_PALETTE, H: "#ffffff", v: "#c6ff00" });
     this.sheet("roof-red", ROOF_FRAMES, { ...ROOF_PALETTE, ...ROOF_COLOURS.red });
     this.sheet("roof-grey", ROOF_FRAMES, { ...ROOF_PALETTE, ...ROOF_COLOURS.grey });
     this.sheet("truss", TRUSS_FRAMES, TRUSS_PALETTE);
@@ -248,6 +253,24 @@ export class Site extends Phaser.Scene {
     ]);
     this.beers = this.add.container(0, gy);
     this.gate = this.add.image(0, gy, "tiles", TILE.fence).setOrigin(0.5, 1).setScale(TS);
+    this.officer = this.add
+      .container(0, gy, [
+        this.add
+          .sprite(0, 0, "tradie-officer", 7)
+          .setOrigin(0.5, 1)
+          .setInteractive()
+          .on("pointerdown", () => this.review && openReview(this.review, this.siteName, this.reviewAfter)),
+        this.add.rectangle(14, -26, 8, 11, 0xffffff).setOrigin(0.5, 1).setStrokeStyle(1, 0x1a1a1a),
+        this.add
+          .text(0, 2, "H&S", { fontSize: "9px", color: "#fff", backgroundColor: "#0008" })
+          .setOrigin(0.5, 0),
+        this.add
+          .text(0, -64, "SITE STOPPED", { fontSize: "10px", color: "#fff", backgroundColor: "#c0392b" })
+          .setName("stop")
+          .setOrigin(0.5, 1),
+      ])
+      .setDepth(5)
+      .setVisible(false);
     this.signoff = this.add.container(0, gy);
     this.plans = this.add.container(0, gy);
     this.pallets = this.add.container(0, gy);
@@ -327,8 +350,10 @@ export class Site extends Phaser.Scene {
 
   async refresh() {
     try {
-      const { site, closed, epics, config, items } = await fetchItems();
+      const { site, closed, epics, config, review, items } = await fetchItems();
       this.closed = closed;
+      this.review = review;
+      this.reviewAfter = config.reviewAfter;
       this.current = cast(items, new Date(), config, new Set(epics.map((e) => e.id)));
       this.siteName = site;
       this.hud.querySelector("#site")!.textContent = `🏗 ${site}`;
@@ -344,6 +369,7 @@ export class Site extends Phaser.Scene {
     const gy = h * GROUND;
     const yard = width + 40;
     this.gate.setX(yard);
+    this.officer.setX(yard + 280);
     this.signoff.setX(yard + 30);
     this.empties.setX(yard + 170);
     this.sign.setX(yard + 360);
@@ -428,7 +454,8 @@ export class Site extends Phaser.Scene {
         .setInteractive();
       dirt.on("pointerdown", () => openBoard(house.items, house.title.slice(0, 60), true));
       lot.box.add(dirt);
-      for (const c of [0, W]) lot.box.add(this.add.rectangle(c * TILE_PX, -8, 3, 14, 0xffffff).setOrigin(0.5, 1));
+      for (const c of [0, W])
+        lot.box.add(this.add.rectangle(c * TILE_PX, -8, 3, 14, 0xffffff).setOrigin(0.5, 1));
     }
     const roofScale = (W * TILE_PX + 24) / (56 * PX);
     const roofY = -H * TILE_PX - SLAB;
@@ -547,6 +574,11 @@ export class Site extends Phaser.Scene {
     this.shelve(c.deferred);
     this.drive(c.gone);
     this.inspect(c.inspectors);
+    const uninspected = (this.review?.commits ?? 0) >= this.reviewAfter;
+    this.officer.setVisible(uninspected);
+    (this.officer.getByName("stop") as Phaser.GameObjects.Text).setVisible(
+      (this.review?.commits ?? 0) >= this.reviewAfter * 2,
+    );
 
     for (const [id, a] of this.actors)
       if (!seen.has(id)) {
@@ -575,6 +607,7 @@ export class Site extends Phaser.Scene {
       c.gone.length ? `${c.gone.length} gone home` : "",
       c.inspectors.length ? `${c.inspectors.length} inspectors` : "",
       c.rain ? "☔ rain" : "",
+      uninspected ? `${this.review!.commits} commits uninspected` : "",
     ]
       .filter(Boolean)
       .join(" · ");

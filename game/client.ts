@@ -2,8 +2,16 @@ import type { Item } from "../server/model.js";
 
 import type { Epic } from "./street.js";
 import type { Config } from "../server/defaults.js";
+import type { Review } from "../server/review.js";
 
-export type Site = { site: string; closed: number; epics: Epic[]; config: Config; items: Item[] };
+export type Site = {
+  site: string;
+  closed: number;
+  epics: Epic[];
+  config: Config;
+  review?: Review;
+  items: Item[];
+};
 
 export async function items(): Promise<Site> {
   const r = await fetch("/api/items");

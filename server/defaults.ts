@@ -5,6 +5,7 @@ export type Config = {
   houseTypes: string[];
   staleDays: number;
   goneDays: number;
+  reviewAfter: number;
 };
 
 export const DEFAULTS: Config = {
@@ -13,4 +14,5 @@ export const DEFAULTS: Config = {
   houseTypes: ["epic", "feature"],
   staleDays: 7,
   goneDays: 30,
+  reviewAfter: 15,
 };
