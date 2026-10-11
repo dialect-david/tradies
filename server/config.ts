@@ -15,10 +15,12 @@ export function parseConfig(text: string | undefined): Config {
     Array.isArray(v) ? v.filter((l): l is string => typeof l === "string" && l.length > 0) : d;
   const list = strings(raw.foremanLabels, DEFAULTS.foremanLabels);
   const houseTypes = strings(raw.houseTypes, DEFAULTS.houseTypes);
+  const todayLabels = strings(raw.todayLabels, DEFAULTS.todayLabels);
   const days = (v: unknown, d: number) => (typeof v === "number" && v > 0 ? v : d);
   const foreman = typeof raw.foreman === "string" && raw.foreman.trim() ? raw.foreman.trim() : undefined;
   return {
     foremanLabels: list,
+    todayLabels,
     foreman,
     houseTypes,
     staleDays: days(raw.staleDays, DEFAULTS.staleDays),

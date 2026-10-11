@@ -993,6 +993,7 @@ export class Site extends Phaser.Scene {
     this.knockedOff = false;
     this.hud.querySelector("#knockoff")!.textContent = "knock-off";
     toast("new day. kettle's on.");
+    if (this.current.today.length) openBoard(this.current.today, "new day", false);
     this.cameras.main.pan(this.scale.width / 2, this.scale.height / 2, 1500, Phaser.Math.Easing.Sine.InOut);
     this.tweens.add({ targets: this.dusk, fillAlpha: 0, duration: 1500 });
     this.tweens.add({ targets: this.sun, y: 90, duration: 1500 });

@@ -11,11 +11,13 @@ describe("config", () => {
   it("partial file fills gaps and drops junk", () => {
     expect(parseConfig('{"foremanLabels":["blocked-on-","needs-"],"staleDays":"soon"}')).toEqual({
       foremanLabels: ["blocked-on-", "needs-"],
+      todayLabels: ["today"],
       foreman: undefined,
       houseTypes: ["epic", "feature"],
       staleDays: 7,
       goneDays: 30,
     });
     expect(parseConfig('{"foremanLabels":[]}').foremanLabels).toEqual([]);
+    expect(parseConfig('{"todayLabels":["next"]}').todayLabels).toEqual(["next"]);
   });
 });

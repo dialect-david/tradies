@@ -108,3 +108,21 @@ describe("config", () => {
     ]);
   });
 });
+
+describe("new day", () => {
+  it("lists open beads labelled today, in a house or not, and nothing closed", () => {
+    const houses = new Set(["in-house"]);
+    const c = cast(
+      [
+        item({ id: "in-house", labels: ["today"] }),
+        item({ id: "yard", labels: ["today"], priority: 1 }),
+        item({ id: "done", labels: ["today"], status: "closed" }),
+        item({ id: "other", labels: ["needs-dave"] }),
+      ],
+      now,
+      DEFAULTS,
+      houses,
+    );
+    expect(c.today.map((i) => i.id).sort()).toEqual(["in-house", "yard"]);
+  });
+});

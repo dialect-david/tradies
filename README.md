@@ -46,6 +46,7 @@ Opens http://localhost:5173. State lives in `bd` and `gh` only; the site refresh
 | Kelpie                                    | parks next to the worst thing on site                                                                                                    |
 | supervisor with a clipboard               | click for the briefing; knock-off is the same at dusk                                                                                    |
 | smoko                                     | everyone sits down for ten minutes                                                                                                       |
+| new day                                   | beads labelled `today`: the few picked for you to start on (the backlog stays at the gate)                                               |
 
 ## Controls
 
@@ -56,7 +57,7 @@ Card: claim / note / close / merge, copy id, copy a Claude Code prompt. Briefing
 `config.json` in the tradies repo (defaults shown):
 
 ```json
-{ "foremanLabels": ["needs-"], "houseTypes": ["epic", "feature"], "staleDays": 7, "goneDays": 30 }
+{ "foremanLabels": ["needs-"], "todayLabels": ["today"], "houseTypes": ["epic", "feature"], "staleDays": 7, "goneDays": 30 }
 ```
 
 `foreman` defaults to `BEADS_ACTOR`, else git `user.name`.

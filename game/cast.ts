@@ -19,6 +19,8 @@ export type Cast = {
   rain: boolean;
   worst?: Item;
   ready: Item[];
+  /** Picked for the new-day board: open beads carrying a today label, wherever they live. */
+  today: Item[];
   cfg: Config;
 };
 
@@ -51,6 +53,9 @@ export function cast(
     .filter((i) => !i.blocked && i.status === "open" && !needsYou.includes(i))
     .sort(byUrgency);
   const worst = [...prs, ...all].sort(byScore)[0];
+  const today = items
+    .filter((i) => i.kind === "bead" && i.status !== "closed" && i.labels.some((l) => cfg.todayLabels.includes(l)))
+    .sort(byUrgency);
   return {
     working,
     asleep,
@@ -63,6 +68,7 @@ export function cast(
     rain,
     worst: worst && score(worst, now, cfg) > 0 ? worst : undefined,
     ready,
+    today,
     cfg,
   };
 }
