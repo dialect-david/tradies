@@ -99,7 +99,6 @@ export class Site extends Phaser.Scene {
   private officer!: Phaser.GameObjects.Container;
   private toolbox!: Phaser.GameObjects.Container;
   private review?: Review;
-  private reviewAfter = 0;
   private signoff!: Phaser.GameObjects.Container;
   private plans!: Phaser.GameObjects.Container;
   private empties!: Phaser.GameObjects.Container;
@@ -274,7 +273,7 @@ export class Site extends Phaser.Scene {
           .sprite(0, 0, "tradie-officer", 7)
           .setOrigin(0.5, 1)
           .setInteractive()
-          .on("pointerdown", () => this.review && openReview(this.review, this.siteName, this.reviewAfter)),
+          .on("pointerdown", () => this.review && openReview(this.review, this.siteName, this.current.cfg)),
         this.add.rectangle(14, -26, 8, 11, 0xffffff).setOrigin(0.5, 1).setStrokeStyle(1, 0x1a1a1a),
         this.add
           .text(0, 2, "H&S", { fontSize: "9px", color: "#fff", backgroundColor: "#0008" })
@@ -369,7 +368,6 @@ export class Site extends Phaser.Scene {
       const { site, closed, epics, config, review, items } = await fetchItems();
       this.closed = closed;
       this.review = review;
-      this.reviewAfter = config.reviewAfter;
       this.current = cast(items, new Date(), config, new Set(epics.map((e) => e.id)));
       this.siteName = site;
       this.hud.querySelector("#site")!.textContent = `🏗 ${site}`;
@@ -594,10 +592,10 @@ export class Site extends Phaser.Scene {
     (this.toolbox.getByName("label") as Phaser.GameObjects.Text).setText(
       c.today.length ? `${c.today.length} today` : "toolbox",
     );
-    const uninspected = (this.review?.commits ?? 0) >= this.reviewAfter;
+    const uninspected = (this.review?.commits ?? 0) >= c.cfg.reviewAfter;
     this.officer.setVisible(uninspected);
     (this.officer.getByName("stop") as Phaser.GameObjects.Text).setVisible(
-      (this.review?.commits ?? 0) >= this.reviewAfter * 2,
+      (this.review?.commits ?? 0) >= c.cfg.reviewAfter * 2,
     );
 
     for (const [id, a] of this.actors)

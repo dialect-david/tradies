@@ -26,12 +26,13 @@ describe("config", () => {
   });
   it("later files override earlier ones key by key", () => {
     const project = file(".tradies.json", '{"houseTypes":["epic"],"staleDays":3}');
-    const user = file("tradies.json", '{"staleDays":10,"foreman":"Dave"}');
+    const user = file("tradies.json", '{"staleDays":10,"foreman":"Dave","reviewSkill":"/ocr {from}..{to}"}');
     expect(loadConfig([project, user], "Sam")).toEqual({
       ...DEFAULTS,
       houseTypes: ["epic"],
       staleDays: 10,
       foreman: "Dave",
+      reviewSkill: "/ocr {from}..{to}",
     });
   });
 });

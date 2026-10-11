@@ -21,10 +21,10 @@ export function parseShortstat(text: string): number {
 
 export const short = (sha: string) => sha.slice(0, 7);
 
-export function reviewPrompt(r: Review, site: string): string {
+export function reviewPrompt(r: Review, site: string, skill: string): string {
   return [
     `Code review ${site}: ${r.commits} commits, ${r.lines} lines, ${short(r.from)}..${short(r.head)}.`,
-    `Run /open-code-review:delegate-review --from ${r.from} --to ${r.head}.`,
+    `Run ${skill.replaceAll("{from}", r.from).replaceAll("{to}", r.head)}.`,
     `Report only: do not edit files, do not commit — skip the skill's fix step.`,
     `Write the findings as a report: severity, file:line, what's wrong, proposed fix.`,
     `When done, save the report as a git note and move the inspection marker:`,

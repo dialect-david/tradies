@@ -64,7 +64,8 @@ Layered, later wins, each file optional. Defaults:
   "houseTypes": ["epic", "feature"],
   "staleDays": 7,
   "goneDays": 30,
-  "reviewAfter": 15
+  "reviewAfter": 15,
+  "reviewSkill": "/code-review {from}..{to}"
 }
 ```
 
@@ -75,7 +76,11 @@ Layered, later wins, each file optional. Defaults:
    ```
 3. `~/.config/tradies.json`, personal:
    ```json
-   { "foreman": "Dave", "staleDays": 3 }
+   {
+     "foreman": "Dave",
+     "staleDays": 3,
+     "reviewSkill": "/open-code-review:delegate-review --from {from} --to {to}"
+   }
    ```
 
 `foreman` defaults to `BEADS_ACTOR`, else git `user.name`.

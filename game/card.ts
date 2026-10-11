@@ -2,6 +2,7 @@ import { ageDays, type Item } from "../server/model.js";
 import { act, show } from "./client.js";
 import { score, type Cast } from "./cast.js";
 import { REVIEW_REF, reviewPrompt, short, type Review } from "../server/review.js";
+import type { Config } from "../server/defaults.js";
 
 const card = document.getElementById("card")!;
 const board = document.getElementById("board")!;
@@ -65,7 +66,7 @@ export async function openCard(item: Item) {
   }
 }
 
-export function openReview(r: Review, site: string, after: number) {
+export function openReview(r: Review, site: string, cfg: Config) {
   card.classList.add("open");
   const when = r.markedAt
     ? ` (${short(r.from)}, ${new Date(r.markedAt).toLocaleDateString("en-AU", { day: "numeric", month: "short" })})`
@@ -73,14 +74,16 @@ export function openReview(r: Review, site: string, after: number) {
   const since = r.marked
     ? `since the last inspection${when}`
     : `with no inspection on record — looking at the last ${r.commits}`;
-  const stopped = r.commits >= after * 2 ? "\nSITE STOPPED until the inspection is done." : "";
+  const stopped = r.commits >= cfg.reviewAfter * 2 ? "\nSITE STOPPED until the inspection is done." : "";
   card.innerHTML = `<h3>health &amp; safety</h3><pre>${r.commits} commits, ${r.lines} lines ${since}.${stopped}</pre>
     <div class="row"><button data-review>copy review prompt</button><button data-copy="git update-ref ${REVIEW_REF} ${r.head}">copy mark-as-inspected</button></div>
     ${r.report ? `<h4>last inspection</h4><pre>${esc(r.report)}</pre>` : ""}`;
   wireCopy(card);
   card
     .querySelector("[data-review]")!
-    .addEventListener("click", () => copyText(reviewPrompt(r, site), "review prompt copied"));
+    .addEventListener("click", () =>
+      copyText(reviewPrompt(r, site, cfg.reviewSkill), "review prompt copied"),
+    );
 }
 
 export function closeCard() {

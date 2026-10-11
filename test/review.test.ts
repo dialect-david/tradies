@@ -16,8 +16,10 @@ describe("review", () => {
       commits: 16,
       lines: 400,
     };
-    const p = reviewPrompt(r, "sheila");
-    expect(p).toContain("--from 0123456789abcdef --to abcdef0123456789");
+    const p = reviewPrompt(r, "sheila", "/open-code-review:delegate-review --from {from} --to {to}");
+    expect(p).toContain(
+      "Run /open-code-review:delegate-review --from 0123456789abcdef --to abcdef0123456789.",
+    );
     expect(p).toContain("16 commits, 400 lines, 0123456..abcdef0");
     expect(p).toMatch(/do not commit/);
     expect(p).toContain("git notes --ref=reviewed add -f -F <report.md> abcdef0123456789");
