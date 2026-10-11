@@ -381,9 +381,9 @@ export class Site extends Phaser.Scene {
   street({ houses, shed, width }: ReturnType<typeof layoutStreet>) {
     const { width: w, height: h } = this.scale;
     const gy = h * GROUND;
-    const yard = width + 40;
+    const yard = width + 120;
     this.gate.setX(yard);
-    this.toolbox.setX(yard - 70);
+    this.toolbox.setX(yard - 60);
     this.signoff.setX(yard + 30);
     this.empties.setX(yard + 170);
     this.sign.setX(yard + 360);
