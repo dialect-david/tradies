@@ -4,7 +4,7 @@ Your [beads](https://github.com/gastownhall/beads) issues and GitHub pull reques
 
 ## Requirements
 
-- Node 24 and Yarn
+- Node 24 (yarn or npm)
 - `bd` (beads) on your PATH
 - `gh` (GitHub CLI), logged in, for pull requests. Optional: without it the road is just empty.
 
@@ -13,7 +13,7 @@ Your [beads](https://github.com/gastownhall/beads) issues and GitHub pull reques
 ```sh
 git clone https://github.com/dialect-david/tradies.git
 cd tradies
-yarn
+yarn   # or: npm install
 ```
 
 ## Run
@@ -22,6 +22,8 @@ From the workspace whose beads you want to see:
 
 ```sh
 yarn --cwd /path/to/tradies start
+# or
+npm --prefix /path/to/tradies start
 ```
 
 Opens http://localhost:5173. State lives in `bd` and `gh` only; the site refreshes when `.beads/` changes.
