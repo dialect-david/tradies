@@ -50,7 +50,6 @@ const TILE = {
   bush: 124,
   tree: 126,
   cloud: [153, 154, 155],
-  fence: 105,
   sign: 86,
 };
 const TOWN = {
@@ -97,7 +96,8 @@ export class Site extends Phaser.Scene {
   private beers!: Phaser.GameObjects.Container;
   private beerCount = -1;
   private pallets!: Phaser.GameObjects.Container;
-  private gate!: Phaser.GameObjects.Image;
+  private gate!: Phaser.GameObjects.Container;
+  private boom!: Phaser.GameObjects.Container;
   private officer!: Phaser.GameObjects.Container;
   private toolbox!: Phaser.GameObjects.Container;
   private review?: Review;
@@ -258,7 +258,15 @@ export class Site extends Phaser.Scene {
       this.add.text(0, -22 * HS, "jobs", { fontSize: "9px", color: "#fff" }).setOrigin(0.5, 1),
     ]);
     this.beers = this.add.container(0, gy);
-    this.gate = this.add.image(0, gy, "tiles", TILE.fence).setOrigin(0.5, 1).setScale(TS);
+    this.boom = this.add.container(0, -44);
+    const stripes = [0, 1, 2, 3, 4].map((n) =>
+      this.add.rectangle(-n * 14, 0, 14, 6, n % 2 ? 0xffffff : 0xe74c3c).setOrigin(1, 0.5),
+    );
+    this.boom.add(stripes);
+    const post = this.add.rectangle(0, 0, 8, 48, 0x444444).setOrigin(0.5, 1).setStrokeStyle(1, 0x1a1a1a);
+    const housing = this.add.rectangle(0, -44, 14, 10, 0x222222).setOrigin(0.5, 0.5);
+    this.gate = this.add.container(0, gy, [post, housing, this.boom]);
+    for (const g of [post, housing, ...stripes]) g.setInteractive().on("pointerdown", () => this.gateCheck());
     this.toolbox = this.add.container(0, gy, [
       this.add
         .sprite(0, 0, "toolbox", 0)
@@ -386,7 +394,7 @@ export class Site extends Phaser.Scene {
     const gy = h * GROUND;
     const yard = width + 120;
     this.gate.setX(yard);
-    this.toolbox.setX(yard - 60);
+    this.toolbox.setX(yard - 125);
     this.signoff.setX(yard + 30);
     this.empties.setX(yard + 170);
     this.sign.setX(yard + 360);
@@ -588,6 +596,12 @@ export class Site extends Phaser.Scene {
     (this.sign.getAt(1) as Phaser.GameObjects.Text).setText(`${c.ready.length} jobs`);
     this.esky();
     this.signOff(c.needsYou);
+    this.tweens.add({
+      targets: this.boom,
+      angle: c.needsYou.length ? 0 : 80,
+      duration: 700,
+      ease: "Sine.InOut",
+    });
     this.shelve(c.deferred);
     this.drive(c.gone);
     this.inspect(c.inspectors);
@@ -761,6 +775,11 @@ export class Site extends Phaser.Scene {
           onComplete: () => car.destroy(),
         });
       }
+  }
+
+  gateCheck() {
+    if (!this.current.needsYou.length) return toast("gate's up. nobody waiting on you.");
+    openBoard(this.current.needsYou, "waiting on the foreman", false);
   }
 
   signOff(items: Item[]) {
