@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import type { Item } from "../server/model.js";
 import { cast, TRADE_COLOUR, type Cast } from "./cast.js";
-import { items as fetchItems, knockoff, onRefresh } from "./client.js";
+import { items as fetchItems, closed as fetchClosed, knockoff, onRefresh } from "./client.js";
 import { openCard, openBoard, openKnockoff, openPlans, openReview, setItems, toast } from "./card.js";
 import type { Review } from "../server/review.js";
 import { HOUSE_W, layoutStreet, SHED, shortTitle, TILE_PX, type House } from "./street.js";
@@ -857,19 +857,43 @@ export class Site extends Phaser.Scene {
     for (let i = 0; i < n; i++) {
       const row = Math.floor(i / perRow);
       const col = i % perRow;
-      this.beers.add(this.add.image(col * SW + (row % 2) * (SW / 2), -row * SH, "slab", 0).setOrigin(0, 1));
+      this.beers.add(
+        this.add
+          .image(col * SW + (row % 2) * (SW / 2), -row * SH, "slab", 0)
+          .setOrigin(0, 1)
+          .setInteractive()
+          .on("pointerdown", () => void this.emptiesBoard()),
+      );
     }
     const top = -Math.ceil(n / perRow) * SH;
-    for (let i = 0; i < cans; i++) this.beers.add(this.add.image(i * 5 * PX, top, "can", 0).setOrigin(0, 1));
+    for (let i = 0; i < cans; i++)
+      this.beers.add(
+        this.add
+          .image(i * 5 * PX, top, "can", 0)
+          .setOrigin(0, 1)
+          .setInteractive()
+          .on("pointerdown", () => void this.emptiesBoard()),
+      );
     this.beers.add(
       this.add
         .text((perRow * SW) / 2, top - 8 * PX, `${closed} beers · ${n} slab${n === 1 ? "" : "s"}`, {
           fontSize: "11px",
           color: "#fff",
         })
-        .setOrigin(0.5, 1),
+        .setOrigin(0.5, 1)
+        .setInteractive()
+        .on("pointerdown", () => void this.emptiesBoard()),
     );
     if (grew) this.shout();
+  }
+
+  async emptiesBoard() {
+    try {
+      const done = await fetchClosed();
+      openBoard(done, "knocked off", false);
+    } catch (e) {
+      toast(`strewth: ${(e as Error).message}`);
+    }
   }
 
   shout() {

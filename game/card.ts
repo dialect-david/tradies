@@ -119,7 +119,7 @@ export function openBoard(ready: Item[], title = "job board", claimable = true) 
   const chits = ready
     .map(
       (i) =>
-        `<div class="chit p${i.priority}" data-id="${i.id}"><b>P${i.priority}</b> <span class="trade">${i.trade} · ${ageDays(i)}d</span> <span class="title">${esc(i.title)}</span><div class="id">${idChip(i.id)}</div>${claimable ? `<button data-claim="${i.id}">claim</button>` : ""}</div>`,
+        `<div class="chit p${i.priority}" data-id="${i.id}"><b>P${i.priority}</b> <span class="trade">${i.trade} · ${ageDays(i)}d</span> <span class="title">${esc(i.title)}</span>${i.closeReason ? `<div class="why">${esc(i.closeReason.slice(0, 120))}</div>` : ""}<div class="id">${idChip(i.id)}</div>${claimable ? `<button data-claim="${i.id}">claim</button>` : ""}</div>`,
     )
     .join("");
   board.innerHTML = `

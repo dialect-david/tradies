@@ -37,6 +37,15 @@ export async function act(
   return j.msg ?? "";
 }
 
+export async function closed(): Promise<Item[]> {
+  const r = await fetch("/api/closed");
+  if (!r.ok) throw new Error((await r.json()).error);
+  const items = (await r.json()) as Item[];
+  for (const i of items)
+    ((i.updatedAt = new Date(i.updatedAt)), (i.closedAt = i.closedAt && new Date(i.closedAt)));
+  return items;
+}
+
 export function onRefresh(fn: () => void) {
   new EventSource("/api/events").onmessage = (e) => e.data === "refresh" && fn();
 }

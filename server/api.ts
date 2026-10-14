@@ -77,6 +77,7 @@ export function api(): Plugin {
             start.setHours(0, 0, 0, 0);
             return send(res, 200, { since: start, today: await bd.closedSince(start) });
           }
+          if (url.pathname === "/closed") return send(res, 200, await bd.closedRecent());
           if (url.pathname === "/show") {
             const id = url.searchParams.get("id") ?? "";
             return send(res, 200, id.startsWith("#") ? await gh.view(id) : await bd.show(id), "text/plain");
