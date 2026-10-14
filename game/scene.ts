@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import type { Item } from "../server/model.js";
 import { cast, TRADE_COLOUR, type Cast } from "./cast.js";
 import { items as fetchItems, knockoff, onRefresh } from "./client.js";
-import { openCard, openBoard, openKnockoff, openReview, toast } from "./card.js";
+import { openCard, openBoard, openKnockoff, openPlans, openReview, setItems, toast } from "./card.js";
 import type { Review } from "../server/review.js";
 import { HOUSE_W, layoutStreet, SHED, shortTitle, TILE_PX, type House } from "./street.js";
 import {
@@ -379,6 +379,7 @@ export class Site extends Phaser.Scene {
       const { site, closed, epics, config, review, items } = await fetchItems();
       this.closed = closed;
       this.review = review;
+      setItems(items);
       this.current = cast(items, new Date(), config, new Set(epics.map((e) => e.id)));
       this.siteName = site;
       this.hud.querySelector("#site")!.textContent = `🏗 ${site}`;
@@ -645,6 +646,7 @@ export class Site extends Phaser.Scene {
       c.rain ? "☔ rain" : "",
       uninspected ? `${this.review!.commits} commits uninspected` : "",
       c.hazards.length ? `⚠ ${c.hazards.length} hazards` : "",
+      c.blocker && c.blocker.frees > 1 ? `closing ${c.blocker.item.id} frees ${c.blocker.frees}` : "",
     ]
       .filter(Boolean)
       .join(" · ");
@@ -715,6 +717,15 @@ export class Site extends Phaser.Scene {
         lot.box.add(cone);
       });
     }
+  }
+
+  plansTable() {
+    const beads = this.current.items;
+    void openPlans(
+      beads,
+      (i) => (this.lotOf(i).house.id === SHED ? undefined : shortTitle(this.lotOf(i).house.title)),
+      this.current.deferred,
+    );
   }
 
   toolboxTalk() {
@@ -806,7 +817,7 @@ export class Site extends Phaser.Scene {
         .setOrigin(0, 1)
         .setStrokeStyle(1, 0x8b5a2b)
         .setInteractive();
-      roll.on("pointerdown", () => openBoard(items, "on the plans", false));
+      roll.on("pointerdown", () => this.plansTable());
       this.plans.add(roll);
     });
     const t = this.add
@@ -817,7 +828,7 @@ export class Site extends Phaser.Scene {
       })
       .setOrigin(0.5, 1)
       .setInteractive();
-    t.on("pointerdown", () => openBoard(items, "on the plans", false));
+    t.on("pointerdown", () => this.plansTable());
     this.plans.add(t);
   }
 

@@ -12,6 +12,7 @@ const item = (over: Partial<Item>): Item => ({
   updatedAt: new Date("2026-10-01"),
   blocked: false,
   labels: [],
+  waitsOn: [],
   ...over,
 });
 const epic = (over: Partial<Epic>): Epic => ({

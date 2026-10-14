@@ -40,7 +40,8 @@ Opens http://localhost:5173. State lives in `bd` and `gh` only; the site refresh
 | tradies sitting on the esky, empties       | stale beads, 7 to 30 days untouched                                                                                                                                                                   |
 | jobs sign                                  | ready beads; claim, or "pin it" to create one                                                                                                                                                         |
 | pallets, tradies arms crossed              | blocked, waiting on materials                                                                                                                                                                         |
-| rolled plans on the shed wall              | deferred; the Kelpie ignores them                                                                                                                                                                     |
+| rolled plans on the shed wall              | click for the dependency map (mermaid, click a node for its card, copy the text for your docs); deferred beads behind a button there                                                                  |
+| Kelpie on a root blocker                   | HUD says "closing X frees N": the bead whose closure unblocks the most others                                                                                                                         |
 | beer wall                                  | closed beads, 24 to a slab; closing one flies a tinnie                                                                                                                                                |
 | ute                                        | gone home: untouched 30+ days                                                                                                                                                                         |
 | inspector's car on the road                | open PR: L plates = draft, signed off = approved, red = CI failed; merge drives it off                                                                                                                |
@@ -54,7 +55,7 @@ Opens http://localhost:5173. State lives in `bd` and `gh` only; the site refresh
 
 ## Controls
 
-Card: claim / note / close / merge, copy id, copy a Claude Code prompt. Briefing: copy as markdown. Drag, wheel or arrow keys to pan.
+Card: claim / note / close / merge, copy id, copy a Claude Code prompt, waits-on / blocks links. Briefing: copy as markdown. Drag, wheel or arrow keys to pan.
 
 ## Config
 

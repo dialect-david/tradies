@@ -1,5 +1,6 @@
 import { ageDays, byUrgency, isStale, type Item } from "../server/model.js";
 import { DEFAULTS, type Config } from "../server/defaults.js";
+import { rootBlocker } from "../server/deps.js";
 
 export const needsSomeone = (i: Item, cfg: Config = DEFAULTS) =>
   i.labels.some((l) => cfg.foremanLabels.some((p) => l.startsWith(p))) ||
@@ -23,6 +24,9 @@ export type Cast = {
   today: Item[];
   /** Open review findings; cones at the house they belong to. */
   hazards: Item[];
+  /** Closing this bead frees the most others. */
+  blocker?: { item: Item; frees: number };
+  items: Item[];
   cfg: Config;
 };
 
@@ -54,7 +58,11 @@ export function cast(
   const ready = beads
     .filter((i) => !i.blocked && i.status === "open" && !needsYou.includes(i))
     .sort(byUrgency);
-  const worst = [...prs, ...all].sort(byScore)[0];
+  const blocker = rootBlocker(items.filter((i) => i.kind === "bead" && i.status !== "closed"));
+  const bonus = (i: Item) => (blocker && blocker.item.id === i.id ? Math.min(30, blocker.frees * 6) : 0);
+  const worst = [...prs, ...all].sort(
+    (a, b) => score(b, now, cfg) + bonus(b) - score(a, now, cfg) - bonus(a),
+  )[0];
   const today = items
     .filter(
       (i) => i.kind === "bead" && i.status !== "closed" && i.labels.some((l) => cfg.todayLabels.includes(l)),
@@ -66,6 +74,8 @@ export function cast(
     )
     .sort(byUrgency);
   return {
+    items,
+    blocker,
     hazards,
     working,
     asleep,
@@ -76,7 +86,7 @@ export function cast(
     waiting,
     inspectors: prs,
     rain,
-    worst: worst && score(worst, now, cfg) > 0 ? worst : undefined,
+    worst: worst && score(worst, now, cfg) + bonus(worst) > 0 ? worst : undefined,
     ready,
     today,
     cfg,

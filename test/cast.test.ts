@@ -14,6 +14,7 @@ const item = (over: Partial<Item>): Item => ({
   updatedAt: new Date("2026-10-09"),
   blocked: false,
   labels: [],
+  waitsOn: [],
   ...over,
 });
 
@@ -139,5 +140,22 @@ describe("hazards", () => {
       DEFAULTS,
     );
     expect(c.hazards.map((i) => i.id)).toEqual(["h"]);
+  });
+});
+
+describe("root blocker", () => {
+  it("is named and pulls the kelpie", () => {
+    const c = cast(
+      [
+        item({ id: "root" }),
+        item({ id: "x", waitsOn: ["root"], blocked: true }),
+        item({ id: "y", waitsOn: ["root"], blocked: true }),
+        item({ id: "z", waitsOn: ["x"], blocked: true }),
+      ],
+      now,
+      DEFAULTS,
+    );
+    expect(c.blocker).toEqual({ item: expect.objectContaining({ id: "root" }), frees: 3 });
+    expect(c.worst?.id).toBe("root");
   });
 });

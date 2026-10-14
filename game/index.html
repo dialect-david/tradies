@@ -198,6 +198,27 @@
       #card {
         scrollbar-color: #444 #222;
       }
+      #board.plans {
+        width: calc(100vw - 80px);
+        background: #1d2a3a;
+        border-color: #4a6a8a;
+      }
+      #board.plans .graph svg {
+        max-width: 100%;
+        height: auto;
+      }
+      #board.plans g.node {
+        cursor: pointer;
+      }
+      #card .deps {
+        font-size: 12px;
+        color: #aaa;
+        margin: 0 0 4px;
+      }
+      #card .deps a {
+        color: #7fb3ff;
+        cursor: pointer;
+      }
       #board.knockoff {
         width: 440px;
         background: #1c1a2e;

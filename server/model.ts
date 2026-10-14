@@ -12,6 +12,8 @@ export type Item = {
   assignee?: string;
   updatedAt: Date;
   blocked: boolean;
+  /** Open-or-closed ids this bead waits on (blocks deps). */
+  waitsOn: string[];
   parent?: string;
   labels: string[];
   url?: string;
@@ -64,6 +66,7 @@ export function fromBead(b: Bead): Item {
     closedAt: b.closed_at ? new Date(b.closed_at) : undefined,
     closeReason: b.close_reason,
     blocked,
+    waitsOn: deps.filter((d) => d.type === "blocks").map((d) => d.depends_on_id),
     parent,
     labels: b.labels ?? [],
   };
@@ -91,6 +94,7 @@ export function fromPr(p: Pr): Item {
     owner: p.author.login,
     updatedAt: new Date(p.updatedAt),
     blocked: ci === "fail",
+    waitsOn: [],
     labels: ci === "none" ? [] : [`ci:${ci}`],
     url: p.url,
   };

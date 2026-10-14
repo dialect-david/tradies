@@ -3,10 +3,25 @@ import { act, show } from "./client.js";
 import { score, type Cast } from "./cast.js";
 import { REVIEW_REF, reviewPrompt, short, type Review } from "../server/review.js";
 import type { Config } from "../server/defaults.js";
+import { mermaid } from "../server/deps.js";
 
 const card = document.getElementById("card")!;
 const board = document.getElementById("board")!;
 const toastEl = document.getElementById("toast")!;
+
+let onSite: Item[] = [];
+export const setItems = (items: Item[]) => (onSite = items);
+
+function depLines(item: Item): string {
+  const open = new Map(onSite.map((i) => [i.id, i]));
+  const waits = item.waitsOn.filter((id) => open.has(id));
+  const blocks = onSite.filter((i) => i.waitsOn.includes(item.id)).map((i) => i.id);
+  const row = (h: string, ids: string[]) =>
+    ids.length
+      ? `<div class="deps">${h}: ${ids.map((id) => `<a data-open="${id}">${id}</a>`).join(", ")}</div>`
+      : "";
+  return row("waits on", waits) + row("blocks", blocks);
+}
 
 export function prompt(item: Item, plan: boolean): string {
   const lead = plan
@@ -47,8 +62,13 @@ export async function openCard(item: Item) {
     <input data-text placeholder="note or close reason" />
     <div class="row"><button data-act="note">note</button><button data-act="close">close bead</button></div>`;
   const prActions = `<div class="row"><button data-act="merge">merge</button></div>`;
-  card.innerHTML = `<h3>${idChip(item.id)} ${esc(item.title)}</h3><pre>${esc(detail)}</pre>${item.kind === "bead" ? beadActions : prActions}`;
+  card.innerHTML = `<h3>${idChip(item.id)} ${esc(item.title)}</h3>${depLines(item)}<pre>${esc(detail)}</pre>${item.kind === "bead" ? beadActions : prActions}`;
   wireCopy(card);
+  for (const a of card.querySelectorAll<HTMLElement>("[data-open]"))
+    a.addEventListener("click", () => {
+      const next = onSite.find((i) => i.id === a.dataset.open);
+      if (next) void openCard(next);
+    });
   for (const b of card.querySelectorAll<HTMLButtonElement>("[data-prompt]"))
     b.addEventListener("click", () => copyText(prompt(item, b.dataset.prompt === "plan"), "prompt copied"));
   for (const b of card.querySelectorAll<HTMLButtonElement>("[data-act]")) {
@@ -141,8 +161,48 @@ export function openBoard(ready: Item[], title = "job board", claimable = true) 
     });
 }
 
+type Mermaid = {
+  initialize: (c: object) => void;
+  render: (id: string, text: string) => Promise<{ svg: string }>;
+};
+const MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+let mermaidLib: Promise<Mermaid> | undefined;
+const loadMermaid = () =>
+  (mermaidLib ??= import(/* @vite-ignore */ MERMAID_URL).then(
+    (m: { default: Mermaid }) => (m.default.initialize({ startOnLoad: false, theme: "dark" }), m.default),
+  ));
+
+export async function openPlans(items: Item[], houseOf: (i: Item) => string | undefined, deferred: Item[]) {
+  closeCard();
+  board.classList.add("open", "plans");
+  document.body.classList.add("board-open");
+  const text = mermaid(items, houseOf);
+  const edges = text.split("\n").filter((l) => l.includes("-->")).length;
+  board.innerHTML = `
+    <div class="head"><h3>the plans · ${edges} dependencies</h3><span><button data-mmd>copy mermaid</button><button data-deferred>${deferred.length} deferred</button></span></div>
+    <div class="graph">${edges ? "drawing…" : "<i>no dependencies between open beads.</i>"}</div>`;
+  board.querySelector("[data-mmd]")!.addEventListener("click", () => copyText(text, "mermaid copied"));
+  board
+    .querySelector("[data-deferred]")!
+    .addEventListener("click", () => openBoard(deferred, "on the plans", false));
+  if (!edges) return;
+  const graph = board.querySelector<HTMLElement>(".graph")!;
+  try {
+    const { svg } = await (await loadMermaid()).render(`plans${Date.now()}`, text);
+    graph.innerHTML = svg;
+    for (const n of graph.querySelectorAll<SVGGElement>("g.node"))
+      n.addEventListener("click", () => {
+        const id = /-flowchart-(.+)-\d+$/.exec(n.id)?.[1];
+        const item = items.find((i) => i.id.replace(/[^a-zA-Z0-9]/g, "_") === id);
+        if (item) void openCard(item);
+      });
+  } catch (e) {
+    graph.innerHTML = `<i>couldn't draw (${esc((e as Error).message)}). the mermaid text still copies.</i>`;
+  }
+}
+
 export function closeBoard() {
-  board.classList.remove("open", "knockoff");
+  board.classList.remove("open", "knockoff", "plans");
   document.body.classList.remove("board-open");
   knockoffClose?.();
   knockoffClose = undefined;
