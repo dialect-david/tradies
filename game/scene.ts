@@ -359,12 +359,13 @@ export class Site extends Phaser.Scene {
     this.input.keyboard?.on("keydown-LEFT", () => (cam.scrollX -= 200));
     this.input.keyboard?.on("keydown-RIGHT", () => (cam.scrollX += 200));
 
-    this.hud.innerHTML = `<span id="site"></span><span id="counts"></span><button id="jobs">job board</button><button id="today">today</button><button id="smoko">smoko</button><button id="knockoff">knock-off</button>`;
+    this.hud.innerHTML = `<span id="site"></span><span id="counts"></span><button id="jobs">job board</button><button id="today">today</button><button id="plans">plans</button><button id="smoko">smoko</button><button id="knockoff">knock-off</button>`;
     this.hud
       .querySelector("#smoko")!
       .addEventListener("click", () => (this.onSmoko ? this.backToWork() : this.smoko()));
     this.hud.querySelector("#jobs")!.addEventListener("click", () => openBoard(this.current.ready));
     this.hud.querySelector("#today")!.addEventListener("click", () => this.toolboxTalk());
+    this.hud.querySelector("#plans")!.addEventListener("click", () => this.plansTable());
     this.hud
       .querySelector("#knockoff")!
       .addEventListener("click", () => (this.knockedOff ? this.day() : void this.knockoff()));
@@ -810,8 +811,8 @@ export class Site extends Phaser.Scene {
 
   shelve(items: Item[]) {
     this.plans.removeAll(true);
-    if (!items.length) return;
-    items.slice(0, 12).forEach((_, i) => {
+    const rolls = Math.max(1, Math.min(items.length, 12));
+    for (let i = 0; i < rolls; i++) {
       const roll = this.add
         .rectangle(0, -i * 7, 40, 6, 0xf1e3c6)
         .setOrigin(0, 1)
@@ -819,9 +820,9 @@ export class Site extends Phaser.Scene {
         .setInteractive();
       roll.on("pointerdown", () => this.plansTable());
       this.plans.add(roll);
-    });
+    }
     const t = this.add
-      .text(20, -Math.min(items.length, 12) * 7 - 6, `${items.length} on the plans`, {
+      .text(20, -rolls * 7 - 6, items.length ? `${items.length} on the plans` : "plans", {
         fontSize: "9px",
         color: "#fff",
         backgroundColor: "#0006",
