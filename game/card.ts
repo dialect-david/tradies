@@ -110,7 +110,8 @@ export function closeCard() {
   card.classList.remove("open");
 }
 
-const esc = (s: string) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]!);
+const esc = (s: string) =>
+  s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
 export function openBoard(ready: Item[], title = "job board", claimable = true) {
   closeCard();
@@ -119,16 +120,28 @@ export function openBoard(ready: Item[], title = "job board", claimable = true) 
   const chits = ready
     .map(
       (i) =>
-        `<div class="chit p${i.priority}" data-id="${i.id}"><b>P${i.priority}</b> <span class="trade">${i.trade} · ${ageDays(i)}d</span> <span class="title">${esc(i.title)}</span>${i.closeReason ? `<div class="why">${esc(i.closeReason.slice(0, 120))}</div>` : ""}<div class="id">${idChip(i.id)}</div>${claimable ? `<button data-claim="${i.id}">claim</button>` : ""}</div>`,
+        `<div class="chit p${i.priority}" data-id="${i.id}" data-text="${esc(`${i.id} ${i.title} ${i.labels.join(" ")} ${i.closeReason ?? ""}`.toLowerCase())}"><b>P${i.priority}</b> <span class="trade">${i.trade} · ${ageDays(i)}d</span> <span class="title">${esc(i.title)}</span>${i.closeReason ? `<div class="why">${esc(i.closeReason.slice(0, 120))}</div>` : ""}<div class="id">${idChip(i.id)}</div>${claimable ? `<button data-claim="${i.id}">claim</button>` : ""}</div>`,
     )
     .join("");
   board.innerHTML = `
-    <div class="head"><h3>${title} · ${ready.length}</h3></div>
+    <div class="head"><h3>${title} · ${ready.length}</h3><input class="filter" placeholder="find…" autocomplete="off" /></div>
     <form class="new" ${claimable ? "" : "hidden"}><input name="title" placeholder="new job…" autocomplete="off" />
       <select name="priority"><option>2</option><option>0</option><option>1</option><option>3</option><option>4</option></select>
       <select name="kind"><option>task</option><option>bug</option><option>feature</option><option>chore</option></select>
       <button>pin it</button></form>
     <div class="chits">${chits || "<i>nobody here.</i>"}</div>`;
+  const filter = board.querySelector<HTMLInputElement>("input.filter")!;
+  filter.addEventListener("input", () => {
+    const q = filter.value.trim().toLowerCase();
+    let shown = 0;
+    for (const c of board.querySelectorAll<HTMLElement>(".chit")) {
+      const hit = !q || c.dataset.text!.includes(q);
+      c.hidden = !hit;
+      if (hit) shown++;
+    }
+    board.querySelector("h3")!.textContent = `${title} · ${q ? `${shown} of ` : ""}${ready.length}`;
+  });
+  filter.focus();
   board.querySelector<HTMLFormElement>("form.new")!.addEventListener("submit", async (e) => {
     e.preventDefault();
     const f = new FormData(e.target as HTMLFormElement);

@@ -42,7 +42,16 @@ export async function closedSince(since: Date): Promise<Item[]> {
 }
 
 export async function closedRecent(limit = 200): Promise<Item[]> {
-  const beads = await json<Bead[]>("bd", ["list", "--json", "--limit", String(limit), "--status", "closed"]);
+  const beads = await json<Bead[]>("bd", [
+    "list",
+    "--json",
+    "--limit",
+    String(limit),
+    "--status",
+    "closed",
+    "--sort",
+    "closed",
+  ]);
   return beads.map(fromBead).sort((a, b) => (b.closedAt?.getTime() ?? 0) - (a.closedAt?.getTime() ?? 0));
 }
 

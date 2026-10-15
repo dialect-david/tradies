@@ -115,6 +115,9 @@
         margin: 0;
         color: #f1c40f;
       }
+      #board form.new[hidden] {
+        display: none;
+      }
       #board form.new {
         display: flex;
         gap: 6px;
@@ -130,6 +133,12 @@
       }
       #board input {
         flex: 1;
+      }
+      #board input.filter {
+        flex: 0 1 160px;
+        background: #2a1d10;
+        color: #eee;
+        border-color: #8b5a2b;
       }
       #board button {
         font: inherit;

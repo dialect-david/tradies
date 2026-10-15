@@ -55,7 +55,7 @@ Opens http://localhost:5173. State lives in `bd` and `gh` only; the site refresh
 
 ## Controls
 
-Card: claim / note / close / merge, copy id, copy a Claude Code prompt, waits-on / blocks links. Briefing: copy as markdown. Drag, wheel or arrow keys to pan.
+Card: claim / note / close / merge, copy id, copy a Claude Code prompt, waits-on / blocks links. Every board has a find box: id, title, labels, close reason. Briefing: copy as markdown. Drag, wheel or arrow keys to pan.
 
 ## Config
 
