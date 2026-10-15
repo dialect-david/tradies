@@ -359,7 +359,7 @@ export class Site extends Phaser.Scene {
     this.input.keyboard?.on("keydown-LEFT", () => (cam.scrollX -= 200));
     this.input.keyboard?.on("keydown-RIGHT", () => (cam.scrollX += 200));
 
-    this.hud.innerHTML = `<span id="site"></span><span id="counts"></span><button id="jobs">job board</button><button id="today">today</button><button id="plans">plans</button><button id="smoko">smoko</button><button id="knockoff">knock-off</button>`;
+    this.hud.innerHTML = `<span id="site"></span><span id="counts"></span><button id="jobs">jobs</button><button id="today">today</button><button id="plans">plans</button><button id="smoko">smoko</button><button id="knockoff">knock-off</button>`;
     this.hud
       .querySelector("#smoko")!
       .addEventListener("click", () => (this.onSmoko ? this.backToWork() : this.smoko()));
