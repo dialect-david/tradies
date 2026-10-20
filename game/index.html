@@ -4,6 +4,13 @@
     <meta charset="utf-8" />
     <title>tradies</title>
     <style>
+      :root {
+        --crt-scanline: 0.13;
+        --crt-scanline-period: 3px;
+        --crt-vignette: 0.4;
+        --crt-vignette-start: 55%;
+        --crt-bezel: 6px;
+      }
       html,
       body {
         margin: 0;
@@ -20,7 +27,7 @@
         inset: 0;
       }
       #game canvas {
-        border-radius: 6px;
+        border-radius: var(--crt-bezel);
         box-shadow:
           0 0 0 3px #0a0a0a,
           0 0 0 5px #3a3a3a,
@@ -32,11 +39,19 @@
         top: var(--crt-top, 0);
         width: var(--crt-width, 100%);
         height: var(--crt-height, 100%);
-        border-radius: 6px;
+        border-radius: var(--crt-bezel);
         pointer-events: none;
         background:
-          radial-gradient(ellipse at center, transparent 55%, #0006 100%),
-          repeating-linear-gradient(0deg, #0000 0 2px, #0002 2px 3px);
+          radial-gradient(
+            ellipse at center,
+            transparent var(--crt-vignette-start),
+            rgb(0 0 0 / var(--crt-vignette)) 100%
+          ),
+          repeating-linear-gradient(
+            0deg,
+            transparent 0 calc(var(--crt-scanline-period) - 1px),
+            rgb(0 0 0 / var(--crt-scanline)) calc(var(--crt-scanline-period) - 1px) var(--crt-scanline-period)
+          );
       }
       #hud {
         position: absolute;
