@@ -5,7 +5,11 @@ import {
   layoutStreet,
   SHED,
   STREET_START,
+  CLOSE_GAP,
   TERRACE_PITCH,
+  TILE_PX,
+  YARD_GAP,
+  YARD_W,
   type Epic,
 } from "../game/street.js";
 import type { Item } from "../server/model.js";
@@ -33,8 +37,8 @@ const epic = (over: Partial<Epic>): Epic => ({
 });
 
 describe("street", () => {
-  it("done epics go to the back row as terraces; live ones front, closest to done first; shed last", () => {
-    const { houses, shed } = layoutStreet(
+  it("live epics front, closest to done first, shed last; done epics are terraces past the yard", () => {
+    const { houses, shed, yard, width } = layoutStreet(
       [
         epic({ id: "half", closed: 2 }),
         epic({ id: "done", status: "closed" }),
@@ -45,14 +49,17 @@ describe("street", () => {
     );
     expect(houses.map((h) => h.id)).toEqual(["done", "all", "most", "half"]);
     expect(houses.map((h) => h.stage)).toEqual(["done", "done", "lockup", "roof"]);
-    expect(houses.map((h) => h.back)).toEqual([true, true, false, false]);
-    expect(houses.map((h) => h.x)).toEqual([
-      STREET_START,
-      STREET_START + TERRACE_PITCH,
-      STREET_START,
-      STREET_START + HOUSE_PITCH,
-    ]);
+    expect(houses.map((h) => h.sold)).toEqual([true, true, false, false]);
     expect(shed.x).toBe(STREET_START + 2 * HOUSE_PITCH);
+    expect(yard).toBe(shed.x + 2 * TILE_PX + 40 + YARD_GAP);
+    const close = yard + YARD_W + CLOSE_GAP;
+    expect(houses.slice(0, 2).map((h) => h.x)).toEqual([close, close + TERRACE_PITCH]);
+    expect(houses.slice(2).map((h) => h.x)).toEqual([STREET_START, STREET_START + HOUSE_PITCH]);
+    expect(width).toBe(close + 2 * TERRACE_PITCH + 40);
+  });
+  it("no done epics: world ends at the yard", () => {
+    const { yard, width } = layoutStreet([epic({ id: "half", closed: 2 })], []);
+    expect(width).toBe(yard + YARD_W);
   });
   it("beads live at their epic, through a parent chain; orphans in the shed", () => {
     const items = [

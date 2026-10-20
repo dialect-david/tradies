@@ -5,17 +5,16 @@ import { items as fetchItems, closed as fetchClosed, knockoff, onRefresh } from 
 import { openCard, openBoard, openKnockoff, openPlans, openReview, setItems, toast } from "./card.js";
 import type { Review } from "../server/review.js";
 import {
-  BACK_LIFT,
-  BACK_SCALE,
+  CLOSE_GAP,
   HOUSE_W,
   layoutStreet,
   SHED,
   shortTitle,
-  STREET_START,
-  TERRACE_PITCH,
   TERRACE_W,
   TILE_PX,
+  YARD_W,
   type House,
+  type Street,
 } from "./street.js";
 import {
   CAN_FRAMES,
@@ -96,8 +95,7 @@ type Lot = {
 export class Site extends Phaser.Scene {
   private actors = new Map<string, Actor>();
   private lots = new Map<string, Lot>();
-  private backRow!: Phaser.GameObjects.Container;
-  private backSign!: Phaser.GameObjects.Text;
+  private closeSign!: Phaser.GameObjects.Text;
   private board!: Phaser.GameObjects.Container;
   private boardRows: Item[] = [];
   private boardTop = 0;
@@ -199,16 +197,10 @@ export class Site extends Phaser.Scene {
       .tileSprite(0, gy + T * TS, w, h - gy - T * TS, "tiles", TILE.dirt)
       .setOrigin(0, 0)
       .setTileScale(TS);
-    this.backRow = this.add.container(0, 0);
-    this.backSign = this.add
-      .text(STREET_START - 8, gy - BACK_LIFT - 4, "settled row", {
-        fontSize: "9px",
-        color: "#fff",
-        backgroundColor: "#0008",
-      })
+    this.closeSign = this.add
+      .text(0, gy - 4, "settled close", { fontSize: "9px", color: "#fff", backgroundColor: "#0008" })
       .setOrigin(1, 1)
       .setVisible(false);
-    this.backRow.add(this.backSign);
     this.roadY = gy + T * TS * 2 + 8;
     this.road = this.add
       .rectangle(0, this.roadY - 22, w, 44, 0x4a4a4a)
@@ -415,10 +407,9 @@ export class Site extends Phaser.Scene {
     }
   }
 
-  street({ houses, shed, width }: ReturnType<typeof layoutStreet>) {
+  street({ houses, shed, yard, width }: Street) {
     const { width: w, height: h } = this.scale;
     const gy = h * GROUND;
-    const yard = width + 120;
     this.gate.setX(yard);
     this.toolbox.setX(yard - 125);
     this.signoff.setX(yard + 30);
@@ -428,7 +419,8 @@ export class Site extends Phaser.Scene {
     this.plans.setX(yard + 670);
     this.beers.setX(yard + 760);
     this.ute.setX(yard + 1030);
-    this.worldW = Math.max(w, yard + 1130);
+    this.closeSign.setX(yard + YARD_W + CLOSE_GAP - 16).setVisible(houses.some((h) => h.sold));
+    this.worldW = Math.max(w, width);
     this.grass.setSize(this.worldW, this.grass.height);
     this.dirt.setSize(this.worldW, this.dirt.height);
     this.road.setSize(this.worldW, 44);
@@ -436,19 +428,12 @@ export class Site extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, this.worldW, h);
     this.rain.updateConfig({ x: { min: 0, max: w } });
 
-    this.backSign.setVisible(houses.some((h) => h.back));
     const seen = new Set<string>();
     for (const house of [...houses, shed]) {
       seen.add(house.id);
       let lot = this.lots.get(house.id);
-      if (lot && lot.house.back !== house.back) {
-        lot.box.destroy();
-        lot = undefined;
-      }
       if (!lot) {
-        const box = this.add.container(house.x, house.back ? gy - BACK_LIFT : gy);
-        if (house.back) this.backRow.add(box.setScale(BACK_SCALE));
-        lot = { box, doorUsers: 0, house };
+        lot = { box: this.add.container(house.x, gy), doorUsers: 0, house };
         this.lots.set(house.id, lot);
       }
       lot.house = house;
@@ -467,7 +452,7 @@ export class Site extends Phaser.Scene {
     const label =
       house.id === SHED
         ? `the shed · ${house.items.length}`
-        : house.back
+        : house.sold
           ? `${shortTitle(house.title, 14)}\nsold · ${house.total} jobs`
           : `${shortTitle(house.title)}\n${house.closed}/${house.total}`;
     if (house.stage === lot.stage) {
@@ -479,7 +464,7 @@ export class Site extends Phaser.Scene {
     lot.door = undefined;
     lot.doorUsers = 0;
     const shed = house.id === SHED;
-    const W = shed ? 2 : house.back ? TERRACE_W : HOUSE_W;
+    const W = shed ? 2 : house.sold ? TERRACE_W : HOUSE_W;
     const H = shed ? 1 : 2;
     const seed = [...house.id].reduce((n, ch) => n + ch.charCodeAt(0), 0);
     const roofKey = shed || seed % 2 ? "roof-grey" : "roof-red";
@@ -539,19 +524,18 @@ export class Site extends Phaser.Scene {
     }
     if (at >= 3) topper(roofKey);
     if (at >= 5 && H > 1) for (const c of [0, W - 1]) tile(c, 2, wall.window);
-    if (at >= 6 && !house.back) {
+    if (at >= 6 && !house.sold) {
       tile(-1, 1, TOWN.fenceL);
       tile(W, 1, TOWN.fenceR);
     }
-    const stagger = house.back && Math.round((house.x - STREET_START) / TERRACE_PITCH) % 2 ? 34 : 0;
     lot.box.add(
       this.add
-        .text((W * TILE_PX) / 2, (at ? roofY - 18 * PX * roofScale - 8 : -24) - stagger, label, {
-          fontSize: house.back ? "15px" : "10px",
+        .text((W * TILE_PX) / 2, at ? roofY - 18 * PX * roofScale - 8 : -24, label, {
+          fontSize: "10px",
           color: "#fff",
           backgroundColor: "#0006",
           align: "center",
-          wordWrap: { width: W * TILE_PX + 36 },
+          wordWrap: { width: W * TILE_PX + (house.sold ? 4 : 36) },
         })
         .setOrigin(0.5, 1)
         .setName("label")
@@ -562,7 +546,7 @@ export class Site extends Phaser.Scene {
 
   lotOf(item: Item): Lot {
     for (const lot of this.lots.values())
-      if (!lot.house.back && lot.house.items.some((i) => i.id === item.id)) return lot;
+      if (!lot.house.sold && lot.house.items.some((i) => i.id === item.id)) return lot;
     return this.lots.get(SHED)!;
   }
 
