@@ -3,6 +3,7 @@ import type { Item } from "../server/model.js";
 import { cast, TRADE_COLOUR, type Cast } from "./cast.js";
 import { items as fetchItems, closed as fetchClosed, knockoff, onRefresh } from "./client.js";
 import { openCard, openBoard, openKnockoff, openPlans, openReview, setItems, toast } from "./card.js";
+import { toggleTuner } from "./crt.js";
 import type { Review } from "../server/review.js";
 import {
   CLOSE_GAP,
@@ -393,7 +394,7 @@ export class Site extends Phaser.Scene {
     this.input.keyboard?.on("keydown-LEFT", () => (cam.scrollX -= 200));
     this.input.keyboard?.on("keydown-RIGHT", () => (cam.scrollX += 200));
 
-    this.hud.innerHTML = `<span id="site"></span><span id="counts"></span><button id="jobs">jobs</button><button id="today">today</button><button id="plans">plans</button><button id="smoko">smoko</button><button id="knockoff">beers</button>`;
+    this.hud.innerHTML = `<span id="site"></span><span id="counts"></span><button id="jobs">jobs</button><button id="today">today</button><button id="plans">plans</button><button id="smoko">smoko</button><button id="knockoff">beers</button><button id="tune">crt</button>`;
     this.hud
       .querySelector("#smoko")!
       .addEventListener("click", () => (this.onSmoko ? this.backToWork() : this.smoko()));
@@ -403,6 +404,8 @@ export class Site extends Phaser.Scene {
     this.hud
       .querySelector("#knockoff")!
       .addEventListener("click", () => (this.knockedOff ? this.day() : void this.knockoff()));
+
+    this.hud.querySelector("#tune")!.addEventListener("click", toggleTuner);
 
     (window as unknown as { site: Site }).site = this;
     void this.refresh();

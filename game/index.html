@@ -300,6 +300,77 @@
       .copy:hover {
         color: #f1c40f;
       }
+      #osd {
+        display: none;
+        position: absolute;
+        right: 24px;
+        top: 24px;
+        width: 300px;
+        padding: 10px 14px;
+        background: #000d;
+        color: #ffb000;
+        border: 3px double #ffb000;
+        font:
+          13px/1.6 ui-monospace,
+          Menlo,
+          monospace;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        image-rendering: pixelated;
+        box-shadow: 0 0 12px #ffb00066;
+      }
+      #osd.open {
+        display: block;
+      }
+      #osd h3 {
+        margin: 0 0 8px;
+        font-size: 13px;
+        border-bottom: 1px solid #ffb00088;
+      }
+      #osd label {
+        display: grid;
+        grid-template-columns: 80px 1fr 48px;
+        align-items: center;
+        gap: 8px;
+      }
+      #osd label b {
+        text-align: right;
+        font-weight: normal;
+      }
+      #osd input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        height: 10px;
+        background: repeating-linear-gradient(90deg, #ffb000 0 6px, #0000 6px 9px);
+        border: 1px solid #ffb000;
+        cursor: pointer;
+      }
+      #osd input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 14px;
+        height: 18px;
+        background: #ffb000;
+        border: 2px solid #000;
+      }
+      #osd .row {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 8px;
+      }
+      #osd button {
+        font: inherit;
+        text-transform: inherit;
+        background: #000;
+        color: #ffb000;
+        border: 2px solid #ffb000;
+        padding: 2px 10px;
+        cursor: pointer;
+      }
+      #osd button:hover {
+        background: #ffb000;
+        color: #000;
+      }
       #toast {
         position: absolute;
         top: 12px;
@@ -320,6 +391,7 @@
   <body>
     <div id="game"></div>
     <div id="crt"></div>
+    <div id="osd"></div>
     <div id="card"></div>
     <div id="board"></div>
     <div id="toast"></div>
