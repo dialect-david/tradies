@@ -77,7 +77,6 @@ const TOWN = {
 };
 const STAGES: Stage[] = ["site", "slab", "frame", "roof", "lockup", "fitout", "done"];
 const PAINT = [0xffffff, 0xf7e7c6, 0xd9efe0, 0xdfe7f5, 0xf5dede, 0xefe3f7];
-const CAR_COLOURS = [0xff3b3b, 0x3b7bff, 0x2ecc71, 0xf1c40f, 0x9b59b6, 0xffffff];
 
 type Actor = {
   item: Item;
@@ -554,34 +553,6 @@ export class Site extends Phaser.Scene {
           .setOrigin(0.5, 1)
           .setScale(0.7),
       );
-      const kerb = W * TILE_PX - 26;
-      const prop = seed % 3;
-      if (prop === 0) {
-        const car = this.add
-          .image(kerb, 4, "car", 0)
-          .setOrigin(0.5, 1)
-          .setScale(0.5)
-          .setTint(CAR_COLOURS[(seed >> 2) % CAR_COLOURS.length]!);
-        const glint = this.add
-          .text(kerb - 14, -12, "✦", { fontSize: "10px", color: "#fff" })
-          .setOrigin(0.5)
-          .setAlpha(0);
-        this.tweens.add({
-          targets: glint,
-          alpha: 1,
-          duration: 250,
-          yoyo: true,
-          repeat: -1,
-          repeatDelay: 2500 + (seed % 7) * 400,
-        });
-        lot.box.add([car, glint]);
-      } else
-        lot.box.add(
-          this.add
-            .image(kerb, 0, "tiles", prop === 1 ? TILE.tree : TILE.bush)
-            .setOrigin(0.5, 1)
-            .setScale(prop === 1 ? 2 : 2.2),
-        );
     }
     lot.box.add(
       this.add
