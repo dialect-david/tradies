@@ -547,6 +547,20 @@ export class Site extends Phaser.Scene {
         .setInteractive();
       sign.on("pointerdown", () => openBoard(house.items, house.title.slice(0, 60), true));
       lot.box.add(sign);
+      const chimneyX = (W * TILE_PX) / 2 - 28 * PX * roofScale + 42.5 * PX * roofScale;
+      const chimneyY = roofY - 17 * PX * roofScale;
+      if (seed % 3)
+        lot.box.add(
+          this.add.particles(chimneyX, chimneyY, "dust", {
+            tint: 0xbfbfbf,
+            speedY: { min: -22, max: -12 },
+            speedX: { min: -4, max: 6 },
+            lifespan: 2800,
+            frequency: 450 + (seed % 5) * 60,
+            scale: { start: 0.7, end: 2.2 },
+            alpha: { start: 0.55, end: 0 },
+          }),
+        );
       lot.box.add(
         this.add
           .image(mid * TILE_PX - 4, 0, "letterbox", 0)
