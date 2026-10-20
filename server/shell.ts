@@ -18,5 +18,6 @@ export async function sh(cmd: string, args: string[]): Promise<string> {
 export async function json<T>(cmd: string, args: string[]): Promise<T> {
   const out = await sh(cmd, args);
   const starts = [out.indexOf("["), out.indexOf("{")].filter((i) => i >= 0);
+  if (!starts.length) throw new Error(`${cmd} ${args[0] ?? ""}: no JSON in output`);
   return JSON.parse(out.slice(Math.min(...starts))) as T;
 }

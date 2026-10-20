@@ -18,7 +18,7 @@ function depLines(item: Item): string {
   const blocks = onSite.filter((i) => i.waitsOn.includes(item.id)).map((i) => i.id);
   const row = (h: string, ids: string[]) =>
     ids.length
-      ? `<div class="deps">${h}: ${ids.map((id) => `<a data-open="${id}">${id}</a>`).join(", ")}</div>`
+      ? `<div class="deps">${h}: ${ids.map((id) => `<a data-open="${esc(id)}">${esc(id)}</a>`).join(", ")}</div>`
       : "";
   return row("waits on", waits) + row("blocks", blocks);
 }
@@ -37,7 +37,8 @@ export function copyText(text: string, msg: string) {
   );
 }
 
-export const idChip = (id: string) => `<span class="copy" data-copy="${id}" title="copy id">${id} ⧉</span>`;
+export const idChip = (id: string) =>
+  `<span class="copy" data-copy="${esc(id)}" title="copy id">${esc(id)} ⧉</span>`;
 
 export function wireCopy(root: HTMLElement) {
   for (const el of root.querySelectorAll<HTMLElement>("[data-copy]"))
@@ -47,16 +48,26 @@ export function wireCopy(root: HTMLElement) {
     });
 }
 
+let toastTimer: ReturnType<typeof setTimeout> | undefined;
 export function toast(msg: string) {
   toastEl.textContent = msg;
   toastEl.classList.add("show");
-  setTimeout(() => toastEl.classList.remove("show"), 2500);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2500);
 }
 
+let cardSeq = 0;
 export async function openCard(item: Item) {
+  const seq = ++cardSeq;
   card.classList.add("open");
   card.innerHTML = `<h3>${idChip(item.id)} ${esc(item.title)}</h3><pre>loading…</pre>`;
-  const detail = await show(item.id);
+  let detail: string;
+  try {
+    detail = await show(item.id);
+  } catch (e) {
+    detail = `couldn't load: ${(e as Error).message}`;
+  }
+  if (seq !== cardSeq) return;
   const beadActions = `
     <div class="row"><button data-act="claim">claim</button><button data-prompt="work">copy prompt</button><button data-prompt="plan">copy plan prompt</button></div>
     <input data-text placeholder="note or close reason" />
@@ -120,11 +131,11 @@ export function openBoard(ready: Item[], title = "job board", claimable = true) 
   const chits = ready
     .map(
       (i) =>
-        `<div class="chit p${i.priority}" data-id="${i.id}" data-text="${esc(`${i.id} ${i.title} ${i.labels.join(" ")} ${i.closeReason ?? ""}`.toLowerCase())}"><b>P${i.priority}</b> <span class="trade">${i.trade} · ${ageDays(i)}d</span> <span class="title">${esc(i.title)}</span>${i.closeReason ? `<div class="why">${esc(i.closeReason.slice(0, 120))}</div>` : ""}<div class="id">${idChip(i.id)}</div>${claimable ? `<button data-claim="${i.id}">claim</button>` : ""}</div>`,
+        `<div class="chit p${i.priority}" data-id="${esc(i.id)}" data-text="${esc(`${i.id} ${i.title} ${i.labels.join(" ")} ${i.closeReason ?? ""}`.toLowerCase())}"><b>P${i.priority}</b> <span class="trade">${esc(i.trade)} · ${ageDays(i)}d</span> <span class="title">${esc(i.title)}</span>${i.closeReason ? `<div class="why">${esc(i.closeReason.slice(0, 120))}</div>` : ""}<div class="id">${idChip(i.id)}</div>${claimable ? `<button data-claim="${esc(i.id)}">claim</button>` : ""}</div>`,
     )
     .join("");
   board.innerHTML = `
-    <div class="head"><h3>${title} · ${ready.length}</h3><input class="filter" placeholder="find…" autocomplete="off" /></div>
+    <div class="head"><h3>${esc(title)} · ${ready.length}</h3><input class="filter" placeholder="find…" autocomplete="off" /></div>
     <form class="new" ${claimable ? "" : "hidden"}><input name="title" placeholder="new job…" autocomplete="off" />
       <select name="priority"><option>2</option><option>0</option><option>1</option><option>3</option><option>4</option></select>
       <select name="kind"><option>task</option><option>bug</option><option>feature</option><option>chore</option></select>
@@ -239,7 +250,7 @@ export function openKnockoff(today: Item[], c: Cast, onClose: () => void, title 
   document.body.classList.add("board-open");
   const now = new Date();
   const row = (i: Item, extra = "") =>
-    `<div class="line" data-id="${i.id}"><b>${idChip(i.id)}</b> ${esc(i.title.slice(0, 70))}${extra}</div>`;
+    `<div class="line" data-id="${esc(i.id)}"><b>${idChip(i.id)}</b> ${esc(i.title.slice(0, 70))}${extra}</div>`;
   const worry = [...c.working, ...c.waiting, ...c.smoko, ...c.inspectors, ...c.needsYou]
     .sort((a, b) => score(b, now, c.cfg) - score(a, now, c.cfg))
     .slice(0, 3);

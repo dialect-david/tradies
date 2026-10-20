@@ -22,7 +22,9 @@ export async function items(): Promise<Site> {
 }
 
 export async function show(id: string): Promise<string> {
-  return (await fetch(`/api/show?id=${encodeURIComponent(id)}`)).text();
+  const r = await fetch(`/api/show?id=${encodeURIComponent(id)}`);
+  if (!r.ok) throw new Error((await r.json()).error);
+  return r.text();
 }
 
 export async function act(

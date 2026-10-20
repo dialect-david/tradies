@@ -41,6 +41,16 @@ export const ACTIONS: Record<string, Action> = {
   },
 };
 
+function sameOrigin(req: IncomingMessage): boolean {
+  const origin = req.headers.origin;
+  if (!origin) return true;
+  try {
+    return new URL(origin).host === req.headers.host;
+  } catch {
+    return false;
+  }
+}
+
 async function act(a: Record<string, string>): Promise<string> {
   const action = ACTIONS[a.type];
   if (!action) throw new Error(`unknown action ${a.type}`);
@@ -83,6 +93,7 @@ export function api(): Plugin {
             return send(res, 200, id.startsWith("#") ? await gh.view(id) : await bd.show(id), "text/plain");
           }
           if (url.pathname === "/act" && req.method === "POST") {
+            if (!sameOrigin(req)) return send(res, 403, { error: "cross-origin action refused" });
             const msg = await act(await body(req));
             notify();
             return send(res, 200, { msg });

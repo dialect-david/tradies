@@ -81,15 +81,24 @@ export function ciVerdict(p: Pr): "pass" | "fail" | "pending" | "none" {
   return "pass";
 }
 
+function prStatus(p: Pr): string {
+  if (p.isDraft) return "draft";
+  return p.reviewDecision === "APPROVED" ? "approved" : "review";
+}
+
+function prPriority(p: Pr, ci: ReturnType<typeof ciVerdict>): number {
+  if (ci === "fail") return 0;
+  return p.reviewDecision === "REVIEW_REQUIRED" ? 1 : 2;
+}
+
 export function fromPr(p: Pr): Item {
   const ci = ciVerdict(p);
-  const status = p.isDraft ? "draft" : p.reviewDecision === "APPROVED" ? "approved" : "review";
   return {
     kind: "pr",
     id: `#${p.number}`,
     title: p.title,
-    status,
-    priority: ci === "fail" ? 0 : p.reviewDecision === "REVIEW_REQUIRED" ? 1 : 2,
+    status: prStatus(p),
+    priority: prPriority(p, ci),
     trade: "inspector",
     owner: p.author.login,
     updatedAt: new Date(p.updatedAt),

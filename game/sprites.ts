@@ -277,13 +277,13 @@ export const SLAB_PALETTE = { o: outline, c: "#c8963e", d: "#a3772c", g: "#ffd70
 export const SLAB_FRAMES: string[][] = [
   [
     "oooooooooooooooooooooo",
-    "occccccccccccccccccccо".replace("о", "o"),
+    "occcccccccccccccccccco",
     "ocddddddddddddddddddco",
     "ocdggggggggggggggggdco",
     "ocdgwwgwgwwgwgwwgwgdco",
     "ocdggggggggggggggggdco",
     "ocddddddddddddddddddco",
-    "occccccccccccccccccccо".replace("о", "o"),
+    "occcccccccccccccccccco",
     "oooooooooooooooooooooo",
   ],
 ];

@@ -36,8 +36,9 @@ export function loadConfig(files = CONFIG_PATHS, actor?: string): Config {
   for (const file of files) {
     try {
       Object.assign(cfg, parseConfig(readFileSync(file, "utf8")));
-    } catch {
-      /* no file: skip layer */
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== "ENOENT")
+        console.warn(`tradies: ignoring ${file}: ${(e as Error).message}`);
     }
   }
   return { ...cfg, foreman: cfg.foreman ?? actor };

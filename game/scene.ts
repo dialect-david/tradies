@@ -472,6 +472,7 @@ export class Site extends Phaser.Scene {
     lot.door = undefined;
     lot.doorUsers = 0;
     const shed = house.id === SHED;
+    const openLot = () => openBoard(lot.house.items, shed ? "the shed" : lot.house.title.slice(0, 60), true);
     const W = shed ? 2 : house.sold ? TERRACE_W : HOUSE_W;
     const H = shed ? 1 : 2;
     const seed = [...house.id].reduce((n, ch) => n + ch.charCodeAt(0), 0);
@@ -484,7 +485,7 @@ export class Site extends Phaser.Scene {
         .setOrigin(0, 1)
         .setScale(HS)
         .setInteractive();
-      img.on("pointerdown", () => openBoard(house.items, shed ? "the shed" : house.title.slice(0, 60), true));
+      img.on("pointerdown", () => openLot());
       lot.box.add(img);
       return img;
     };
@@ -496,16 +497,14 @@ export class Site extends Phaser.Scene {
         .setOrigin(0, 1)
         .setStrokeStyle(2, 0x6e6e6e)
         .setInteractive();
-      slab.on("pointerdown", () =>
-        openBoard(house.items, shed ? "the shed" : house.title.slice(0, 60), true),
-      );
+      slab.on("pointerdown", () => openLot());
       lot.box.add(slab);
     } else {
       const dirt = this.add
         .rectangle(-6, 0, W * TILE_PX + 12, 8, 0x8d6e4a)
         .setOrigin(0, 1)
         .setInteractive();
-      dirt.on("pointerdown", () => openBoard(house.items, house.title.slice(0, 60), true));
+      dirt.on("pointerdown", () => openLot());
       lot.box.add(dirt);
       for (const c of [0, W])
         lot.box.add(this.add.rectangle(c * TILE_PX, -8, 3, 14, 0xffffff).setOrigin(0.5, 1));
@@ -518,7 +517,7 @@ export class Site extends Phaser.Scene {
         .setOrigin(0.5, 1)
         .setScale(roofScale)
         .setInteractive();
-      img.on("pointerdown", () => openBoard(house.items, shed ? "the shed" : house.title.slice(0, 60), true));
+      img.on("pointerdown", () => openLot());
       lot.box.add(img);
     };
     if (at >= 2 && at < 4) {
@@ -545,7 +544,7 @@ export class Site extends Phaser.Scene {
         .setScale(0.7)
         .setAngle(seed % 2 ? 5 : -4)
         .setInteractive();
-      sign.on("pointerdown", () => openBoard(house.items, house.title.slice(0, 60), true));
+      sign.on("pointerdown", () => openLot());
       lot.box.add(sign);
       const chimneyX = (W * TILE_PX) / 2 - 28 * PX * roofScale + 42.5 * PX * roofScale;
       const chimneyY = roofY - 17 * PX * roofScale;
@@ -580,7 +579,7 @@ export class Site extends Phaser.Scene {
         .setOrigin(0.5, 1)
         .setName("label")
         .setInteractive()
-        .on("pointerdown", () => openBoard(house.items, shed ? "the shed" : house.title.slice(0, 60), true)),
+        .on("pointerdown", () => openLot()),
     );
   }
 
@@ -621,15 +620,18 @@ export class Site extends Phaser.Scene {
             backgroundColor: "#0008",
           })
           .setOrigin(0.5, 0);
-        body.on("pointerdown", () => void openCard(item));
-        body.on("pointerover", () => label.setText(item.title.slice(0, 40)).setVisible(true).setDepth(20));
+        const actor: Actor = { item, body, label, role, home: SHED, gen: 0 };
+        body.on("pointerdown", () => void openCard(actor.item));
+        body.on("pointerover", () =>
+          label.setText(actor.item.title.slice(0, 40)).setVisible(true).setDepth(20),
+        );
         body.on("pointerout", () =>
           label
-            .setText(item.id.replace(/^[a-z]+-/, ""))
-            .setVisible(role === "working")
+            .setText(actor.item.id.replace(/^[a-z]+-/, ""))
+            .setVisible(actor.role === "working")
             .setDepth(0),
         );
-        a = { item, body, label, role, home: SHED, gen: 0 };
+        a = actor;
         this.actors.set(item.id, a);
       }
       a.item = item;
@@ -641,9 +643,9 @@ export class Site extends Phaser.Scene {
       a.body.setFrame(
         napping ? 6 : role === "smoko" ? 2 : role === "waiting" ? 3 : role === "signoff" ? 7 : 0,
       );
+      this.settle(a);
       this.tweens.add({ targets: a.body, x, y, duration: 600, ease: "Bounce.Out" });
       this.tweens.add({ targets: a.label, x, y: y + 2, duration: 600 });
-      this.settle(a);
       if (napping) this.snooze(a);
       else if (role === "working") this.wander(a);
       else a.body.anims.stop();
@@ -671,10 +673,10 @@ export class Site extends Phaser.Scene {
     (this.toolbox.getByName("label") as Phaser.GameObjects.Text).setText(
       c.today.length ? `${c.today.length} today` : "toolbox",
     );
-    const uninspected = (this.review?.commits ?? 0) >= c.cfg.reviewAfter;
+    const uninspected = !!this.review && this.review.commits >= c.cfg.reviewAfter;
     this.officer.setVisible(uninspected);
     (this.officer.getByName("stop") as Phaser.GameObjects.Text).setVisible(
-      (this.review?.commits ?? 0) >= c.cfg.reviewAfter * 2,
+      !!this.review && this.review.commits >= c.cfg.reviewAfter * 2,
     );
 
     for (const [id, a] of this.actors)
@@ -704,7 +706,7 @@ export class Site extends Phaser.Scene {
       c.gone.length ? `${c.gone.length} gone home` : "",
       c.inspectors.length ? `${c.inspectors.length} inspectors` : "",
       c.rain ? "☔ rain" : "",
-      uninspected ? `${this.review!.commits} commits uninspected` : "",
+      this.review && uninspected ? `${this.review.commits} commits uninspected` : "",
       c.hazards.length ? `⚠ ${c.hazards.length} hazards` : "",
       c.blocker && c.blocker.frees > 1 ? `closing ${c.blocker.item.id} frees ${c.blocker.frees}` : "",
     ]
@@ -1020,9 +1022,10 @@ export class Site extends Phaser.Scene {
         x,
         duration: Math.abs(x - a.body.x) * 12 + 200,
         onComplete: () => {
+          if (!alive()) return;
           a.body.anims.stop();
           a.body.setFrame(0);
-          if (alive()) then();
+          then();
         },
       });
     };
@@ -1038,9 +1041,10 @@ export class Site extends Phaser.Scene {
       }));
       this.time.delayedCall(ms, () => {
         this.dustOff(a, puff);
+        if (!alive()) return;
         a.body.anims.stop();
         a.body.setFrame(0);
-        if (alive()) then();
+        then();
       });
     };
     const inside = (then: () => void) => {
@@ -1077,7 +1081,7 @@ export class Site extends Phaser.Scene {
   snooze(a: Actor) {
     const gen = a.gen;
     const z = () => {
-      if (a.gen !== gen || !this.actors.has(a.item.id)) return;
+      if (a.gen !== gen || this.actors.get(a.item.id) !== a) return;
       const t = this.add
         .text(a.body.x + 10, a.body.y - 60, "z", { fontSize: "12px", color: "#fff" })
         .setDepth(6);
@@ -1105,6 +1109,7 @@ export class Site extends Phaser.Scene {
 
   settle(a: Actor) {
     a.gen++;
+    this.tweens.killTweensOf([a.body, a.label]);
     a.can?.destroy();
     a.can = undefined;
     if (a.puff) this.dustOff(a, a.puff);
@@ -1200,8 +1205,9 @@ export class Site extends Phaser.Scene {
     const gy = h * GROUND;
     const esky = this.empties.x + 27;
     [...this.actors.values()].forEach((a, n) => {
-      this.tweens.killTweensOf([a.body, a.label]);
       this.settle(a);
+      const gen = a.gen;
+      const live = () => a.gen === gen && a.body.active;
       a.role = "smoko";
       a.body.setAlpha(1);
       a.label.setVisible(false);
@@ -1215,14 +1221,19 @@ export class Site extends Phaser.Scene {
           y: (t: Phaser.GameObjects.GameObject) => (t === a.body ? gy : gy + 2),
           duration: Math.min(4000, Math.abs(x - a.body.x) * 2 + 300),
           delay: n * 150,
-          onComplete: () => (a.body.anims.stop(), a.body.setFrame(0), then()),
+          onComplete: () => {
+            if (!live()) return;
+            a.body.anims.stop();
+            a.body.setFrame(0);
+            then();
+          },
         });
       };
       walk(esky, () => {
         a.can?.destroy();
         a.can = this.add.image(a.body.x + 12, a.body.y - 24, "can", 0).setDepth(6);
         this.tweens.add({ targets: a.can, y: a.can.y - 10, duration: 150, yoyo: true });
-        this.time.delayedCall(400, () => walk(seat, () => a.body.setFrame(2)));
+        this.time.delayedCall(400, () => live() && walk(seat, () => a.body.setFrame(2)));
       });
     });
     this.kelpie.play("kelpie-run");
