@@ -4,7 +4,18 @@ import { cast, TRADE_COLOUR, type Cast } from "./cast.js";
 import { items as fetchItems, closed as fetchClosed, knockoff, onRefresh } from "./client.js";
 import { openCard, openBoard, openKnockoff, openPlans, openReview, setItems, toast } from "./card.js";
 import type { Review } from "../server/review.js";
-import { HOUSE_W, layoutStreet, SHED, shortTitle, TILE_PX, type House } from "./street.js";
+import {
+  BACK_LIFT,
+  BACK_SCALE,
+  HOUSE_W,
+  layoutStreet,
+  SHED,
+  shortTitle,
+  STREET_START,
+  TERRACE_W,
+  TILE_PX,
+  type House,
+} from "./street.js";
 import {
   CAN_FRAMES,
   CAN_PALETTE,
@@ -84,6 +95,8 @@ type Lot = {
 export class Site extends Phaser.Scene {
   private actors = new Map<string, Actor>();
   private lots = new Map<string, Lot>();
+  private backRow!: Phaser.GameObjects.Container;
+  private backSign!: Phaser.GameObjects.Text;
   private board!: Phaser.GameObjects.Container;
   private boardRows: Item[] = [];
   private boardTop = 0;
@@ -185,6 +198,16 @@ export class Site extends Phaser.Scene {
       .tileSprite(0, gy + T * TS, w, h - gy - T * TS, "tiles", TILE.dirt)
       .setOrigin(0, 0)
       .setTileScale(TS);
+    this.backRow = this.add.container(0, 0);
+    this.backSign = this.add
+      .text(STREET_START - 8, gy - BACK_LIFT - 4, "settled row", {
+        fontSize: "9px",
+        color: "#fff",
+        backgroundColor: "#0008",
+      })
+      .setOrigin(1, 1)
+      .setVisible(false);
+    this.backRow.add(this.backSign);
     this.roadY = gy + T * TS * 2 + 8;
     this.road = this.add
       .rectangle(0, this.roadY - 22, w, 44, 0x4a4a4a)
@@ -412,12 +435,19 @@ export class Site extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, this.worldW, h);
     this.rain.updateConfig({ x: { min: 0, max: w } });
 
+    this.backSign.setVisible(houses.some((h) => h.back));
     const seen = new Set<string>();
     for (const house of [...houses, shed]) {
       seen.add(house.id);
       let lot = this.lots.get(house.id);
+      if (lot && lot.house.back !== house.back) {
+        lot.box.destroy();
+        lot = undefined;
+      }
       if (!lot) {
-        lot = { box: this.add.container(house.x, gy), doorUsers: 0, house };
+        const box = this.add.container(house.x, house.back ? gy - BACK_LIFT : gy);
+        if (house.back) this.backRow.add(box.setScale(BACK_SCALE));
+        lot = { box, doorUsers: 0, house };
         this.lots.set(house.id, lot);
       }
       lot.house = house;
@@ -436,7 +466,9 @@ export class Site extends Phaser.Scene {
     const label =
       house.id === SHED
         ? `the shed · ${house.items.length}`
-        : `${shortTitle(house.title)}\n${house.closed}/${house.total}`;
+        : house.back
+          ? `${shortTitle(house.title, 18)}\nsold · ${house.total} jobs`
+          : `${shortTitle(house.title)}\n${house.closed}/${house.total}`;
     if (house.stage === lot.stage) {
       (lot.box.getByName("label") as Phaser.GameObjects.Text | null)?.setText(label);
       return;
@@ -446,7 +478,7 @@ export class Site extends Phaser.Scene {
     lot.door = undefined;
     lot.doorUsers = 0;
     const shed = house.id === SHED;
-    const W = shed ? 2 : HOUSE_W;
+    const W = shed ? 2 : house.back ? TERRACE_W : HOUSE_W;
     const H = shed ? 1 : 2;
     const seed = [...house.id].reduce((n, ch) => n + ch.charCodeAt(0), 0);
     const roofKey = shed || seed % 2 ? "roof-grey" : "roof-red";
@@ -506,14 +538,14 @@ export class Site extends Phaser.Scene {
     }
     if (at >= 3) topper(roofKey);
     if (at >= 5 && H > 1) for (const c of [0, W - 1]) tile(c, 2, wall.window);
-    if (at >= 6) {
+    if (at >= 6 && !house.back) {
       tile(-1, 1, TOWN.fenceL);
       tile(W, 1, TOWN.fenceR);
     }
     lot.box.add(
       this.add
         .text((W * TILE_PX) / 2, at ? roofY - 18 * PX * roofScale - 8 : -24, label, {
-          fontSize: "10px",
+          fontSize: house.back ? "15px" : "10px",
           color: "#fff",
           backgroundColor: "#0006",
           align: "center",
@@ -527,7 +559,8 @@ export class Site extends Phaser.Scene {
   }
 
   lotOf(item: Item): Lot {
-    for (const lot of this.lots.values()) if (lot.house.items.some((i) => i.id === item.id)) return lot;
+    for (const lot of this.lots.values())
+      if (!lot.house.back && lot.house.items.some((i) => i.id === item.id)) return lot;
     return this.lots.get(SHED)!;
   }
 
