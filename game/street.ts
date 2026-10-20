@@ -20,7 +20,7 @@ export const HOUSE_PITCH = HOUSE_W * TILE_PX + 44;
 export const STREET_START = 130;
 export const TERRACE_W = 2;
 export const BACK_SCALE = 0.6;
-export const BACK_LIFT = 72;
+export const BACK_LIFT = 200;
 export const TERRACE_PITCH = TERRACE_W * TILE_PX * BACK_SCALE + 8;
 export const SHED = "shed";
 

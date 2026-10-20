@@ -12,6 +12,7 @@ import {
   SHED,
   shortTitle,
   STREET_START,
+  TERRACE_PITCH,
   TERRACE_W,
   TILE_PX,
   type House,
@@ -467,7 +468,7 @@ export class Site extends Phaser.Scene {
       house.id === SHED
         ? `the shed · ${house.items.length}`
         : house.back
-          ? `${shortTitle(house.title, 18)}\nsold · ${house.total} jobs`
+          ? `${shortTitle(house.title, 14)}\nsold · ${house.total} jobs`
           : `${shortTitle(house.title)}\n${house.closed}/${house.total}`;
     if (house.stage === lot.stage) {
       (lot.box.getByName("label") as Phaser.GameObjects.Text | null)?.setText(label);
@@ -542,9 +543,10 @@ export class Site extends Phaser.Scene {
       tile(-1, 1, TOWN.fenceL);
       tile(W, 1, TOWN.fenceR);
     }
+    const stagger = house.back && Math.round((house.x - STREET_START) / TERRACE_PITCH) % 2 ? 34 : 0;
     lot.box.add(
       this.add
-        .text((W * TILE_PX) / 2, at ? roofY - 18 * PX * roofScale - 8 : -24, label, {
+        .text((W * TILE_PX) / 2, (at ? roofY - 18 * PX * roofScale - 8 : -24) - stagger, label, {
           fontSize: house.back ? "15px" : "10px",
           color: "#fff",
           backgroundColor: "#0006",
