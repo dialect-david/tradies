@@ -267,15 +267,19 @@ export class Site extends Phaser.Scene {
       .setDepth(3)
       .setScrollFactor(0);
     this.boardChars = Math.floor((boardW - 32) / 7.9);
-    const panel = () => {
-      const { x } = this.scale.canvasBounds;
+    const fit = () => {
+      const { x, y, width, height } = this.scale.canvasBounds;
       const k = 1 / this.scale.displayScale.x;
       const css = document.documentElement.style;
       css.setProperty("--panel-left", `${Math.round(x + (w * 0.5 - boardW / 2) * k)}px`);
       css.setProperty("--panel-width", `${Math.round(boardW * k)}px`);
+      css.setProperty("--crt-left", `${Math.round(x)}px`);
+      css.setProperty("--crt-top", `${Math.round(y)}px`);
+      css.setProperty("--crt-width", `${Math.round(width)}px`);
+      css.setProperty("--crt-height", `${Math.round(height)}px`);
     };
-    panel();
-    this.scale.on("resize", panel);
+    fit();
+    this.scale.on("resize", fit);
     this.time.addEvent({ delay: 2500, loop: true, callback: () => this.drawBoard(this.boardTop + 1) });
 
     this.sign = this.add.container(0, gy, [

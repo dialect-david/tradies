@@ -19,6 +19,25 @@
         position: absolute;
         inset: 0;
       }
+      #game canvas {
+        border-radius: 6px;
+        box-shadow:
+          0 0 0 3px #0a0a0a,
+          0 0 0 5px #3a3a3a,
+          0 0 40px 8px #000;
+      }
+      #crt {
+        position: absolute;
+        left: var(--crt-left, 0);
+        top: var(--crt-top, 0);
+        width: var(--crt-width, 100%);
+        height: var(--crt-height, 100%);
+        border-radius: 6px;
+        pointer-events: none;
+        background:
+          radial-gradient(ellipse at center, transparent 55%, #0006 100%),
+          repeating-linear-gradient(0deg, #0000 0 2px, #0002 2px 3px);
+      }
       #hud {
         position: absolute;
         left: 0;
@@ -285,6 +304,7 @@
   </head>
   <body>
     <div id="game"></div>
+    <div id="crt"></div>
     <div id="card"></div>
     <div id="board"></div>
     <div id="toast"></div>
