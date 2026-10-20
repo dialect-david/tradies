@@ -267,8 +267,15 @@ export class Site extends Phaser.Scene {
       .setDepth(3)
       .setScrollFactor(0);
     this.boardChars = Math.floor((boardW - 32) / 7.9);
-    document.documentElement.style.setProperty("--panel-left", `${Math.round(w * 0.5 - boardW / 2)}px`);
-    document.documentElement.style.setProperty("--panel-width", `${Math.round(boardW)}px`);
+    const panel = () => {
+      const { x } = this.scale.canvasBounds;
+      const k = 1 / this.scale.displayScale.x;
+      const css = document.documentElement.style;
+      css.setProperty("--panel-left", `${Math.round(x + (w * 0.5 - boardW / 2) * k)}px`);
+      css.setProperty("--panel-width", `${Math.round(boardW * k)}px`);
+    };
+    panel();
+    this.scale.on("resize", panel);
     this.time.addEvent({ delay: 2500, loop: true, callback: () => this.drawBoard(this.boardTop + 1) });
 
     this.sign = this.add.container(0, gy, [

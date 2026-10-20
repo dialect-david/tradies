@@ -1,4 +1,4 @@
-// usage: [CLICK=x,y [AFTER=js]] node scripts/shot.mjs <url> <out.png> [waitMs] [js to run before the shot]
+// usage: [SIZE=w,h] [CLICK=x,y [AFTER=js]] node scripts/shot.mjs <url> <out.png> [waitMs] [js to run before the shot]
 import { spawn } from "node:child_process";
 import { writeFileSync } from "node:fs";
 
@@ -8,7 +8,7 @@ const chrome = spawn(
   [
     "--headless=new",
     "--remote-debugging-port=9333",
-    "--window-size=1400,900",
+    `--window-size=${process.env.SIZE ?? "1400,900"}`,
     "--hide-scrollbars",
     "--user-data-dir=/tmp/tradies-chrome",
     "about:blank",
