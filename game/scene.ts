@@ -533,8 +533,9 @@ export class Site extends Phaser.Scene {
     }
     if (house.sold) {
       const sign = this.add
-        .image(W * TILE_PX - 12, 2, "sold", 0)
+        .image(22, 2, "sold", 0)
         .setOrigin(0.5, 1)
+        .setScale(0.7)
         .setAngle(seed % 2 ? 5 : -4)
         .setInteractive();
       sign.on("pointerdown", () => openBoard(house.items, house.title.slice(0, 60), true));
