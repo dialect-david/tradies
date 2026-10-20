@@ -324,6 +324,28 @@ export const CONE_FRAMES: string[][] = [
   ["...oo...", "..occo..", "..occo..", ".owwwwo.", ".occcco.", ".occcco.", "owwwwwwo", "oooooooo"],
 ];
 
+export const SOLD_PALETTE = { o: outline, w: "#f8f8f8", r: "#d8262c", p: "#8d6e4a" };
+export const SOLD_FRAMES: string[][] = [
+  [
+    "ooooooooooooooooooo",
+    "owwwwwwwwwwwwwwwwwo",
+    "owrrrwrrrwrwwwrrwwo",
+    "owrwwwrwrwrwwwrwrwo",
+    "owrrrwrwrwrwwwrwrwo",
+    "owwwrwrwrwrwwwrwrwo",
+    "owrrrwrrrwrrrwrrwwo",
+    "owwwwwwwwwwwwwwwwwo",
+    "ooooooooooooooooooo",
+    "........opo........",
+    "........opo........",
+    "........opo........",
+    "........opo........",
+    "........opo........",
+    "........opo........",
+    "........opo........",
+  ],
+];
+
 export const SLAB_SIZE = 24;
 
 export function slabs(closed: number): { slabs: number; cans: number } {

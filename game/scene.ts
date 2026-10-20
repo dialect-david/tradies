@@ -38,6 +38,8 @@ import {
   TOOLBOX_FRAMES,
   CONE_FRAMES,
   CONE_PALETTE,
+  SOLD_FRAMES,
+  SOLD_PALETTE,
   TOOLBOX_PALETTE,
   type Stage,
 } from "./sprites.js";
@@ -161,6 +163,7 @@ export class Site extends Phaser.Scene {
     });
     this.sheet("toolbox", TOOLBOX_FRAMES, TOOLBOX_PALETTE);
     this.sheet("cone", CONE_FRAMES, CONE_PALETTE);
+    this.sheet("sold", SOLD_FRAMES, SOLD_PALETTE);
     this.sheet("tradie-officer", TRADIE_FRAMES, { ...TRADIE_PALETTE, H: "#ffffff", v: "#c6ff00" });
     this.sheet("roof-red", ROOF_FRAMES, { ...ROOF_PALETTE, ...ROOF_COLOURS.red });
     this.sheet("roof-grey", ROOF_FRAMES, { ...ROOF_PALETTE, ...ROOF_COLOURS.grey });
@@ -527,6 +530,15 @@ export class Site extends Phaser.Scene {
     if (at >= 6 && !house.sold) {
       tile(-1, 1, TOWN.fenceL);
       tile(W, 1, TOWN.fenceR);
+    }
+    if (house.sold) {
+      const sign = this.add
+        .image(W * TILE_PX - 12, 2, "sold", 0)
+        .setOrigin(0.5, 1)
+        .setAngle(seed % 2 ? 5 : -4)
+        .setInteractive();
+      sign.on("pointerdown", () => openBoard(house.items, house.title.slice(0, 60), true));
+      lot.box.add(sign);
     }
     lot.box.add(
       this.add

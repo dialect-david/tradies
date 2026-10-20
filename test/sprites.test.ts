@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { frameSize, KELPIE_FRAMES, stage, TRADIE_FRAMES } from "../game/sprites.js";
+import { frameSize, KELPIE_FRAMES, SOLD_FRAMES, stage, TRADIE_FRAMES } from "../game/sprites.js";
 
 describe("sprites", () => {
   it("frames are rectangular", () => {
     expect(frameSize(TRADIE_FRAMES)).toEqual({ w: 12, h: 19 });
     expect(TRADIE_FRAMES).toHaveLength(8);
     expect(frameSize(KELPIE_FRAMES)).toEqual({ w: 16, h: 8 });
+    expect(frameSize(SOLD_FRAMES)).toEqual({ w: 19, h: 16 });
   });
   it("house stage follows closed ratio and only finishes at zero open", () => {
     expect(stage(0, 0)).toBe("site");
