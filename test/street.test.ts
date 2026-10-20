@@ -50,6 +50,7 @@ describe("street", () => {
     expect(houses.map((h) => h.id)).toEqual(["done", "all", "most", "half"]);
     expect(houses.map((h) => h.stage)).toEqual(["done", "done", "lockup", "roof"]);
     expect(houses.map((h) => h.sold)).toEqual([true, true, false, false]);
+    expect(houses.map((h) => h.no)).toEqual([1, 2, undefined, undefined]);
     expect(shed.x).toBe(STREET_START + 2 * HOUSE_PITCH);
     expect(yard).toBe(shed.x + 2 * TILE_PX + 40 + YARD_GAP);
     const close = yard + YARD_W + CLOSE_GAP;

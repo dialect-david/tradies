@@ -346,6 +346,23 @@ export const SOLD_FRAMES: string[][] = [
   ],
 ];
 
+export const LETTERBOX_PALETTE = { o: outline, w: "#f3ead6", p: "#8d6e4a" };
+export const LETTERBOX_FRAMES: string[][] = [
+  [
+    ".ooooo.",
+    "owwwwwo",
+    "owooowo",
+    "owwwwwo",
+    ".ooooo.",
+    "...p...",
+    "...p...",
+    "...p...",
+    "...p...",
+    "...p...",
+    "..ppp..",
+  ],
+];
+
 export const SLAB_SIZE = 24;
 
 export function slabs(closed: number): { slabs: number; cans: number } {

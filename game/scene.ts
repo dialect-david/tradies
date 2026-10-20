@@ -40,6 +40,8 @@ import {
   CONE_PALETTE,
   SOLD_FRAMES,
   SOLD_PALETTE,
+  LETTERBOX_FRAMES,
+  LETTERBOX_PALETTE,
   TOOLBOX_PALETTE,
   type Stage,
 } from "./sprites.js";
@@ -74,6 +76,8 @@ const TOWN = {
   fenceR: 46,
 };
 const STAGES: Stage[] = ["site", "slab", "frame", "roof", "lockup", "fitout", "done"];
+const PAINT = [0xffffff, 0xf7e7c6, 0xd9efe0, 0xdfe7f5, 0xf5dede, 0xefe3f7];
+const CAR_COLOURS = [0xff3b3b, 0x3b7bff, 0x2ecc71, 0xf1c40f, 0x9b59b6, 0xffffff];
 
 type Actor = {
   item: Item;
@@ -164,6 +168,7 @@ export class Site extends Phaser.Scene {
     this.sheet("toolbox", TOOLBOX_FRAMES, TOOLBOX_PALETTE);
     this.sheet("cone", CONE_FRAMES, CONE_PALETTE);
     this.sheet("sold", SOLD_FRAMES, SOLD_PALETTE);
+    this.sheet("letterbox", LETTERBOX_FRAMES, LETTERBOX_PALETTE);
     this.sheet("tradie-officer", TRADIE_FRAMES, { ...TRADIE_PALETTE, H: "#ffffff", v: "#c6ff00" });
     this.sheet("roof-red", ROOF_FRAMES, { ...ROOF_PALETTE, ...ROOF_COLOURS.red });
     this.sheet("roof-grey", ROOF_FRAMES, { ...ROOF_PALETTE, ...ROOF_COLOURS.grey });
@@ -456,13 +461,14 @@ export class Site extends Phaser.Scene {
       house.id === SHED
         ? `the shed · ${house.items.length}`
         : house.sold
-          ? `${shortTitle(house.title, 14)}\nsold · ${house.total} jobs`
+          ? `${shortTitle(house.title, 14)}\nNo. ${house.no} · ${house.total} jobs`
           : `${shortTitle(house.title)}\n${house.closed}/${house.total}`;
     if (house.stage === lot.stage) {
       (lot.box.getByName("label") as Phaser.GameObjects.Text | null)?.setText(label);
       return;
     }
     lot.stage = house.stage;
+    this.tweens.killTweensOf(lot.box.list);
     lot.box.removeAll(true);
     lot.door = undefined;
     lot.doorUsers = 0;
@@ -520,13 +526,15 @@ export class Site extends Phaser.Scene {
       for (let r = 1; r <= H; r++) for (const c of [0, W - 1]) tile(c, r, TOWN.post);
       if (at === 2) topper("truss");
     }
+    const paint = house.sold ? PAINT[seed % PAINT.length]! : 0xffffff;
     if (at >= 4) {
       for (let r = 1; r <= H; r++)
-        for (let c = 0; c < W; c++) tile(c, r, c === mid && r === 1 ? wall.opening : wall.plain);
+        for (let c = 0; c < W; c++)
+          tile(c, r, c === mid && r === 1 ? wall.opening : wall.plain).setTint(paint);
       lot.door = tile(mid, 1, at >= 5 ? TOWN.doorLit : TOWN.door);
     }
     if (at >= 3) topper(roofKey);
-    if (at >= 5 && H > 1) for (const c of [0, W - 1]) tile(c, 2, wall.window);
+    if (at >= 5 && H > 1) for (const c of [0, W - 1]) tile(c, 2, wall.window).setTint(paint);
     if (at >= 6 && !house.sold) {
       tile(-1, 1, TOWN.fenceL);
       tile(W, 1, TOWN.fenceR);
@@ -540,6 +548,40 @@ export class Site extends Phaser.Scene {
         .setInteractive();
       sign.on("pointerdown", () => openBoard(house.items, house.title.slice(0, 60), true));
       lot.box.add(sign);
+      lot.box.add(
+        this.add
+          .image(mid * TILE_PX - 4, 0, "letterbox", 0)
+          .setOrigin(0.5, 1)
+          .setScale(0.7),
+      );
+      const kerb = W * TILE_PX - 26;
+      const prop = seed % 3;
+      if (prop === 0) {
+        const car = this.add
+          .image(kerb, 4, "car", 0)
+          .setOrigin(0.5, 1)
+          .setScale(0.5)
+          .setTint(CAR_COLOURS[(seed >> 2) % CAR_COLOURS.length]!);
+        const glint = this.add
+          .text(kerb - 14, -12, "✦", { fontSize: "10px", color: "#fff" })
+          .setOrigin(0.5)
+          .setAlpha(0);
+        this.tweens.add({
+          targets: glint,
+          alpha: 1,
+          duration: 250,
+          yoyo: true,
+          repeat: -1,
+          repeatDelay: 2500 + (seed % 7) * 400,
+        });
+        lot.box.add([car, glint]);
+      } else
+        lot.box.add(
+          this.add
+            .image(kerb, 0, "tiles", prop === 1 ? TILE.tree : TILE.bush)
+            .setOrigin(0.5, 1)
+            .setScale(prop === 1 ? 2 : 2.2),
+        );
     }
     lot.box.add(
       this.add

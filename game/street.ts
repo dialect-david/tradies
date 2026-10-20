@@ -12,6 +12,7 @@ export type House = {
   total: number;
   items: Item[];
   sold: boolean;
+  no?: number;
 };
 
 export const HOUSE_W = 3;
@@ -71,6 +72,7 @@ export function layoutStreet(epics: Epic[], items: Item[]): Street {
       total: e.total,
       items: homes.get(e.id) ?? [],
       sold: isSold,
+      ...(isSold ? { no: sold } : {}),
     };
   });
   const shed: House = {
