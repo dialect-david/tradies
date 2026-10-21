@@ -72,3 +72,19 @@ describe("demo fixture", () => {
     expect(done.some((i) => i.closedAt! < new Date(now.getTime() - 14 * 86_400_000))).toBe(true);
   });
 });
+
+describe("demo source", () => {
+  it("claim shows in_progress, close lands in closedSince", async () => {
+    const { demoSource } = await import("../server/demo.js");
+    const s = demoSource();
+    const ready = (await s.items()).find((i) => i.status === "open" && i.parent && !i.blocked)!;
+    await s.actions.claim.run(ready.id, {});
+    expect((await s.items()).find((i) => i.id === ready.id)?.status).toBe("in_progress");
+    await s.actions.close.run(ready.id, { text: "shipped" });
+    const since = new Date(Date.now() - 3_600_000);
+    expect((await s.closedSince(since)).map((i) => i.id)).toContain(ready.id);
+    expect(await s.show(ready.id)).toContain("shipped");
+    const id = await s.actions.create.run("", { text: "new job" });
+    expect((await s.items()).some((i) => i.id === id)).toBe(true);
+  });
+});
