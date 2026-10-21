@@ -51,9 +51,9 @@ describe("demo fixture", () => {
     expect(c.worst).toBeDefined();
   });
 
-  it("has inspectors on the road and rain", () => {
+  it("has inspectors on the road, no rain", () => {
     expect(c.inspectors.map((i) => i.status).sort()).toEqual(["approved", "draft", "review", "review"]);
-    expect(c.rain).toBe(true);
+    expect(c.rain).toBe(false);
     expect(prs.every((p) => p.url && p.id.startsWith("#"))).toBe(true);
   });
 
