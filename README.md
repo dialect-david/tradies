@@ -55,7 +55,7 @@ Opens http://localhost:5173. State lives in `bd` and `gh` only; the site refresh
 | ON THE TOOLS board                         | in_progress beads; click a row for the card                                                                                                                                                           |
 | boom gate down, tradies queued behind it   | waiting on the foreman: `needs-*` label, or blocked and assigned to you; click the gate for the list; arm lifts when nobody is waiting                                                                |
 | tradies sitting on the esky, empties       | stale beads, 7 to 30 days untouched                                                                                                                                                                   |
-| jobs sign                                  | ready beads; claim, or "pin it" to create one                                                                                                                                                         |
+| jobs sign                                  | ready beads; "pin it" under by hand to create one                                                                                                                                                     |
 | pallets, tradies arms crossed              | blocked, waiting on materials                                                                                                                                                                         |
 | rolled plans on the shed wall              | click for the dependency map (mermaid, click a node for its card, copy the text for your docs); deferred beads behind a button there                                                                  |
 | Kelpie on a root blocker                   | HUD says "closing X frees N": the bead whose closure unblocks the most others                                                                                                                         |
@@ -72,7 +72,7 @@ Opens http://localhost:5173. State lives in `bd` and `gh` only; the site refresh
 
 ## Controls
 
-Card: claim / note / close / merge, copy id, copy a Claude Code prompt, waits-on / blocks links. Every board has a find box: id, title, labels, close reason. Briefing: copy as markdown. Drag, wheel or arrow keys to pan.
+Card: copy a Claude Code prompt (work or plan), copy id, waits-on / blocks links; claim / note / close / merge fold under "by hand". Every board has a find box: id, title, labels, close reason. Briefing: copy as markdown. Drag, wheel or arrow keys to pan.
 
 ## OpenSpec mode
 

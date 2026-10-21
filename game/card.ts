@@ -64,6 +64,16 @@ export function toast(msg: string) {
 
 const BY_HAND = "tradies.byHand";
 let byHandOpen = !!localStorage.getItem(BY_HAND);
+const byHand = (inner: string) =>
+  inner
+    ? `<details class="by-hand"${byHandOpen ? " open" : ""}><summary>by hand</summary>${inner}</details>`
+    : "";
+function wireByHand(root: HTMLElement) {
+  root.querySelector<HTMLDetailsElement>("details.by-hand")?.addEventListener("toggle", (e) => {
+    byHandOpen = (e.target as HTMLDetailsElement).open;
+    localStorage.setItem(BY_HAND, byHandOpen ? "1" : "");
+  });
+}
 let cardSeq = 0;
 export async function openCard(item: Item) {
   const seq = ++cardSeq;
@@ -79,20 +89,16 @@ export async function openCard(item: Item) {
   const hands = ["claim", "note", "close"].filter((a) => can.has(a));
   const beadActions = `
     <div class="row hand-over"><button class="primary" data-prompt="work">copy prompt</button><button data-prompt="plan">plan</button></div>
-    ${
+    ${byHand(
       hands.length
-        ? `<details class="by-hand"${byHandOpen ? " open" : ""}><summary>by hand</summary>
-      ${can.has("note") || can.has("close") ? `<input data-text placeholder="note or close reason" />` : ""}
-      <div class="row">${button("claim", "claim")}${button("note", "note")}${button("close", "close bead")}</div></details>`
-        : ""
-    }`;
+        ? `${can.has("note") || can.has("close") ? `<input data-text placeholder="note or close reason" />` : ""}
+      <div class="row">${button("claim", "claim")}${button("note", "note")}${button("close", "close bead")}</div>`
+        : "",
+    )}`;
   const prActions = `<div class="row">${button("merge", "merge")}</div>`;
   card.innerHTML = `<h3>${idChip(item.id)} ${esc(item.title)}</h3>${depLines(item)}<pre>${esc(detail)}</pre>${item.kind === "bead" ? beadActions : prActions}`;
   wireCopy(card);
-  card.querySelector<HTMLDetailsElement>("details.by-hand")?.addEventListener("toggle", (e) => {
-    byHandOpen = (e.target as HTMLDetailsElement).open;
-    localStorage.setItem(BY_HAND, byHandOpen ? "1" : "");
-  });
+  wireByHand(card);
   for (const a of card.querySelectorAll<HTMLElement>("[data-open]"))
     a.addEventListener("click", () => {
       const next = onSite.find((i) => i.id === a.dataset.open);
@@ -142,24 +148,27 @@ export function closeCard() {
 const esc = (s: string) =>
   s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
-export function openBoard(ready: Item[], title = "job board", claimable = true) {
+export function openBoard(ready: Item[], title = "job board", pinnable = true) {
   closeCard();
-  claimable &&= can.has("claim");
-  const creatable = can.has("create");
+  pinnable &&= can.has("create");
   board.classList.add("open");
   document.body.classList.add("board-open");
   const chits = ready
     .map(
       (i) =>
-        `<div class="chit p${i.priority}" data-id="${esc(i.id)}" data-text="${esc(`${i.id} ${i.title} ${i.labels.join(" ")} ${i.closeReason ?? ""}`.toLowerCase())}"><b>P${i.priority}</b> <span class="trade">${esc(i.trade)} · ${ageDays(i)}d</span> <span class="title">${esc(i.title)}</span>${i.closeReason ? `<div class="why">${esc(i.closeReason.slice(0, 120))}</div>` : ""}<div class="id">${idChip(i.id)}</div>${claimable ? `<button data-claim="${esc(i.id)}">claim</button>` : ""}</div>`,
+        `<div class="chit p${i.priority}" data-id="${esc(i.id)}" data-text="${esc(`${i.id} ${i.title} ${i.labels.join(" ")} ${i.closeReason ?? ""}`.toLowerCase())}"><b>P${i.priority}</b> <span class="trade">${esc(i.trade)} · ${ageDays(i)}d</span> <span class="title">${esc(i.title)}</span>${i.closeReason ? `<div class="why">${esc(i.closeReason.slice(0, 120))}</div>` : ""}<div class="id">${idChip(i.id)}</div></div>`,
     )
     .join("");
   board.innerHTML = `
     <div class="head"><h3>${esc(title)} · ${ready.length}</h3><input class="filter" placeholder="find…" autocomplete="off" /></div>
-    <form class="new" ${creatable ? "" : "hidden"}><input name="title" placeholder="new job…" autocomplete="off" />
+    ${byHand(
+      pinnable
+        ? `<form class="new"><input name="title" placeholder="new job…" autocomplete="off" />
       <select name="priority"><option>2</option><option>0</option><option>1</option><option>3</option><option>4</option></select>
       <select name="kind"><option>task</option><option>bug</option><option>feature</option><option>chore</option></select>
-      <button>pin it</button></form>
+      <button>pin it</button></form>`
+        : "",
+    )}
     <div class="chits">${chits || "<i>nobody here.</i>"}</div>`;
   const filter = board.querySelector<HTMLInputElement>("input.filter")!;
   filter.addEventListener("input", () => {
@@ -173,7 +182,8 @@ export function openBoard(ready: Item[], title = "job board", claimable = true) 
     board.querySelector("h3")!.textContent = `${title} · ${q ? `${shown} of ` : ""}${ready.length}`;
   });
   filter.focus();
-  board.querySelector<HTMLFormElement>("form.new")!.addEventListener("submit", async (e) => {
+  wireByHand(board);
+  board.querySelector<HTMLFormElement>("form.new")?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const f = new FormData(e.target as HTMLFormElement);
     const title = String(f.get("title") ?? "").trim();
@@ -187,16 +197,6 @@ export function openBoard(ready: Item[], title = "job board", claimable = true) 
       toast(`strewth: ${(err as Error).message}`);
     }
   });
-  for (const b of board.querySelectorAll<HTMLButtonElement>("[data-claim]"))
-    b.addEventListener("click", async (e) => {
-      e.stopPropagation();
-      try {
-        toast(await act("claim", b.dataset.claim!));
-        closeBoard();
-      } catch (err) {
-        toast(`strewth: ${(err as Error).message}`);
-      }
-    });
   wireCopy(board);
   for (const c of board.querySelectorAll<HTMLElement>(".chit"))
     c.addEventListener("click", () => {
