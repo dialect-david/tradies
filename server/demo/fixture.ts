@@ -38,24 +38,32 @@ export function fixture(now = new Date()): Fixture {
   ) => closed({ id, title, parent, days, why, ...o });
 
   const items: Item[] = [
-    // --- menu & ordering: mid build, one tradie on it, cones from the last review
+    // --- menu & ordering: mid build, ella on modifiers, a cone from the last review
     epic("demo-1", "Menu & ordering"),
-    done("demo-1", "demo-10", "Menu data model", 12, "shipped"),
-    done("demo-1", "demo-11", "Category tabs", 10, "shipped"),
-    done("demo-1", "demo-12", "Item card with photo", 9, "shipped"),
-    done("demo-1", "demo-13", "Cart drawer", 6, "shipped, see #41"),
-    done("demo-1", "demo-14", "Dietary filter chips", 0, "merged this morning", { closedAt: ago(0, 3) }),
-    kid("demo-1", "demo-15", "Modifiers: milk, size, extras", {
+    done(
+      "demo-1",
+      "demo-10",
+      "Model menu, categories and items",
+      12,
+      "schema in, seeded from the chalkboard",
+    ),
+    done("demo-1", "demo-11", "Render category tabs", 10, "swipes on mobile"),
+    done("demo-1", "demo-12", "Show item card with photo", 9, "Priya shot all 38 items"),
+    done("demo-1", "demo-13", "Add cart drawer", 6, "slides up, see #41"),
+    done("demo-1", "demo-14", "Filter menu by dietary tag", 0, "merged this morning, vegan chips work", {
+      closedAt: ago(0, 3),
+    }),
+    kid("demo-1", "demo-15", "Pick milk, size and extras", {
       status: "in_progress",
       assignee: "ella",
       owner: "ella",
       updatedAt: ago(0, 5),
       trade: "feature",
     }),
-    kid("demo-1", "demo-16", "Out-of-stock badge", { priority: 3 }),
-    kid("demo-1", "demo-17", "Reorder last order", { trade: "feature" }),
-    kid("demo-1", "demo-18", "Allergen info sheet", { labels: ["today"] }),
-    kid("demo-1", "demo-19", "Cart total rounds .005 the wrong way", {
+    kid("demo-1", "demo-16", "Badge sold-out items", { priority: 3 }),
+    kid("demo-1", "demo-17", "Reorder my usual in one tap", { trade: "feature" }),
+    kid("demo-1", "demo-18", "Link allergen sheet from item card", { labels: ["today"] }),
+    kid("demo-1", "demo-19", "Round cart total half-up, not banker's", {
       trade: "bug",
       priority: 1,
       labels: ["hs"],
@@ -63,60 +71,76 @@ export function fixture(now = new Date()): Fixture {
     }),
     kid("demo-1", "demo-1a", "Search menu by name", { priority: 3 }),
 
-    // --- payments: early, everything waits on the provider decision
+    // --- payments: early, the whole chain waits on the provider decision
     epic("demo-2", "Payments"),
-    done("demo-2", "demo-20", "Spike: Stripe vs Square fees", 4, "Square cheaper under 50k/mo", {
+    done("demo-2", "demo-20", "Compare Stripe and Square fees", 4, "Square cheaper under 50k a month", {
       trade: "spike",
     }),
-    kid("demo-2", "demo-21", "Pick payment provider", { trade: "decision", priority: 1, updatedAt: ago(3) }),
-    kid("demo-2", "demo-22", "Card checkout form", { blocked: true, waitsOn: ["demo-21"], trade: "feature" }),
-    kid("demo-2", "demo-23", "Apple Pay / Google Pay", {
+    kid("demo-2", "demo-21", "Decide payment provider", {
+      trade: "decision",
+      priority: 1,
+      updatedAt: ago(3),
+    }),
+    kid("demo-2", "demo-22", "Build card checkout form", {
       blocked: true,
       waitsOn: ["demo-21"],
       trade: "feature",
     }),
-    kid("demo-2", "demo-24", "Refund flow", { blocked: true, waitsOn: ["demo-22"] }),
-    kid("demo-2", "demo-25", "Receipts by email", { blocked: true, waitsOn: ["demo-22"], priority: 3 }),
-    kid("demo-2", "demo-26", "PCI checklist", {
+    kid("demo-2", "demo-23", "Add Apple Pay and Google Pay", {
+      blocked: true,
+      waitsOn: ["demo-21"],
+      trade: "feature",
+    }),
+    kid("demo-2", "demo-24", "Refund an order from the till", { blocked: true, waitsOn: ["demo-22"] }),
+    kid("demo-2", "demo-25", "Email receipt after payment", {
+      blocked: true,
+      waitsOn: ["demo-22"],
+      priority: 3,
+    }),
+    kid("demo-2", "demo-26", "Fill in PCI self-assessment", {
       trade: "chore",
       labels: ["needs-review"],
       updatedAt: ago(2),
     }),
-    kid("demo-2", "demo-27", "Tips at checkout", { priority: 3 }),
-    kid("demo-2", "demo-28", "Split the bill", { status: "deferred", updatedAt: ago(5) }),
+    kid("demo-2", "demo-27", "Show tip line on the receipt", {
+      blocked: true,
+      waitsOn: ["demo-25"],
+      priority: 3,
+    }),
+    kid("demo-2", "demo-28", "Split the bill between cards", { status: "deferred", updatedAt: ago(5) }),
 
-    // --- kitchen display: nearly done, someone fell asleep on the last ticket
+    // --- kitchen display: nearly done, sam fell asleep on the sleepy tablet
     epic("demo-3", "Kitchen display"),
-    done("demo-3", "demo-30", "Ticket queue view", 14, "shipped"),
-    done("demo-3", "demo-31", "Bump bar keys", 13, "shipped"),
-    done("demo-3", "demo-32", "Order timer colours", 11, "shipped"),
-    done("demo-3", "demo-33", "Sound on new order", 8, "shipped"),
-    done("demo-3", "demo-34", "Recall bumped ticket", 7, "shipped"),
-    done("demo-3", "demo-35", "Print to kitchen printer", 1, "works on the Epson, Star untested"),
-    kid("demo-3", "demo-36", "Tablet goes to sleep mid-shift", {
+    done("demo-3", "demo-30", "List open tickets oldest first", 14, "up on the old iPad"),
+    done("demo-3", "demo-31", "Bump ticket with keyboard", 13, "space bumps, b brings back"),
+    done("demo-3", "demo-32", "Colour tickets by wait time", 11, "amber at 5, red at 10"),
+    done("demo-3", "demo-33", "Chime on new order", 8, "kitchen asked for quieter, done"),
+    done("demo-3", "demo-34", "Recall a bumped ticket", 7, "last ten, that's plenty"),
+    done("demo-3", "demo-35", "Print ticket to kitchen printer", 1, "works on the Epson, Star untested"),
+    kid("demo-3", "demo-36", "Stop tablet sleeping mid-shift", {
       trade: "bug",
       status: "in_progress",
       assignee: "sam",
       owner: "sam",
       updatedAt: ago(8),
     }),
-    kid("demo-3", "demo-37", "Station filter: bar vs kitchen", { labels: ["today"] }),
+    kid("demo-3", "demo-37", "Filter tickets by station", { labels: ["today"] }),
 
     // --- loyalty: sold, moved across the road
     epic("demo-4", "Loyalty stamps", { status: "closed", closedAt: ago(3), updatedAt: ago(3) }),
-    done("demo-4", "demo-40", "Stamp card model", 20, "shipped"),
-    done("demo-4", "demo-41", "QR stamp at the till", 17, "shipped"),
-    done("demo-4", "demo-42", "Free coffee redemption", 15, "shipped"),
-    done("demo-4", "demo-43", "Stamp history screen", 9, "shipped"),
-    done("demo-4", "demo-44", "Double stamp Tuesdays", 3, "shipped, marketing happy"),
+    done("demo-4", "demo-40", "Model stamp card per customer", 20, "ten stamps, one free"),
+    done("demo-4", "demo-41", "Scan QR stamp at the till", 17, "first stamp was Marg's flat white"),
+    done("demo-4", "demo-42", "Redeem free coffee", 15, "first free coffee claimed day one"),
+    done("demo-4", "demo-43", "Show stamp history", 9, "shipped"),
+    done("demo-4", "demo-44", "Double stamps on Tuesdays", 3, "Tuesdays up 30 percent, marketing happy"),
 
-    // --- admin with a nested reports epic
+    // --- admin, with reports nested inside
     epic("demo-5", "Admin dashboard"),
-    done("demo-5", "demo-50", "Staff login", 18, "shipped"),
-    done("demo-5", "demo-51", "Edit menu prices", 16, "shipped"),
-    kid("demo-5", "demo-52", "Opening hours editor", { trade: "feature" }),
-    kid("demo-5", "demo-53", "Bulk 86 items", { priority: 3 }),
-    kid("demo-5", "demo-54", "Role: barista can't see takings", {
+    done("demo-5", "demo-50", "Log in staff with a PIN", 18, "four digits, locks after five goes"),
+    done("demo-5", "demo-51", "Edit menu prices inline", 16, "shipped, no more redeploy for a price"),
+    kid("demo-5", "demo-52", "Edit opening hours", { trade: "feature" }),
+    kid("demo-5", "demo-53", "86 several items at once", { priority: 3 }),
+    kid("demo-5", "demo-54", "Hide takings from barista role", {
       trade: "bug",
       blocked: true,
       waitsOn: ["demo-50"],
@@ -125,12 +149,12 @@ export function fixture(now = new Date()): Fixture {
       priority: 1,
     }),
     epic("demo-6", "Reports", { parent: "demo-5" }),
-    done("demo-6", "demo-60", "Daily takings", 5, "shipped"),
-    kid("demo-6", "demo-61", "Best sellers by hour", { trade: "feature" }),
-    kid("demo-6", "demo-62", "Export CSV", { priority: 3 }),
-    kid("demo-6", "demo-63", "Wastage report", { status: "deferred", updatedAt: ago(9) }),
+    done("demo-6", "demo-60", "Show daily takings", 5, "matches the till to the cent"),
+    kid("demo-6", "demo-61", "Chart best sellers by hour", { trade: "feature" }),
+    kid("demo-6", "demo-62", "Export takings as CSV", { priority: 3 }),
+    kid("demo-6", "demo-63", "Report wastage by item", { status: "deferred", updatedAt: ago(9) }),
 
-    // --- the shed: no house
+    // --- the shed: odd jobs with no house
     bead({
       id: "demo-70",
       title: "Upgrade to Node 24",
@@ -138,54 +162,89 @@ export function fixture(now = new Date()): Fixture {
       labels: ["today"],
       updatedAt: ago(1),
     }),
-    bead({ id: "demo-71", title: "Flaky checkout e2e test", trade: "bug", updatedAt: ago(10) }),
+    bead({
+      id: "demo-71",
+      title: "Fix flaky checkout e2e, fails on CI only",
+      trade: "bug",
+      updatedAt: ago(10),
+    }),
     bead({
       id: "demo-72",
-      title: "Rotate the staging API key",
+      title: "Rotate staging API key, waiting on ops",
       trade: "chore",
       updatedAt: ago(12),
       priority: 3,
     }),
-    bead({ id: "demo-73", title: "Dark mode", trade: "feature", updatedAt: ago(35), priority: 4 }),
+    bead({
+      id: "demo-73",
+      title: "Add dark mode, nobody asked",
+      trade: "feature",
+      updatedAt: ago(35),
+      priority: 4,
+    }),
     bead({
       id: "demo-74",
-      title: "Old onboarding copy still mentions beta",
+      title: "Drop 'beta' from onboarding copy",
       updatedAt: ago(41),
       priority: 4,
     }),
     bead({
       id: "demo-75",
-      title: "Secrets committed in scripts/seed.sh",
+      title: "Remove secrets from scripts/seed.sh",
       trade: "bug",
       priority: 0,
       labels: ["hs"],
     }),
-    bead({ id: "demo-76", title: "Logo favicon", priority: 4 }),
-    bead({ id: "demo-77", title: "README screenshots", trade: "chore", priority: 3 }),
-    closed({ id: "demo-78", title: "Set up CI", days: 21, why: "green on main", trade: "chore" }),
+    bead({ id: "demo-76", title: "Draw a favicon", priority: 4 }),
+    bead({ id: "demo-77", title: "Refresh README screenshots", trade: "chore", priority: 3 }),
     closed({ id: "demo-79", title: "Pick a name", days: 25, why: "brew it is", trade: "decision" }),
-    closed({ id: "demo-7a", title: "Domain and DNS", days: 24, why: "brew.cafe live", trade: "chore" }),
-    closed({ id: "demo-7b", title: "Error tracking", days: 19, why: "sentry wired", trade: "chore" }),
     closed({
-      id: "demo-7c",
-      title: "Typo on the thanks page",
-      days: 0,
-      why: "fixed",
+      id: "demo-7a",
+      title: "Register domain and DNS",
+      days: 24,
+      why: "brew.cafe live",
+      trade: "chore",
+    }),
+    closed({
+      id: "demo-78",
+      title: "Set up CI",
+      days: 21,
+      why: "green on main, first commit",
+      trade: "chore",
+    }),
+    closed({
+      id: "demo-7b",
+      title: "Wire error tracking",
+      days: 19,
+      why: "sentry caught one already",
+      trade: "chore",
+    }),
+    closed({ id: "demo-7f", title: "Stand up staging", days: 15, why: "staging.brew.cafe up" }),
+    closed({ id: "demo-7g", title: "Define design tokens", days: 13, why: "in figma and css" }),
+    closed({ id: "demo-7h", title: "Add analytics events", days: 11, why: "plausible, no cookie banner" }),
+    closed({
+      id: "demo-7e",
+      title: "Speed up menu load on 3G",
+      days: 2,
+      why: "images webp, 4s to 1s",
       trade: "bug",
-      closedAt: ago(0, 1),
     }),
     closed({
       id: "demo-7d",
       title: "Lint on commit",
       days: 0,
-      why: "husky in",
+      why: "husky in, no more prettier commits",
       trade: "chore",
       closedAt: ago(0, 6),
     }),
-    closed({ id: "demo-7e", title: "Slow menu load on 3G", days: 2, why: "images now webp", trade: "bug" }),
-    closed({ id: "demo-7f", title: "Staging env", days: 15, why: "up" }),
-    closed({ id: "demo-7g", title: "Design tokens", days: 13, why: "in figma and css" }),
-    closed({ id: "demo-7h", title: "Analytics events", days: 11, why: "plausible, no cookies" }),
+    closed({
+      id: "demo-7c",
+      title: "Fix typo on the thanks page",
+      days: 0,
+      why: "'recieved' no more",
+      trade: "bug",
+      closedAt: ago(0, 1),
+    }),
   ];
 
   const pr = (o: Over & { status: string; blocked?: boolean; ci?: string; priority: number }): Item => {
@@ -203,18 +262,25 @@ export function fixture(now = new Date()): Fixture {
     };
   };
   const prs: Item[] = [
-    pr({ id: "#41", title: "Cart drawer", status: "approved", priority: 2, ci: "pass" }),
-    pr({ id: "#42", title: "Modifiers WIP", status: "draft", priority: 2, owner: "ella", ci: "pending" }),
+    pr({ id: "#41", title: "Add cart drawer (demo-13)", status: "approved", priority: 2, ci: "pass" }),
+    pr({
+      id: "#42",
+      title: "Pick milk, size and extras (demo-15)",
+      status: "draft",
+      priority: 2,
+      owner: "ella",
+      ci: "pending",
+    }),
     pr({
       id: "#43",
-      title: "Kitchen printer support",
+      title: "Print ticket to kitchen printer (demo-35)",
       status: "review",
       priority: 0,
       blocked: true,
       ci: "fail",
       owner: "sam",
     }),
-    pr({ id: "#44", title: "Bump vite", status: "review", priority: 1, owner: "dependabot" }),
+    pr({ id: "#44", title: "Bump vite to 8.3", status: "review", priority: 1, owner: "dependabot" }),
   ];
 
   return { items, prs, foreman: FOREMAN };
