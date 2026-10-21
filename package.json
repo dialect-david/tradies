@@ -1,8 +1,23 @@
 {
-  "name": "tradies",
+  "name": "@dialect-david/tradies",
   "version": "0.1.0",
-  "private": true,
+  "description": "Your beads issues and GitHub pull requests as a construction site",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dialect-david/tradies.git"
+  },
   "type": "module",
+  "bin": {
+    "tradies": "bin/tradies.mjs"
+  },
+  "files": [
+    "bin",
+    "game",
+    "server",
+    "config.json",
+    "vite.config.ts",
+    "tsconfig.json"
+  ],
   "scripts": {
     "start": "vite",
     "test": "vitest run",
@@ -11,17 +26,14 @@
     "check:all": "yarn test && yarn check:types && prettier --check ."
   },
   "dependencies": {
-    "phaser": "^4.2.1"
+    "phaser": "^4.2.1",
+    "vite": "^8.3.2"
   },
   "devDependencies": {
     "@types/node": "^24",
     "prettier": "^3",
     "tsx": "^4",
     "typescript": "^5",
-    "vite": "^8.3.2",
     "vitest": "^3"
-  },
-  "bin": {
-    "tradies": "bin/tradies.mjs"
   }
 }
