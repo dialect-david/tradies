@@ -1212,7 +1212,7 @@ export class Site extends Phaser.Scene {
   day() {
     if (!this.knockedOff) return;
     this.knockedOff = false;
-    this.hud.querySelector("#knockoff")!.textContent = "beers";
+    this.hud.querySelector("#knockoff")!.textContent = "knock-off";
     toast("new day. kettle's on.");
     if (this.current.today.length) openBoard(this.current.today, "today", false);
     this.cameras.main.pan(this.scale.width / 2, this.scale.height / 2, 1500, Phaser.Math.Easing.Sine.InOut);
