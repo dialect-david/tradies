@@ -62,6 +62,8 @@ export function toast(msg: string) {
   toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2500);
 }
 
+const BY_HAND = "tradies.byHand";
+let byHandOpen = !!localStorage.getItem(BY_HAND);
 let cardSeq = 0;
 export async function openCard(item: Item) {
   const seq = ++cardSeq;
@@ -74,13 +76,23 @@ export async function openCard(item: Item) {
     detail = `couldn't load: ${(e as Error).message}`;
   }
   if (seq !== cardSeq) return;
+  const hands = ["claim", "note", "close"].filter((a) => can.has(a));
   const beadActions = `
-    <div class="row">${button("claim", "claim")}<button data-prompt="work">copy prompt</button><button data-prompt="plan">copy plan prompt</button></div>
-    ${can.has("note") || can.has("close") ? `<input data-text placeholder="note or close reason" />` : ""}
-    <div class="row">${button("note", "note")}${button("close", "close bead")}</div>`;
+    <div class="row hand-over"><button class="primary" data-prompt="work">copy prompt</button><button data-prompt="plan">plan</button></div>
+    ${
+      hands.length
+        ? `<details class="by-hand"${byHandOpen ? " open" : ""}><summary>by hand</summary>
+      ${can.has("note") || can.has("close") ? `<input data-text placeholder="note or close reason" />` : ""}
+      <div class="row">${button("claim", "claim")}${button("note", "note")}${button("close", "close bead")}</div></details>`
+        : ""
+    }`;
   const prActions = `<div class="row">${button("merge", "merge")}</div>`;
   card.innerHTML = `<h3>${idChip(item.id)} ${esc(item.title)}</h3>${depLines(item)}<pre>${esc(detail)}</pre>${item.kind === "bead" ? beadActions : prActions}`;
   wireCopy(card);
+  card.querySelector<HTMLDetailsElement>("details.by-hand")?.addEventListener("toggle", (e) => {
+    byHandOpen = (e.target as HTMLDetailsElement).open;
+    localStorage.setItem(BY_HAND, byHandOpen ? "1" : "");
+  });
   for (const a of card.querySelectorAll<HTMLElement>("[data-open]"))
     a.addEventListener("click", () => {
       const next = onSite.find((i) => i.id === a.dataset.open);
