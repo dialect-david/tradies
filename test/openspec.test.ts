@@ -12,6 +12,7 @@ import {
 } from "../server/openspec.js";
 
 const root = path.join(import.meta.dirname, "fixtures", "openspec");
+const byName = async (name: string) => (await readChanges(root, meta)).find((c) => c.name === name)!;
 const meta = async (dirs: string[]) =>
   new Map(dirs.map((d) => [d, { updatedAt: new Date("2026-10-01T00:00:00Z"), owner: "dave" }]));
 
@@ -27,11 +28,12 @@ describe("openspec", () => {
     const c = await readChanges(root, meta);
     expect(c.map((x) => [x.name, x.title, x.tasks.length, x.closedAt])).toEqual([
       ["add-login", "Add login", 3, undefined],
+      ["just-made", "Just made", 0, undefined],
       ["remove-legacy", "Remove legacy", 1, undefined],
       ["old-thing", "Old thing", 1, new Date(2026, 8, 1)],
     ]);
-    expect(c[0].owner).toBe("dave");
-    expect(c[1].owner).toBe("sam");
+    expect(c.find((x) => x.name === "add-login")!.owner).toBe("dave");
+    expect(c.find((x) => x.name === "remove-legacy")!.owner).toBe("sam");
   });
   it("one git log gives every change its last commit; stat fallback for the rest", async () => {
     const changes = path.join(root, "changes");
@@ -43,7 +45,7 @@ describe("openspec", () => {
     expect(m.get(ghost)).toEqual({ updatedAt: new Date(0) });
   });
   it("a change is a house, a checkbox a chit", async () => {
-    const [login, , old] = await readChanges(root, meta);
+    const [login, old] = await Promise.all([byName("add-login"), byName("old-thing")]);
     const items = toItems(login);
     expect(items.map((i) => [i.id, i.trade, i.status, i.parent])).toEqual([
       ["add-login", "epic", "in_progress", undefined],
@@ -82,7 +84,7 @@ describe("openspec", () => {
     expect(parseFront("---\npriority: 99\n---")).toEqual({ priority: 4 });
   });
   it("frontmatter drives priority, labels, and blocked against active changes", async () => {
-    const [, legacy] = await readChanges(root, meta);
+    const legacy = await byName("remove-legacy");
     const [epic, kid] = toItems(legacy, new Set(["add-login"]));
     expect([epic.priority, epic.labels, epic.waitsOn, epic.blocked, epic.owner]).toEqual([
       1,

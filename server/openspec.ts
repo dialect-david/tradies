@@ -134,9 +134,10 @@ export async function readChanges(root = ROOT, metaOf: MetaOf = (d) => gitMeta(d
     const proposal = await text(path.join(dir, "proposal.md"));
     const front = parseFront(proposal);
     const m = meta.get(dir) ?? { updatedAt: new Date(0) };
+    const heading = (md: string) => /^#\s+(.+)$/m.exec(md)?.[1].trim();
     return {
       name,
-      title: /^#\s+(.+)$/m.exec(proposal)?.[1].trim() ?? name,
+      title: heading(proposal) ?? heading(await text(path.join(dir, "README.md"))) ?? name,
       dir,
       closedAt,
       tasks: parseTasks(await text(path.join(dir, "tasks.md"))),
