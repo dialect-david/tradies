@@ -2,6 +2,16 @@
 
 Your [beads](https://github.com/gastownhall/beads) issues and GitHub pull requests as a construction site. We're building a house.
 
+![the demo site](docs/demo.png)
+
+## Try it
+
+No beads, no gh, nothing saved: a made-up cafe app with every feature lit. Claim a job from the sign, watch the tradie walk to its house, close it and the tinnie flies.
+
+```sh
+npx @stottula/tradies --demo
+```
+
 ## Requirements
 
 - Node 24 (yarn or npm)
