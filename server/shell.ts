@@ -3,7 +3,7 @@ import { promisify } from "node:util";
 
 const run = promisify(execFile);
 
-export const site = process.env.INIT_CWD ?? process.cwd();
+export const site = process.env.TRADIES_SITE ?? process.env.INIT_CWD ?? process.cwd();
 
 export async function sh(cmd: string, args: string[]): Promise<string> {
   try {

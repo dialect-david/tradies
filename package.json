@@ -20,5 +20,8 @@
     "typescript": "^5",
     "vite": "^8.3.2",
     "vitest": "^3"
+  },
+  "bin": {
+    "tradies": "bin/tradies.mjs"
   }
 }
