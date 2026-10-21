@@ -1,6 +1,6 @@
 import { appendFile, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { sh, site } from "./shell.js";
+import { json, sh, site } from "./shell.js";
 import { userName } from "./git.js";
 import type { Item } from "./model.js";
 import { houses, type Phase } from "./houses.js";
@@ -357,6 +357,47 @@ export function tick(text: string, n: number): string {
   return lines.join("\n");
 }
 
+type Requirement = { name: string; scenarios?: { name: string }[] };
+type Delta = { spec: string; operation: string; requirement?: Requirement; requirements?: Requirement[] };
+
+/** `openspec show --json --deltas-only` as lines: `ADDED auth: Email login` then its scenarios. */
+export function renderDeltas(deltas: Delta[]): string {
+  return deltas
+    .flatMap((d) => {
+      const reqs = d.requirements?.length ? d.requirements : d.requirement ? [d.requirement] : [];
+      return reqs.flatMap((r) => [
+        `${d.operation} ${d.spec}: ${r.name}`,
+        ...(r.scenarios ?? []).map((s) => `  · ${s.name}`),
+      ]);
+    })
+    .join("\n");
+}
+
+/** The change's spec delta files, concatenated, when the CLI can't be asked. */
+export async function specFiles(dir: string): Promise<string> {
+  const caps = await dirs(path.join(dir, "specs"));
+  const parts = await Promise.all(
+    caps.map(async (cap) => {
+      const body = await text(path.join(dir, "specs", cap, "spec.md"));
+      return body ? `## ${cap}\n${body.trim()}` : "";
+    }),
+  );
+  return parts.filter(Boolean).join("\n\n");
+}
+
+async function delta(c: Change): Promise<string> {
+  if (!c.closedAt) {
+    try {
+      const out = await json<{ deltas: Delta[] }>("openspec", ["show", c.name, "--json", "--deltas-only"]);
+      const lines = renderDeltas(out.deltas ?? []);
+      if (lines) return lines;
+    } catch {
+      /* no cli, or not an openspec root */
+    }
+  }
+  return specFiles(c.dir);
+}
+
 async function change(id: string): Promise<Change> {
   const name = id.split("#")[0];
   const c = (await readChanges()).find((x) => x.name === name);
@@ -389,7 +430,14 @@ export const openspec: Source = {
   closedRecent: async (limit = 200) => byClosed(archived(await all())).slice(0, limit),
   show: async (id) => {
     const c = await change(id);
-    return [await text(path.join(c.dir, "proposal.md")), await text(path.join(c.dir, "tasks.md"))].join("\n");
+    const specs = await delta(c);
+    return [
+      specs && `spec delta\n${specs}`,
+      await text(path.join(c.dir, "proposal.md")),
+      await text(path.join(c.dir, "tasks.md")),
+    ]
+      .filter(Boolean)
+      .join("\n\n");
   },
   actor: userName,
   actions: {

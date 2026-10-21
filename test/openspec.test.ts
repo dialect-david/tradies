@@ -10,7 +10,9 @@ import {
   parseTasks,
   phase,
   readChanges,
+  renderDeltas,
   setOwner,
+  specFiles,
   tick,
   tickKey,
   tickedSince,
@@ -145,6 +147,22 @@ describe("openspec", () => {
       Date,
     );
     expect(real.has(tickKey(file, "1.1 session table"))).toBe(false);
+  });
+  it("spec delta: cli json as one line per requirement, else the delta files", async () => {
+    expect(
+      renderDeltas([
+        {
+          spec: "auth",
+          operation: "ADDED",
+          requirement: { name: "Email login", scenarios: [{ name: "valid credentials" }] },
+        },
+        { spec: "cart", operation: "MODIFIED", requirements: [{ name: "Totals" }, { name: "Rounding" }] },
+        { spec: "x", operation: "REMOVED" },
+      ]),
+    ).toBe("ADDED auth: Email login\n  · valid credentials\nMODIFIED cart: Totals\nMODIFIED cart: Rounding");
+    const login = await byName("add-login");
+    expect(await specFiles(login.dir)).toMatch(/^## auth\n## ADDED Requirements/);
+    expect(await specFiles((await byName("just-made")).dir)).toBe("");
   });
   it("archive dates are local midnight", () => {
     const d = localDate("2026-09-01");
