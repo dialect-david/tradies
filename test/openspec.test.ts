@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import path from "node:path";
 import {
+  dependsOn,
   gitMeta,
   kebab,
+  openQuestions,
   localDate,
   parseFront,
   parseTasks,
@@ -79,6 +81,24 @@ describe("openspec", () => {
       phase({ ...by["add-login"], tasks: by["add-login"].tasks.map((t) => ({ ...t, done: true })) }),
     ).toBe("fitout");
     expect(phase(by["old-thing"])).toBe("done");
+  });
+  it("proposal body: open questions queue at the gate, depends on blocks; frontmatter wins", async () => {
+    expect(openQuestions("# T\n## Open Questions\n- [ ] a\n- [x] b\n- [ ] c\n## Next\n- [ ] d")).toBe(2);
+    expect(openQuestions("# T\n- [ ] a")).toBe(0);
+    expect(dependsOn("Depends on: a, `b` ,c\n")).toEqual(["a", "b", "c"]);
+    expect(dependsOn("- depends on: x")).toEqual(["x"]);
+    expect(dependsOn("nothing")).toEqual([]);
+    const login = await byName("add-login");
+    expect([login.questions, login.dependsOn]).toEqual([1, ["remove-legacy", "old-thing"]]);
+    const [epic] = toItems(login, new Set(["remove-legacy"]), { needs: "needs-" });
+    expect([epic.labels, epic.waitsOn, epic.blocked]).toEqual([
+      ["needs-questions"],
+      ["remove-legacy", "old-thing"],
+      true,
+    ]);
+    expect(toItems(login)[0].labels).toEqual([]);
+    const legacy = await byName("remove-legacy");
+    expect(toItems(legacy, new Set(), { needs: "needs-" })[0].labels).toEqual(["needs-signoff"]);
   });
   it("archive dates are local midnight", () => {
     const d = localDate("2026-09-01");

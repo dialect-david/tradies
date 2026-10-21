@@ -5,6 +5,7 @@ import { userName } from "./git.js";
 import type { Item } from "./model.js";
 import { houses, type Phase } from "./houses.js";
 import type { Source } from "./source.js";
+import { loadConfig } from "./config.js";
 
 export type Task = { text: string; done: boolean; line: number };
 export type Meta = { updatedAt: Date; owner?: string };
@@ -18,6 +19,10 @@ export type Change = Meta & {
   tasks: Task[];
   front: Front;
   has: Artifacts;
+  /** Unticked boxes under a `## Open questions` heading in proposal.md. */
+  questions: number;
+  /** Names from a `depends on: a, b` line in proposal.md. */
+  dependsOn: string[];
 };
 
 export const ROOT = path.join(site, "openspec");
@@ -59,6 +64,21 @@ export function parseFront(text: string): Front {
     }
   }
   return out;
+}
+
+export function openQuestions(proposal: string): number {
+  const m = /^##\s+open questions\s*$([\s\S]*?)(?=^##\s|(?![\s\S]))/im.exec(proposal);
+  return m ? parseTasks(m[1]).filter((t) => !t.done).length : 0;
+}
+
+export function dependsOn(proposal: string): string[] {
+  const m = /^\s*(?:[-*]\s+)?depends on:\s*(.+)$/im.exec(proposal);
+  return m
+    ? m[1]
+        .split(",")
+        .map((x) => x.trim().replace(/^`|`$/g, ""))
+        .filter(Boolean)
+    : [];
 }
 
 export function localDate(ymd: string): Date {
@@ -155,6 +175,8 @@ export async function readChanges(root = ROOT, metaOf: MetaOf = (d) => gitMeta(d
     };
     return {
       has,
+      questions: openQuestions(proposal),
+      dependsOn: dependsOn(proposal),
       name,
       title: heading(proposal) ?? heading(await text(path.join(dir, "README.md"))) ?? name,
       dir,
@@ -178,8 +200,13 @@ export function phase(c: Change): Phase {
   return c.has.proposal ? "slab" : "site";
 }
 
+export type Derive = {
+  /** Label prefix that queues at the gate, e.g. `needs-`. */
+  needs?: string;
+};
+
 /** active = names of changes not yet archived; a change waiting on one of them is blocked. */
-export function toItems(c: Change, active = new Set<string>()): Item[] {
+export function toItems(c: Change, active = new Set<string>(), opts: Derive = {}): Item[] {
   const base = {
     kind: "bead" as const,
     priority: c.front.priority ?? 2,
@@ -191,7 +218,10 @@ export function toItems(c: Change, active = new Set<string>()): Item[] {
   };
   const ticked = c.tasks.filter((t) => t.done).length;
   const status = c.closedAt ? "closed" : ticked ? "in_progress" : "open";
-  const waitsOn = c.front.blocks ?? [];
+  const waitsOn = c.front.blocks ?? c.dependsOn;
+  const labels = c.front.labels ?? [];
+  if (c.questions && opts.needs && !labels.some((l) => l.startsWith(opts.needs!)))
+    labels.push(`${opts.needs}questions`);
   const epic: Item = {
     ...base,
     id: c.name,
@@ -201,7 +231,7 @@ export function toItems(c: Change, active = new Set<string>()): Item[] {
     closedAt: c.closedAt,
     waitsOn,
     blocked: !c.closedAt && waitsOn.some((n) => active.has(n)),
-    labels: c.front.labels ?? [],
+    labels,
   };
   const kids = c.tasks.map((t, i): Item => ({
     ...base,
@@ -219,7 +249,8 @@ export function toItems(c: Change, active = new Set<string>()): Item[] {
 async function all(changes?: Change[]): Promise<Item[]> {
   changes ??= await readChanges();
   const active = new Set(changes.filter((c) => !c.closedAt).map((c) => c.name));
-  return changes.flatMap((c) => toItems(c, active));
+  const opts: Derive = { needs: loadConfig().foremanLabels[0] };
+  return changes.flatMap((c) => toItems(c, active, opts));
 }
 const isOpen = (i: Item) => i.status !== "closed";
 const archived = (items: Item[]) => items.filter((i) => i.closedAt);
