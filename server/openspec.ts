@@ -221,10 +221,50 @@ export function phase(c: Change): Phase {
 export type Derive = {
   /** Label prefix that queues at the gate, e.g. `needs-`. */
   needs?: string;
+  /** When each box was ticked, keyed by tasks.md path + newline + task text. */
+  ticks?: Map<string, Date>;
   /** Checked-out git branch; one named after the change puts it in progress. */
   branch?: string;
   actor?: string;
 };
+
+export const tickKey = (file: string, text: string) => `${file}\n${text}`;
+
+/** Boxes that went `[ ]` to `[x]` in commits since `since`; newest tick wins. */
+export async function tickedSince(since: Date, root = ROOT): Promise<Map<string, Date>> {
+  const out = new Map<string, Date>();
+  try {
+    const log = await sh("git", [
+      "log",
+      "-p",
+      `--since=${since.toISOString()}`,
+      "--format=%aI%x1f",
+      "--no-renames",
+      "--",
+      path.join(root, "changes", "*", "tasks.md"),
+    ]);
+    let when: Date | undefined;
+    let file = "";
+    let gone = new Set<string>();
+    for (const line of log.split("\n")) {
+      if (line.endsWith("\x1f")) when = new Date(line.slice(0, -1));
+      else if (line.startsWith("+++ b/")) {
+        file = path.resolve(site, line.slice(6));
+        gone = new Set();
+      } else if (line.startsWith("-")) {
+        const m = TASK.exec(line.slice(1));
+        if (m && m[1] === " ") gone.add(m[2].trim());
+      } else if (line.startsWith("+")) {
+        const m = TASK.exec(line.slice(1));
+        const key = m && tickKey(file, m[2].trim());
+        if (m && m[1] !== " " && gone.has(m[2].trim()) && when && !out.has(key!)) out.set(key!, when);
+      }
+    }
+  } catch {
+    /* not a git repo */
+  }
+  return out;
+}
 
 export const onBranch = (c: Change, branch?: string) =>
   !!branch && (branch === c.name || branch.endsWith(`/${c.name}`));
@@ -277,13 +317,14 @@ export function toItems(c: Change, active = new Set<string>(), opts: Derive = {}
     parent: c.name,
     labels: TAG.exec(t.text)?.slice(1) ?? [],
     status: c.closedAt || t.done ? "closed" : "open",
-    closedAt: c.closedAt,
+    closedAt:
+      c.closedAt ?? (t.done ? opts.ticks?.get(tickKey(path.join(c.dir, "tasks.md"), t.text)) : undefined),
     closeReason: c.closeReason,
   }));
   return [epic, ...kids];
 }
 
-async function all(changes?: Change[]): Promise<Item[]> {
+async function all(changes?: Change[], extra: Derive = {}): Promise<Item[]> {
   changes ??= await readChanges();
   const active = new Set(changes.filter((c) => !c.closedAt).map((c) => c.name));
   const [branch, actor] = await Promise.all([
@@ -293,7 +334,7 @@ async function all(changes?: Change[]): Promise<Item[]> {
     ),
     userName(),
   ]);
-  const opts: Derive = { needs: loadConfig().foremanLabels[0], branch, actor };
+  const opts: Derive = { needs: loadConfig().foremanLabels[0], branch, actor, ...extra };
   return changes.flatMap((c) => toItems(c, active, opts));
 }
 const isOpen = (i: Item) => i.status !== "closed";
@@ -341,7 +382,10 @@ export const openspec: Source = {
     return houses(await all(changes), cfg, (id) => phases.get(id));
   },
   closedCount: async () => archived(await all()).length,
-  closedSince: async (since) => byClosed(archived(await all()).filter((i) => i.closedAt! >= since)),
+  closedSince: async (since) =>
+    byClosed(
+      archived(await all(undefined, { ticks: await tickedSince(since) })).filter((i) => i.closedAt! >= since),
+    ),
   closedRecent: async (limit = 200) => byClosed(archived(await all())).slice(0, limit),
   show: async (id) => {
     const c = await change(id);

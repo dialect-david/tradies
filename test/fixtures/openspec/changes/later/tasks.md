@@ -1,1 +1,1 @@
-- [ ] wire it
+- [x] wire it

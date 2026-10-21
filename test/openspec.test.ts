@@ -12,6 +12,8 @@ import {
   readChanges,
   setOwner,
   tick,
+  tickKey,
+  tickedSince,
   toItems,
 } from "../server/openspec.js";
 
@@ -33,6 +35,7 @@ describe("openspec", () => {
     expect(c.map((x) => [x.name, x.title, x.tasks.length, x.closedAt])).toEqual([
       ["add-login", "Add login", 3, undefined],
       ["just-made", "Just made", 0, undefined],
+      ["later", "Later", 1, undefined],
       ["remove-legacy", "Remove legacy", 1, undefined],
       ["old-thing", "Old thing", 1, new Date(2026, 8, 1)],
     ]);
@@ -127,6 +130,21 @@ describe("openspec", () => {
     const [onIt] = toItems(fresh, new Set(), { branch: "feat/just-made", actor: "kim" });
     expect([onIt.status, onIt.owner]).toEqual(["in_progress", "kim"]);
     expect(toItems(fresh, new Set(), { branch: "just-made-2" })[0].status).toBe("open");
+  });
+  it("a box ticked in a commit since the date is closed then; untouched ticks have no date", async () => {
+    const login = await byName("add-login");
+    const file = path.join(login.dir, "tasks.md");
+    const when = new Date("2026-10-20T09:00:00Z");
+    const ticks = new Map([[tickKey(file, "1.1 session table"), when]]);
+    const [, done, open] = toItems(login, new Set(), { ticks });
+    expect(done.closedAt).toEqual(when);
+    expect(open.closedAt).toBeUndefined();
+    expect(toItems(login)[1].closedAt).toBeUndefined();
+    const real = await tickedSince(new Date("2026-10-01"), root);
+    expect(real.get(tickKey(path.join(root, "changes", "later", "tasks.md"), "wire it"))).toBeInstanceOf(
+      Date,
+    );
+    expect(real.has(tickKey(file, "1.1 session table"))).toBe(false);
   });
   it("archive dates are local midnight", () => {
     const d = localDate("2026-09-01");
