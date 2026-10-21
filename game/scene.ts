@@ -101,7 +101,7 @@ type Lot = {
 export class Site extends Phaser.Scene {
   private actors = new Map<string, Actor>();
   private lots = new Map<string, Lot>();
-  private closeSign!: Phaser.GameObjects.Text;
+  private closeSign!: Phaser.GameObjects.Container;
   private board!: Phaser.GameObjects.Container;
   private boardRows: Item[] = [];
   private boardTop = 0;
@@ -206,8 +206,12 @@ export class Site extends Phaser.Scene {
       .setOrigin(0, 0)
       .setTileScale(TS);
     this.closeSign = this.add
-      .text(0, gy - 4, "settled close", { fontSize: "9px", color: "#fff", backgroundColor: "#0008" })
-      .setOrigin(1, 1)
+      .container(0, gy, [
+        this.add.image(0, 0, "tiles", TILE.sign).setOrigin(0.5, 1).setScale(HS),
+        this.add
+          .text(0, -22 * HS, "No Callbacks\nCrescent", { fontSize: "9px", color: "#fff", align: "center" })
+          .setOrigin(0.5, 1),
+      ])
       .setVisible(false);
     this.roadY = gy + T * TS * 2 + 8;
     this.road = this.add
@@ -259,7 +263,13 @@ export class Site extends Phaser.Scene {
       .setDepth(3)
       .setScrollFactor(0);
     this.add
-      .text(w * 0.5, 28, "ON THE TOOLS", { color: "#f1c40f", fontSize: "18px", fontStyle: "bold" })
+      .text(w * 0.5, 28, "ON THE TOOLS", {
+        color: "#f1c40f",
+        fontSize: "18px",
+        fontStyle: "bold",
+        backgroundColor: "#111c",
+        padding: { x: 10, y: 3 },
+      })
       .setOrigin(0.5)
       .setDepth(3)
       .setScrollFactor(0);
@@ -440,7 +450,7 @@ export class Site extends Phaser.Scene {
     this.plans.setX(yard + 670);
     this.beers.setX(yard + 760);
     this.ute.setX(yard + 1030);
-    this.closeSign.setX(yard + YARD_W + CLOSE_GAP - 16).setVisible(houses.some((h) => h.sold));
+    this.closeSign.setX(yard + YARD_W + CLOSE_GAP / 2).setVisible(houses.some((h) => h.sold));
     this.worldW = Math.max(w, width);
     this.grass.setSize(this.worldW, this.grass.height);
     this.dirt.setSize(this.worldW, this.dirt.height);
