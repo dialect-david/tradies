@@ -12,38 +12,27 @@ No beads, no gh, nothing saved: a made-up cafe app with every feature lit. Claim
 npx @stottula/tradies --demo
 ```
 
-## Requirements
-
-- Node 24 (yarn or npm)
-- `bd` (beads) on your PATH
-- `gh` (GitHub CLI), logged in, for pull requests. Optional: without it the road is just empty.
-
-## Install
-
-```sh
-git clone https://github.com/dialect-david/tradies.git
-cd tradies
-yarn   # or: npm install
-```
-
 ## Run
 
-From the workspace whose beads you want to see:
+From the repo you want to see:
 
 ```sh
-tradies                  # after: npm i -g @stottula/tradies
-tradies /path/to/repo    # or name the workspace
+npx @stottula/tradies              # this repo
+npx @stottula/tradies /path/to/repo
 ```
 
-From a clone instead:
+Opens http://localhost:5173. The site refreshes when the tracker changes.
 
-```sh
-yarn --cwd /path/to/tradies start
-# or
-npm --prefix /path/to/tradies start
-```
+Tired of typing it: `npm i -g @stottula/tradies`, then `tradies`. Hacking on tradies itself: clone, `yarn`, `yarn start` from the repo you want to see.
 
-Opens http://localhost:5173. State lives in `bd` and `gh` only; the site refreshes when `.beads/` changes.
+## Requirements
+
+- Node 24
+- One tracker in the repo:
+  - [beads](https://github.com/gastownhall/beads): `.beads/` present and `bd` on your PATH. Everything on the legend.
+  - [OpenSpec](https://github.com/Fission-AI/OpenSpec): `openspec/` present. Changes are houses, tasks are chits; see [OpenSpec mode](#openspec-mode) for what stays quiet.
+  - Both present: beads wins; `"source": "openspec"` in `.tradies.json` flips it.
+- `gh` (GitHub CLI), logged in, for pull requests. Optional: without it the road is just empty.
 
 ## Legend
 
@@ -76,21 +65,30 @@ Card: copy a Claude Code prompt (work or plan), copy id, waits-on / blocks links
 
 ## For agents
 
-Agents work through `bd` and `gh`; tradies only draws it. `tradies prime` prints the one page of conventions it reads (houses, `needs-*`, `today`, `hs`, close reasons, `refs/reviewed`). Feed it at session start, next to `bd prime`, in `.claude/settings.json`:
+Agents work through `bd` and `gh`; tradies only draws it. It ships one page of the conventions it reads (houses, `needs-*`, `today`, `hs`, close reasons, `refs/reviewed`). Get it in front of your agent one of three ways:
 
-```json
-{
-  "hooks": {
-    "SessionStart": [{ "matcher": "", "hooks": [{ "type": "command", "command": "tradies prime" }] }]
-  }
-}
-```
+1. Nothing. Every prompt copied from a card ends with "run `tradies prime` first", so the agent fetches it when it starts a job.
+2. Every session. Add it to `.claude/settings.json` next to `bd prime`:
 
-Or once, as a skill the agent can call by name (`/tradies`):
+   ```json
+   {
+     "hooks": {
+       "SessionStart": [
+         { "matcher": "", "hooks": [{ "type": "command", "command": "npx @stottula/tradies prime" }] }
+       ]
+     }
+   }
+   ```
 
-```sh
-tradies init    # writes .claude/skills/tradies/SKILL.md and .agents/skills/tradies/SKILL.md
-```
+3. As a skill. Once, in the repo:
+
+   ```sh
+   npx @stottula/tradies init    # writes .claude/skills/tradies/SKILL.md and .agents/skills/tradies/SKILL.md
+   ```
+
+   The agent then has `/tradies`. Rerun with `--force` after upgrading.
+
+To read it yourself: `npx @stottula/tradies prime`.
 
 ## OpenSpec mode
 

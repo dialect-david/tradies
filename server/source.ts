@@ -8,7 +8,7 @@ export type Action = { run: (id: string, a: Record<string, string>) => Promise<s
 /** Templates for the copied Claude prompts; {id} and {title} are filled by the card. */
 export type Prompts = { work: string; plan: string };
 
-export const CONVENTIONS = "Conventions: run `tradies prime` first.";
+export const CONVENTIONS = "Conventions: run `npx @stottula/tradies prime` first.";
 
 /** {change} is the id before any `#` task suffix. */
 export function fillPrompt(template: string, item: { id: string; title: string }): string {
