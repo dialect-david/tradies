@@ -14,8 +14,10 @@ const vite = path.join(
 );
 const site = path.resolve(process.argv[2] ?? process.cwd());
 
-spawn(process.execPath, [vite], {
+const child = spawn(process.execPath, [vite], {
   cwd: pkg,
   stdio: "inherit",
   env: { ...process.env, TRADIES_SITE: site },
-}).on("exit", (code) => process.exit(code ?? 0));
+});
+for (const sig of ["SIGINT", "SIGTERM", "SIGHUP"]) process.on(sig, () => child.kill(sig));
+child.on("exit", (code, sig) => process.exit(code ?? (sig ? 1 : 0)));
