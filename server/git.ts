@@ -28,3 +28,11 @@ export async function review(fallbackCommits: number): Promise<Review | undefine
     return undefined;
   }
 }
+
+export async function userName(): Promise<string | undefined> {
+  try {
+    return (await sh("git", ["config", "user.name"])).trim() || process.env.USER;
+  } catch {
+    return process.env.USER;
+  }
+}

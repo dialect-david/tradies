@@ -2,6 +2,7 @@ import path from "node:path";
 import { json, sh, site } from "./shell.js";
 import { fromBead, type Bead, type Item } from "./model.js";
 import { houses } from "./houses.js";
+import { userName } from "./git.js";
 import type { Source } from "./source.js";
 
 const list = (status: string, extra: string[] = []) =>
@@ -11,12 +12,7 @@ const byClosed = (items: Item[]) =>
   items.sort((a, b) => (b.closedAt?.getTime() ?? 0) - (a.closedAt?.getTime() ?? 0));
 
 export async function actor(): Promise<string | undefined> {
-  if (process.env.BEADS_ACTOR) return process.env.BEADS_ACTOR;
-  try {
-    return (await sh("git", ["config", "user.name"])).trim() || process.env.USER;
-  } catch {
-    return process.env.USER;
-  }
+  return process.env.BEADS_ACTOR || userName();
 }
 
 export const beads: Source = {
