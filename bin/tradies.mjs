@@ -23,23 +23,37 @@ function config() {
   return cfg;
 }
 
+function source(cfg) {
+  const has = {
+    beads: existsSync(path.join(site, ".beads")),
+    openspec: existsSync(path.join(site, "openspec")),
+  };
+  if (cfg.source && has[cfg.source]) return cfg.source;
+  return has.openspec && !has.beads ? "openspec" : "beads";
+}
+
 function doc() {
   const cfg = config();
   const word = (k, v) =>
     Array.isArray(v) ? v.map((x) => `\`${x}${k === "foremanLabels" ? "*" : ""}\``).join(" / ") : String(v);
-  return readFileSync(path.join(pkg, "docs", "agents.md"), "utf8").replace(/\{(\w+)\}/g, (m, k) =>
+  const file = source(cfg) === "openspec" ? "agents-openspec.md" : "agents.md";
+  const text = readFileSync(path.join(pkg, "docs", file), "utf8").replace(/\{(\w+)\}/g, (m, k) =>
     k in cfg ? word(k, cfg[k]) : m,
   );
+  return { text, source: source(cfg) };
 }
 
 if (cmd === "prime") {
-  process.stdout.write(doc());
+  process.stdout.write(doc().text);
   process.exit(0);
 }
 
 if (cmd === "init") {
   const force = args.includes("--force");
-  const skill = `---\nname: tradies\ndescription: How beads and PRs show up on the tradies site; the labels, deps and close reasons it reads\n---\n\n${doc()}`;
+  const { text, source: src } = doc();
+  const what =
+    src === "openspec" ? "OpenSpec changes, tasks and frontmatter" : "beads, labels, deps and close reasons";
+  const skill = `---\nname: tradies\ndescription: How ${what} show up on the tradies site, and what it reads\n---\n\n${text}`;
   for (const dir of [".claude/skills/tradies", ".agents/skills/tradies"]) {
     const file = path.join(process.cwd(), dir, "SKILL.md");
     if (existsSync(file) && !force) {

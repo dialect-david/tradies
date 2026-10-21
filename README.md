@@ -60,7 +60,7 @@ Opens http://localhost:5173, refreshes when the tracker changes.
 
 ## Using with agents
 
-tradies is read-only. Agents use `bd` and `gh` as normal.
+tradies is read-only. Agents use `bd` (or `openspec`) and `gh` as normal. `prime` and `init` pick the doc for the tracker in the repo.
 
 `npx @stottula/tradies prime` prints the conventions tradies draws (labels, houses, close reasons). Give it to your agent:
 
