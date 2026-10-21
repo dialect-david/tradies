@@ -57,6 +57,34 @@ Opens http://localhost:5173. State lives in `bd` and `gh` only; the site refresh
 
 Card: claim / note / close / merge, copy id, copy a Claude Code prompt, waits-on / blocks links. Every board has a find box: id, title, labels, close reason. Briefing: copy as markdown. Drag, wheel or arrow keys to pan.
 
+## OpenSpec mode
+
+A workspace with `openspec/` and no `.beads/` is read from [OpenSpec](https://github.com/Fission-AI/OpenSpec) instead (both present: `"source": "openspec"` in config). No `bd` needed; `openspec` on PATH for archive and create.
+
+| On site           | OpenSpec                                                               |
+| ----------------- | ---------------------------------------------------------------------- |
+| house             | `openspec/changes/<name>/`, titled from the `# heading` of proposal.md |
+| chit              | a `- [ ]` line in tasks.md, id `<name>#<n>`                            |
+| stage             | ticked / total boxes; a tick puts the change in progress               |
+| closed, beer wall | `openspec/changes/archive/YYYY-MM-DD-<name>/`, closed on that date     |
+| who, when         | last commit touching the change folder                                 |
+| close             | ticks the box; on the house, `openspec archive <name> -y`              |
+| note              | appends to design.md                                                   |
+| pin it            | `openspec new change <kebab-title>`                                    |
+
+Optional frontmatter at the top of proposal.md fills in what OpenSpec has no word for:
+
+```yaml
+---
+priority: 1
+labels: [needs-signoff, today]
+blocks: [other-change]
+owner: sam
+---
+```
+
+Without it the boom gate, toolbox, cones and Kelpie stay quiet, and there is no claim.
+
 ## Config
 
 Layered, later wins, each file optional. Defaults:
