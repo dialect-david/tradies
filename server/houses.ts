@@ -1,9 +1,24 @@
 import type { Item } from "./model.js";
 import type { Config } from "./defaults.js";
 
-export type HouseStat = { id: string; title: string; status: string; closed: number; total: number };
+export const PHASES = ["site", "slab", "frame", "roof", "lockup", "fitout", "done"] as const;
+export type Phase = (typeof PHASES)[number];
 
-export function houses(all: Item[], cfg: Pick<Config, "houseTypes">): HouseStat[] {
+/** phase: the source's own idea of how built the house is; absent means closed/total decides. */
+export type HouseStat = {
+  id: string;
+  title: string;
+  status: string;
+  closed: number;
+  total: number;
+  phase?: Phase;
+};
+
+export function houses(
+  all: Item[],
+  cfg: Pick<Config, "houseTypes">,
+  phaseOf: (id: string) => Phase | undefined = () => undefined,
+): HouseStat[] {
   const byId = new Map(all.map((i) => [i.id, i]));
   const parent = new Map<string, string>();
   const children = new Map<string, string[]>();
@@ -33,6 +48,7 @@ export function houses(all: Item[], cfg: Pick<Config, "houseTypes">): HouseStat[
         }
       };
       walk(i.id);
-      return { id: i.id, title: i.title, status: i.status, closed, total };
+      const phase = phaseOf(i.id);
+      return { id: i.id, title: i.title, status: i.status, closed, total, ...(phase ? { phase } : {}) };
     });
 }

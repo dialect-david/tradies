@@ -52,6 +52,8 @@ describe("street", () => {
     expect(houses.map((h) => h.sold)).toEqual([true, true, false, false]);
     expect(houses.map((h) => h.no)).toEqual([1, 2, undefined, undefined]);
     expect(shed.x).toBe(STREET_START + 2 * HOUSE_PITCH);
+    const phased = layoutStreet([epic({ id: "p", closed: 0, phase: "roof" })], []);
+    expect(phased.houses[0].stage).toBe("roof");
     expect(yard).toBe(shed.x + 2 * TILE_PX + 40 + YARD_GAP);
     const close = yard + YARD_W + CLOSE_GAP;
     expect(houses.slice(0, 2).map((h) => h.x)).toEqual([close, close + TERRACE_PITCH]);

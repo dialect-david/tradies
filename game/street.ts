@@ -1,7 +1,11 @@
 import type { Item } from "../server/model.js";
+import type { HouseStat } from "../server/houses.js";
 import { stage, type Stage } from "./sprites.js";
 
-export type Epic = { id: string; title: string; status: string; closed: number; total: number };
+export type Epic = HouseStat;
+
+export const stageOf = (e: Epic): Stage =>
+  e.status === "closed" ? "done" : (e.phase ?? stage(e.closed, Math.max(0, e.total - e.closed)));
 
 export type House = {
   id: string;
@@ -52,16 +56,14 @@ export function layoutStreet(epics: Epic[], items: Item[]): Street {
     const db = b.status === "closed" ? 1 : 0;
     return db - da || ratio(b) - ratio(a) || a.id.localeCompare(b.id);
   });
-  const live = sorted.filter(
-    (e) => e.status !== "closed" && stage(e.closed, Math.max(0, e.total - e.closed)) !== "done",
-  );
+  const live = sorted.filter((e) => stageOf(e) !== "done");
   const shedX = STREET_START + live.length * HOUSE_PITCH;
   const yard = shedX + 2 * TILE_PX + 40 + YARD_GAP;
   const closeX = yard + YARD_W + CLOSE_GAP;
   let front = 0;
   let sold = 0;
   const houses = sorted.map((e) => {
-    const st: Stage = e.status === "closed" ? "done" : stage(e.closed, Math.max(0, e.total - e.closed));
+    const st = stageOf(e);
     const isSold = st === "done";
     return {
       id: e.id,
