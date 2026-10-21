@@ -414,10 +414,10 @@ export class Site extends Phaser.Scene {
 
   async refresh() {
     try {
-      const { site, closed, epics, config, review, items } = await fetchItems();
+      const { site, closed, epics, config, review, items, actions } = await fetchItems();
       this.closed = closed;
       this.review = review;
-      setItems(items);
+      setItems(items, actions);
       this.current = cast(items, new Date(), config, new Set(epics.map((e) => e.id)));
       this.siteName = site;
       this.hud.querySelector("#site")!.textContent = `🏗 ${site}`;

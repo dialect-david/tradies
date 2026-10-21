@@ -9,6 +9,7 @@ export type Site = {
   closed: number;
   epics: Epic[];
   config: Config;
+  actions: string[];
   review?: Review;
   items: Item[];
 };

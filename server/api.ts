@@ -67,6 +67,7 @@ export function api(): Plugin {
               site: site.split("/").pop(),
               closed,
               epics,
+              actions: Object.keys(ACTIONS),
               config,
               review: await git.review(config.reviewAfter),
               items: [...items, ...prs],

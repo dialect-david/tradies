@@ -10,7 +10,13 @@ const board = document.getElementById("board")!;
 const toastEl = document.getElementById("toast")!;
 
 let onSite: Item[] = [];
-export const setItems = (items: Item[]) => (onSite = items);
+let can = new Set<string>();
+export const setItems = (items: Item[], actions: string[] = [...can]) => (
+  (onSite = items),
+  (can = new Set(actions))
+);
+const button = (act: string, label: string) =>
+  can.has(act) ? `<button data-act="${act}">${label}</button>` : "";
 
 function depLines(item: Item): string {
   const open = new Map(onSite.map((i) => [i.id, i]));
@@ -69,10 +75,10 @@ export async function openCard(item: Item) {
   }
   if (seq !== cardSeq) return;
   const beadActions = `
-    <div class="row"><button data-act="claim">claim</button><button data-prompt="work">copy prompt</button><button data-prompt="plan">copy plan prompt</button></div>
-    <input data-text placeholder="note or close reason" />
-    <div class="row"><button data-act="note">note</button><button data-act="close">close bead</button></div>`;
-  const prActions = `<div class="row"><button data-act="merge">merge</button></div>`;
+    <div class="row">${button("claim", "claim")}<button data-prompt="work">copy prompt</button><button data-prompt="plan">copy plan prompt</button></div>
+    ${can.has("note") || can.has("close") ? `<input data-text placeholder="note or close reason" />` : ""}
+    <div class="row">${button("note", "note")}${button("close", "close bead")}</div>`;
+  const prActions = `<div class="row">${button("merge", "merge")}</div>`;
   card.innerHTML = `<h3>${idChip(item.id)} ${esc(item.title)}</h3>${depLines(item)}<pre>${esc(detail)}</pre>${item.kind === "bead" ? beadActions : prActions}`;
   wireCopy(card);
   for (const a of card.querySelectorAll<HTMLElement>("[data-open]"))
@@ -126,6 +132,8 @@ const esc = (s: string) =>
 
 export function openBoard(ready: Item[], title = "job board", claimable = true) {
   closeCard();
+  claimable &&= can.has("claim");
+  const creatable = can.has("create");
   board.classList.add("open");
   document.body.classList.add("board-open");
   const chits = ready
@@ -136,7 +144,7 @@ export function openBoard(ready: Item[], title = "job board", claimable = true) 
     .join("");
   board.innerHTML = `
     <div class="head"><h3>${esc(title)} · ${ready.length}</h3><input class="filter" placeholder="find…" autocomplete="off" /></div>
-    <form class="new" ${claimable ? "" : "hidden"}><input name="title" placeholder="new job…" autocomplete="off" />
+    <form class="new" ${creatable ? "" : "hidden"}><input name="title" placeholder="new job…" autocomplete="off" />
       <select name="priority"><option>2</option><option>0</option><option>1</option><option>3</option><option>4</option></select>
       <select name="kind"><option>task</option><option>bug</option><option>feature</option><option>chore</option></select>
       <button>pin it</button></form>
