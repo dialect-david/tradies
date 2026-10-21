@@ -61,30 +61,22 @@ Tired of typing it: `npm i -g @stottula/tradies`, then `tradies`. Hacking on tra
 
 ## Using with agents
 
-Agents work through `bd` and `gh`; tradies only draws it. It ships one page of the conventions it reads (houses, `needs-*`, `today`, `hs`, close reasons, `refs/reviewed`). Get it in front of your agent one of three ways:
+tradies is read-only. Agents use `bd` and `gh` as normal.
 
-1. Nothing. Every prompt copied from a card ends with "run `tradies prime` first", so the agent fetches it when it starts a job.
-2. Every session. Add it to `.claude/settings.json` next to `bd prime`:
+`npx @stottula/tradies prime` prints the conventions tradies draws (labels, houses, close reasons). Give it to your agent:
 
-   ```json
-   {
-     "hooks": {
-       "SessionStart": [
-         { "matcher": "", "hooks": [{ "type": "command", "command": "npx @stottula/tradies prime" }] }
-       ]
-     }
-   }
-   ```
+- Copied prompts already say to run it. Nothing to do.
+- Or hook it into every session, `.claude/settings.json`:
 
-3. As a skill. Once, in the repo:
+  ```json
+  {
+    "hooks": {
+      "SessionStart": [{ "hooks": [{ "type": "command", "command": "npx @stottula/tradies prime" }] }]
+    }
+  }
+  ```
 
-   ```sh
-   npx @stottula/tradies init    # writes .claude/skills/tradies/SKILL.md and .agents/skills/tradies/SKILL.md
-   ```
-
-   The agent then has `/tradies`. Rerun with `--force` after upgrading.
-
-To read it yourself: `npx @stottula/tradies prime`.
+- Or `npx @stottula/tradies init` writes it as a `/tradies` skill.
 
 ## OpenSpec mode
 
