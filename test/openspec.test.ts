@@ -79,6 +79,7 @@ describe("openspec", () => {
     });
     expect(parseFront("# T\n---\npriority: 1\n---")).toEqual({});
     expect(parseFront("---\npriority: high\nlabels:\n---")).toEqual({ labels: [] });
+    expect(parseFront("---\npriority: 99\n---")).toEqual({ priority: 4 });
   });
   it("frontmatter drives priority, labels, and blocked against active changes", async () => {
     const [, legacy] = await readChanges(root, meta);

@@ -40,7 +40,7 @@ export function parseFront(text: string): Front {
     const kv = /^([a-z]+):\s*(.*)$/.exec(raw);
     if (!kv) continue;
     const [, key, value] = kv;
-    if (key === "priority" && /^\d+$/.test(value)) out.priority = Number(value);
+    if (key === "priority" && /^\d+$/.test(value)) out.priority = Math.min(4, Number(value));
     else if (key === "owner" && value) out.owner = value.trim();
     else if ((LIST_KEYS as readonly string[]).includes(key)) {
       const k = key as (typeof LIST_KEYS)[number];
