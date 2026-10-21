@@ -256,5 +256,9 @@ export const openspec: Source = {
       done: "proposed",
     },
   },
+  prompts: {
+    work: "Work on {id}: {title}. Read openspec/changes/{change}/proposal.md, design.md and tasks.md first, tick the boxes in tasks.md as you finish them, and run `openspec archive {change} -y` when all are ticked.",
+    plan: "Give me a plan for {id} ({title}). Read openspec/changes/{change}/proposal.md, design.md and tasks.md first, then propose the approach; don't change anything yet.",
+  },
   watchPath: ROOT,
 };

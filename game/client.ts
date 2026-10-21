@@ -2,6 +2,7 @@ import type { Item } from "../server/model.js";
 
 import type { Epic } from "./street.js";
 import type { Config } from "../server/defaults.js";
+import type { Prompts } from "../server/source.js";
 import type { Review } from "../server/review.js";
 
 export type Site = {
@@ -10,6 +11,7 @@ export type Site = {
   epics: Epic[];
   config: Config;
   actions: string[];
+  prompts: Prompts;
   review?: Review;
   items: Item[];
 };

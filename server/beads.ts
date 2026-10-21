@@ -51,5 +51,9 @@ export const beads: Source = {
       done: "pinned to the board",
     },
   },
+  prompts: {
+    work: "Work on {id}: {title}. Read `bd show {id}` first, claim it with `bd update {id} --claim`, and close it with a reason when done.",
+    plan: "Give me a plan for {id} ({title}). Read `bd show {id}` and its notes first, then propose the approach; don't change anything yet.",
+  },
   watchPath: path.join(site, ".beads"),
 };

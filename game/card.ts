@@ -3,6 +3,7 @@ import { act, show } from "./client.js";
 import { score, type Cast } from "./cast.js";
 import { REVIEW_REF, reviewPrompt, short, type Review } from "../server/review.js";
 import type { Config } from "../server/defaults.js";
+import { fillPrompt, type Prompts } from "../server/source.js";
 import { mermaid } from "../server/deps.js";
 
 const card = document.getElementById("card")!;
@@ -11,9 +12,11 @@ const toastEl = document.getElementById("toast")!;
 
 let onSite: Item[] = [];
 let can = new Set<string>();
-export const setItems = (items: Item[], actions: string[] = [...can]) => (
+let prompts: Prompts = { work: "{id}: {title}", plan: "{id}: {title}" };
+export const setItems = (items: Item[], actions: string[] = [...can], p = prompts) => (
   (onSite = items),
-  (can = new Set(actions))
+  (can = new Set(actions)),
+  (prompts = p)
 );
 const button = (act: string, label: string) =>
   can.has(act) ? `<button data-act="${act}">${label}</button>` : "";
@@ -30,10 +33,7 @@ function depLines(item: Item): string {
 }
 
 export function prompt(item: Item, plan: boolean): string {
-  const lead = plan
-    ? `Give me a plan for ${item.id} (${item.title}). Read \`bd show ${item.id}\` and its notes first, then propose the approach; don't change anything yet.`
-    : `Work on ${item.id}: ${item.title}. Read \`bd show ${item.id}\` first, claim it with \`bd update ${item.id} --claim\`, and close it with a reason when done.`;
-  return lead;
+  return fillPrompt(plan ? prompts.plan : prompts.work, item);
 }
 
 export function copyText(text: string, msg: string) {

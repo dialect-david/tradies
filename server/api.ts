@@ -80,6 +80,7 @@ export function api(): Plugin {
               closed,
               epics,
               actions: Object.keys(ACTIONS),
+              prompts: source.prompts,
               config,
               review: await git.review(config.reviewAfter),
               items: [...items, ...prs],
