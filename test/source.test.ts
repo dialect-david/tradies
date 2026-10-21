@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fillPrompt, pickSource } from "../server/source.js";
+import { CONVENTIONS, fillPrompt, pickSource } from "../server/source.js";
 
 describe("pickSource", () => {
   it("beads by default, openspec only when it is the one present", () => {
@@ -21,12 +21,18 @@ describe("pickSource", () => {
 describe("prompts", () => {
   const item = { id: "add-login#2", title: "wire the form" };
   it("fills id, title and change", () => {
-    expect(fillPrompt("{id} / {title} / {change}", item)).toBe("add-login#2 / wire the form / add-login");
+    expect(fillPrompt("{id} / {title} / {change}", item)).toBe(
+      `add-login#2 / wire the form / add-login ${CONVENTIONS}`,
+    );
   });
-  it("both sources name the item", async () => {
+  it("every source names the item and points at prime", async () => {
     const { beads } = await import("../server/beads.js");
     const { openspec } = await import("../server/openspec.js");
-    for (const s of [beads, openspec])
-      for (const t of [s.prompts.work, s.prompts.plan]) expect(fillPrompt(t, item)).toContain("add-login#2");
+    const { demoSource } = await import("../server/demo.js");
+    for (const s of [beads, openspec, demoSource()])
+      for (const t of [s.prompts.work, s.prompts.plan]) {
+        expect(fillPrompt(t, item)).toContain("add-login#2");
+        expect(fillPrompt(t, item)).toContain("tradies prime");
+      }
   });
 });
