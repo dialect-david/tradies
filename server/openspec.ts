@@ -83,23 +83,57 @@ async function dirs(p: string): Promise<string[]> {
 
 const text = (p: string) => readFile(p, "utf8").catch(() => "");
 
-async function gitMeta(dir: string): Promise<Meta> {
+export type MetaOf = (dirs: string[]) => Promise<Map<string, Meta>>;
+
+/** One `git log` over the changes root; newest commit touching each dir wins. */
+export async function gitMeta(dirs: string[], root = ROOT): Promise<Map<string, Meta>> {
+  const out = new Map<string, Meta>();
   try {
-    const [iso, an] = (await sh("git", ["log", "-1", "--format=%aI%n%an", "--", dir])).trim().split("\n");
-    if (iso) return { updatedAt: new Date(iso), owner: an || undefined };
+    const log = await sh("git", ["log", "--format=%aI%n%an", "--name-only", "--relative", "--", root]);
+    let meta: Meta | undefined;
+    for (const line of log.split("\n")) {
+      if (/^\d{4}-\d{2}-\d{2}T/.test(line)) meta = { updatedAt: new Date(line) };
+      else if (meta && !meta.owner && line) meta.owner = line;
+      else if (meta && line) {
+        const file = path.resolve(site, line);
+        const dir = dirs.find((d) => file.startsWith(d + path.sep));
+        if (dir && !out.has(dir)) out.set(dir, meta);
+      }
+    }
   } catch {
     /* not a git repo */
   }
-  const s = await stat(dir).catch(() => undefined);
-  return { updatedAt: s?.mtime ?? new Date(0) };
+  await Promise.all(
+    dirs
+      .filter((d) => !out.has(d))
+      .map(async (d) =>
+        out.set(d, { updatedAt: (await stat(d).catch(() => undefined))?.mtime ?? new Date(0) }),
+      ),
+  );
+  return out;
 }
 
-export async function readChanges(root = ROOT, meta = gitMeta): Promise<Change[]> {
+export async function readChanges(root = ROOT, metaOf: MetaOf = (d) => gitMeta(d, root)): Promise<Change[]> {
   const changes = path.join(root, "changes");
-  const load = async (name: string, dir: string, closedAt?: Date): Promise<Change> => {
+  const names = (await dirs(changes)).filter((n) => n !== "archive");
+  const old = (await dirs(path.join(changes, "archive"))).flatMap((n) => {
+    const m = ARCHIVE.exec(n);
+    return m ? [{ name: m[2], dir: path.join(changes, "archive", n), closedAt: localDate(m[1]) }] : [];
+  });
+  const live = names.map((n) => ({ name: n, dir: path.join(changes, n), closedAt: undefined }));
+  const meta = await metaOf([...live, ...old].map((c) => c.dir));
+  const load = async ({
+    name,
+    dir,
+    closedAt,
+  }: {
+    name: string;
+    dir: string;
+    closedAt?: Date;
+  }): Promise<Change> => {
     const proposal = await text(path.join(dir, "proposal.md"));
     const front = parseFront(proposal);
-    const m = await meta(dir);
+    const m = meta.get(dir) ?? { updatedAt: new Date(0) };
     return {
       name,
       title: /^#\s+(.+)$/m.exec(proposal)?.[1].trim() ?? name,
@@ -111,14 +145,7 @@ export async function readChanges(root = ROOT, meta = gitMeta): Promise<Change[]
       owner: front.owner ?? m.owner,
     };
   };
-  const active = (await dirs(changes))
-    .filter((n) => n !== "archive")
-    .map((n) => load(n, path.join(changes, n)));
-  const archived = (await dirs(path.join(changes, "archive"))).flatMap((n) => {
-    const m = ARCHIVE.exec(n);
-    return m ? [load(m[2], path.join(changes, "archive", n), localDate(m[1]))] : [];
-  });
-  return Promise.all([...active, ...archived]);
+  return Promise.all([...live, ...old].map(load));
 }
 
 /** active = names of changes not yet archived; a change waiting on one of them is blocked. */

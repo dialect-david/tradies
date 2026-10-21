@@ -1,9 +1,19 @@
 import { describe, expect, it } from "vitest";
 import path from "node:path";
-import { kebab, localDate, parseFront, parseTasks, readChanges, tick, toItems } from "../server/openspec.js";
+import {
+  gitMeta,
+  kebab,
+  localDate,
+  parseFront,
+  parseTasks,
+  readChanges,
+  tick,
+  toItems,
+} from "../server/openspec.js";
 
 const root = path.join(import.meta.dirname, "fixtures", "openspec");
-const meta = async () => ({ updatedAt: new Date("2026-10-01T00:00:00Z"), owner: "dave" });
+const meta = async (dirs: string[]) =>
+  new Map(dirs.map((d) => [d, { updatedAt: new Date("2026-10-01T00:00:00Z"), owner: "dave" }]));
 
 describe("openspec", () => {
   it("parses checkbox lines only", () => {
@@ -22,6 +32,15 @@ describe("openspec", () => {
     ]);
     expect(c[0].owner).toBe("dave");
     expect(c[1].owner).toBe("sam");
+  });
+  it("one git log gives every change its last commit; stat fallback for the rest", async () => {
+    const changes = path.join(root, "changes");
+    const login = path.join(changes, "add-login");
+    const ghost = path.join(changes, "ghost");
+    const m = await gitMeta([login, ghost], root);
+    expect(m.get(login)!.owner).toBeTruthy();
+    expect(m.get(login)!.updatedAt.getTime()).toBeGreaterThan(0);
+    expect(m.get(ghost)).toEqual({ updatedAt: new Date(0) });
   });
   it("a change is a house, a checkbox a chit", async () => {
     const [login, , old] = await readChanges(root, meta);
