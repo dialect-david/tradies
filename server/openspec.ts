@@ -8,11 +8,54 @@ import type { Source } from "./source.js";
 
 export type Task = { text: string; done: boolean; line: number };
 export type Meta = { updatedAt: Date; owner?: string };
-export type Change = Meta & { name: string; title: string; dir: string; closedAt?: Date; tasks: Task[] };
+export type Front = { priority?: number; labels?: string[]; blocks?: string[]; owner?: string };
+export type Change = Meta & {
+  name: string;
+  title: string;
+  dir: string;
+  closedAt?: Date;
+  tasks: Task[];
+  front: Front;
+};
 
 export const ROOT = path.join(site, "openspec");
 const TASK = /^\s*[-*]\s+\[([ xX])\]\s+(.*)$/;
 const ARCHIVE = /^(\d{4}-\d{2}-\d{2})-(.+)$/;
+
+const LIST_KEYS = ["labels", "blocks"] as const;
+
+/** Leading `---` block of proposal.md: `key: value`, `key: [a, b]`, or `key:` then `- a` lines. */
+export function parseFront(text: string): Front {
+  const m = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
+  if (!m) return {};
+  const out: Front = {};
+  let list: string[] | undefined;
+  for (const raw of m[1].split("\n")) {
+    const item = /^\s+-\s+(.+)$/.exec(raw);
+    if (item && list) {
+      list.push(item[1].trim());
+      continue;
+    }
+    list = undefined;
+    const kv = /^([a-z]+):\s*(.*)$/.exec(raw);
+    if (!kv) continue;
+    const [, key, value] = kv;
+    if (key === "priority" && /^\d+$/.test(value)) out.priority = Number(value);
+    else if (key === "owner" && value) out.owner = value.trim();
+    else if ((LIST_KEYS as readonly string[]).includes(key)) {
+      const k = key as (typeof LIST_KEYS)[number];
+      const inline = /^\[(.*)\]$/.exec(value);
+      out[k] = inline
+        ? inline[1]
+            .split(",")
+            .map((x) => x.trim())
+            .filter(Boolean)
+        : [];
+      if (!inline && !value) list = out[k];
+    }
+  }
+  return out;
+}
 
 export function parseTasks(text: string): Task[] {
   return text.split("\n").flatMap((l, line) => {
@@ -50,13 +93,17 @@ export async function readChanges(root = ROOT, meta = gitMeta): Promise<Change[]
   const changes = path.join(root, "changes");
   const load = async (name: string, dir: string, closedAt?: Date): Promise<Change> => {
     const proposal = await text(path.join(dir, "proposal.md"));
+    const front = parseFront(proposal);
+    const m = await meta(dir);
     return {
       name,
       title: /^#\s+(.+)$/m.exec(proposal)?.[1].trim() ?? name,
       dir,
       closedAt,
       tasks: parseTasks(await text(path.join(dir, "tasks.md"))),
-      ...(await meta(dir)),
+      front,
+      ...m,
+      owner: front.owner ?? m.owner,
     };
   };
   const active = (await dirs(changes))
@@ -69,10 +116,11 @@ export async function readChanges(root = ROOT, meta = gitMeta): Promise<Change[]
   return Promise.all([...active, ...archived]);
 }
 
-export function toItems(c: Change): Item[] {
+/** active = names of changes not yet archived; a change waiting on one of them is blocked. */
+export function toItems(c: Change, active = new Set<string>()): Item[] {
   const base = {
     kind: "bead" as const,
-    priority: 2,
+    priority: c.front.priority ?? 2,
     owner: c.owner,
     updatedAt: c.updatedAt,
     blocked: false,
@@ -81,7 +129,18 @@ export function toItems(c: Change): Item[] {
   };
   const ticked = c.tasks.filter((t) => t.done).length;
   const status = c.closedAt ? "closed" : ticked ? "in_progress" : "open";
-  const epic: Item = { ...base, id: c.name, title: c.title, trade: "epic", status, closedAt: c.closedAt };
+  const waitsOn = c.front.blocks ?? [];
+  const epic: Item = {
+    ...base,
+    id: c.name,
+    title: c.title,
+    trade: "epic",
+    status,
+    closedAt: c.closedAt,
+    waitsOn,
+    blocked: !c.closedAt && waitsOn.some((n) => active.has(n)),
+    labels: c.front.labels ?? [],
+  };
   const kids = c.tasks.map((t, i): Item => ({
     ...base,
     id: `${c.name}#${i + 1}`,
@@ -94,7 +153,11 @@ export function toItems(c: Change): Item[] {
   return [epic, ...kids];
 }
 
-const all = async () => (await readChanges()).flatMap(toItems);
+async function all(): Promise<Item[]> {
+  const changes = await readChanges();
+  const active = new Set(changes.filter((c) => !c.closedAt).map((c) => c.name));
+  return changes.flatMap((c) => toItems(c, active));
+}
 const isOpen = (i: Item) => i.status !== "closed";
 const byClosed = (items: Item[]) =>
   items.sort((a, b) => (b.closedAt?.getTime() ?? 0) - (a.closedAt?.getTime() ?? 0));
