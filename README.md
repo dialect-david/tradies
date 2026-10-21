@@ -59,7 +59,7 @@ Tired of typing it: `npm i -g @stottula/tradies`, then `tradies`. Hacking on tra
 | cones at a house                           | open review findings (`hs` label) parented to that epic; unparented ones at the shed; click for the list                                                                                              |
 | new day, toolbox at the gate               | beads labelled `today`: the few picked for you to start on (the backlog stays at the gate); the toolbox or the `today` button reopens it                                                              |
 
-## For agents
+## Using with agents
 
 Agents work through `bd` and `gh`; tradies only draws it. It ships one page of the conventions it reads (houses, `needs-*`, `today`, `hs`, close reasons, `refs/reviewed`). Get it in front of your agent one of three ways:
 
