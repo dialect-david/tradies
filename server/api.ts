@@ -49,8 +49,8 @@ const source = {
 ];
 
 export const ACTIONS: Record<string, Action> = {
-  ...source.actions,
   merge: { run: (id) => gh.merge(id).then(() => id), done: "certified" },
+  ...source.actions,
 };
 
 async function act(a: Record<string, string>): Promise<string> {
@@ -71,7 +71,7 @@ export function api(): Plugin {
             const config = loadConfig(undefined, actor);
             const [items, prs, closed, epics] = await Promise.all([
               source.items(),
-              gh.listPrs(),
+              source.prs?.() ?? gh.listPrs(),
               source.closedCount(),
               source.houses(config),
             ]);
@@ -97,7 +97,7 @@ export function api(): Plugin {
             return send(
               res,
               200,
-              id.startsWith("#") ? await gh.view(id) : await source.show(id),
+              id.startsWith("#") ? await (source.view?.(id) ?? gh.view(id)) : await source.show(id),
               "text/plain",
             );
           }

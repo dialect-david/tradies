@@ -27,6 +27,10 @@ export type Source = {
   actor(): Promise<string | undefined>;
   actions: Record<string, Action>;
   prompts: Prompts;
+  /** Pull requests; absent means gh. */
+  prs?(): Promise<Item[]>;
+  /** Text for a `#n` PR id; absent means gh. */
+  view?(id: string): Promise<string>;
   /** Directory whose changes mean the site should refresh. */
   watchPath?: string;
 };
