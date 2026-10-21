@@ -4,16 +4,16 @@ tradies draws the beads (`bd`) issues and GitHub pull requests of this workspace
 
 ## Houses
 
-- An `epic` or `feature` with children is a house. Parent new work to one (`bd create ... --parent <epic>`); unparented beads sit at the shed.
+- An {houseTypes} with children is a house. Parent new work to one (`bd create ... --parent <epic>`); unparented beads sit at the shed.
 - House stage = closed children / total. Closing children builds it; close the epic itself when it is done.
 
 ## Labels tradies reads
 
 | Label                | On site                                                          |
 | -------------------- | ---------------------------------------------------------------- |
-| `needs-*`            | waiting on the foreman at the boom gate. Use when a human must decide, review or sign off. Remove it when answered. |
-| `today`              | in the toolbox: the few picked to start on today                 |
-| `hs`                 | a hazard cone at its epic: an open review finding. `-t bug -p 1 -l hs --parent <epic>` |
+| {foremanLabels}      | waiting on the foreman at the boom gate. Use when a human must decide, review or sign off. Remove it when answered. |
+| {todayLabels}        | in the toolbox: the few picked to start on today                 |
+| {hazardLabels}       | a hazard cone at its epic: an open review finding. `-t bug -p 1 -l <label> --parent <epic>` |
 
 Blocked and assigned to the foreman also queues at the gate.
 
@@ -24,7 +24,7 @@ Blocked and assigned to the foreman also queues at the gate.
 
 ## Time
 
-- Untouched 7 days: stale, sits on the esky (in progress: asleep). 30 days: gone home in the ute.
+- Untouched {staleDays} days: stale, sits on the esky (in progress: asleep). {goneDays} days: gone home in the ute.
 - Touch what you are on (`bd update <id> --claim`, `bd note <id> "..."`) so it stays on the tools; close or defer what you are not.
 
 ## Closing
@@ -38,7 +38,7 @@ Blocked and assigned to the foreman also queues at the gate.
 
 ## Inspections
 
-- The health & safety officer counts commits since `refs/reviewed`. A review prompt is copied from the site; it files findings as `hs` beads, saves the report as a git note (`--ref=reviewed`) on the reviewed commit and moves `refs/reviewed` there.
+- The health & safety officer counts commits since `refs/reviewed`. A review prompt is copied from the site; it files findings as {hazardLabels} beads, saves the report as a git note (`--ref=reviewed`) on the reviewed commit and moves `refs/reviewed` there.
 
 ## Sources
 
