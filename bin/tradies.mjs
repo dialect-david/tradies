@@ -5,7 +5,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const pkg = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const vite = path.join(path.dirname(createRequire(import.meta.url).resolve("vite")), "..", "..", "bin", "vite.js");
+const vite = path.join(
+  path.dirname(createRequire(import.meta.url).resolve("vite")),
+  "..",
+  "..",
+  "bin",
+  "vite.js",
+);
 const site = path.resolve(process.argv[2] ?? process.cwd());
 
 spawn(process.execPath, [vite], {
