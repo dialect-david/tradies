@@ -8,11 +8,11 @@ import { site } from "./shell.js";
 
 export { DEFAULTS, type Config };
 
-/** Lowest to highest precedence: tool install, workspace, user. */
+/** Lowest to highest precedence: tool install, user, workspace. */
 export const CONFIG_PATHS = [
   path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "config.json"),
-  path.join(site, ".tradies.json"),
   path.join(os.homedir(), ".config", "tradies.json"),
+  path.join(site, ".tradies.json"),
 ];
 
 export function parseConfig(text: string | undefined): Partial<Config> {

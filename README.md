@@ -107,7 +107,7 @@ Without it the boom gate, toolbox, cones and Kelpie stay quiet, and there is no 
 
 ## Config
 
-`.tradies.json` in the repo, `~/.config/tradies.json` for you. Later wins. Defaults:
+`~/.config/tradies.json` for all your repos, `.tradies.json` in a repo to override. Defaults:
 
 ```json
 {

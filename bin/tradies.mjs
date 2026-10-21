@@ -15,8 +15,8 @@ const site = path.resolve(args.find((a) => !a.startsWith("--") && !SUB.has(a)) ?
 function config() {
   const files = [
     path.join(pkg, "config.json"),
-    path.join(site, ".tradies.json"),
     path.join(os.homedir(), ".config", "tradies.json"),
+    path.join(site, ".tradies.json"),
   ];
   const cfg = {};
   for (const f of files) if (existsSync(f)) Object.assign(cfg, JSON.parse(readFileSync(f, "utf8")));
