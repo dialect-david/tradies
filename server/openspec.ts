@@ -153,7 +153,7 @@ export function toItems(c: Change, active = new Set<string>()): Item[] {
     trade: "task",
     parent: c.name,
     status: c.closedAt || t.done ? "closed" : "open",
-    closedAt: c.closedAt ?? (t.done ? c.updatedAt : undefined),
+    closedAt: c.closedAt,
   }));
   return [epic, ...kids];
 }
@@ -164,6 +164,7 @@ async function all(): Promise<Item[]> {
   return changes.flatMap((c) => toItems(c, active));
 }
 const isOpen = (i: Item) => i.status !== "closed";
+const archived = (items: Item[]) => items.filter((i) => i.closedAt);
 const byClosed = (items: Item[]) =>
   items.sort((a, b) => (b.closedAt?.getTime() ?? 0) - (a.closedAt?.getTime() ?? 0));
 
@@ -202,9 +203,9 @@ async function close(id: string): Promise<string> {
 export const openspec: Source = {
   items: async () => (await all()).filter(isOpen),
   houses: async (cfg) => houses(await all(), cfg),
-  closedCount: async () => (await all()).filter((i) => !isOpen(i)).length,
-  closedSince: async (since) => byClosed((await all()).filter((i) => i.closedAt && i.closedAt >= since)),
-  closedRecent: async (limit = 200) => byClosed((await all()).filter((i) => !isOpen(i))).slice(0, limit),
+  closedCount: async () => archived(await all()).length,
+  closedSince: async (since) => byClosed(archived(await all()).filter((i) => i.closedAt! >= since)),
+  closedRecent: async (limit = 200) => byClosed(archived(await all())).slice(0, limit),
   show: async (id) => {
     const c = await change(id);
     return [await text(path.join(c.dir, "proposal.md")), await text(path.join(c.dir, "tasks.md"))].join("\n");

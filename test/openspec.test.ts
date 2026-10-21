@@ -32,7 +32,7 @@ describe("openspec", () => {
       ["add-login#2", "task", "open", "add-login"],
       ["add-login#3", "task", "open", "add-login"],
     ]);
-    expect(items[1].closedAt).toEqual(login.updatedAt);
+    expect(items[1].closedAt).toBeUndefined();
     const archived = toItems(old);
     expect(archived.every((i) => i.status === "closed" && i.closedAt === old.closedAt)).toBe(true);
   });
