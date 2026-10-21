@@ -47,6 +47,19 @@ describe("openspec", () => {
     expect(m.get(login)!.owner).toBeTruthy();
     expect(m.get(login)!.updatedAt.getTime()).toBeGreaterThan(0);
     expect(m.get(ghost)).toEqual({ updatedAt: new Date(0) });
+    const old = path.join(changes, "archive", "2026-09-01-old-thing");
+    expect((await gitMeta([old], root)).get(old)!.added).toMatch(/^openspec source, read side/);
+  });
+  it("an archived change carries the move's commit subject as its close reason", async () => {
+    const old = (
+      await readChanges(
+        root,
+        async (d) => new Map(d.map((x) => [x, { updatedAt: new Date(0), added: "ship it" }])),
+      )
+    ).find((c) => c.name === "old-thing")!;
+    expect(old.closeReason).toBe("ship it");
+    expect(toItems(old).every((i) => i.closeReason === "ship it")).toBe(true);
+    expect((await byName("add-login")).closeReason).toBeUndefined();
   });
   it("a change is a house, a checkbox a chit", async () => {
     const [login, old] = await Promise.all([byName("add-login"), byName("old-thing")]);

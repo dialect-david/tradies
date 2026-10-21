@@ -8,7 +8,8 @@ import type { Source } from "./source.js";
 import { loadConfig } from "./config.js";
 
 export type Task = { text: string; done: boolean; line: number };
-export type Meta = { updatedAt: Date; owner?: string };
+/** added: subject of the oldest commit that put a file in the dir; the archive move, for archived changes. */
+export type Meta = { updatedAt: Date; owner?: string; added?: string };
 export type Front = { priority?: number; labels?: string[]; blocks?: string[]; owner?: string };
 export type Artifacts = { proposal: boolean; design: boolean; specs: boolean };
 export type Change = Meta & {
@@ -16,6 +17,7 @@ export type Change = Meta & {
   title: string;
   dir: string;
   closedAt?: Date;
+  closeReason?: string;
   tasks: Task[];
   front: Front;
   has: Artifacts;
@@ -115,20 +117,35 @@ const text = (p: string) => readFile(p, "utf8").catch(() => "");
 
 export type MetaOf = (dirs: string[]) => Promise<Map<string, Meta>>;
 
-/** One `git log` over the changes root; newest commit touching each dir wins. */
+/** One `git log` over the changes root; newest commit touching each dir wins, oldest add names the move. */
 export async function gitMeta(dirs: string[], root = ROOT): Promise<Map<string, Meta>> {
   const out = new Map<string, Meta>();
   try {
-    const log = await sh("git", ["log", "--format=%aI%n%an", "--name-only", "--relative", "--", root]);
+    const log = await sh("git", [
+      "log",
+      "--format=%aI%x1f%an%x1f%s",
+      "--name-status",
+      "--no-renames",
+      "--relative",
+      "--",
+      root,
+    ]);
     let meta: Meta | undefined;
+    let subject = "";
     for (const line of log.split("\n")) {
-      if (/^\d{4}-\d{2}-\d{2}T/.test(line)) meta = { updatedAt: new Date(line) };
-      else if (meta && !meta.owner && line) meta.owner = line;
-      else if (meta && line) {
-        const file = path.resolve(site, line);
-        const dir = dirs.find((d) => file.startsWith(d + path.sep));
-        if (dir && !out.has(dir)) out.set(dir, meta);
+      const head = /^(\d{4}-\d{2}-\d{2}T[^\x1f]*)\x1f([^\x1f]*)\x1f(.*)$/.exec(line);
+      if (head) {
+        meta = { updatedAt: new Date(head[1]), owner: head[2] || undefined };
+        subject = head[3];
+        continue;
       }
+      const file = /^([A-Z])\d*\t(.+)$/.exec(line);
+      if (!meta || !file) continue;
+      const abs = path.resolve(site, file[2]);
+      const dir = dirs.find((d) => abs.startsWith(d + path.sep));
+      if (!dir) continue;
+      const m = out.get(dir) ?? out.set(dir, meta).get(dir)!;
+      if (file[1] === "A") m.added = subject;
     }
   } catch {
     /* not a git repo */
@@ -181,6 +198,7 @@ export async function readChanges(root = ROOT, metaOf: MetaOf = (d) => gitMeta(d
       title: heading(proposal) ?? heading(await text(path.join(dir, "README.md"))) ?? name,
       dir,
       closedAt,
+      closeReason: closedAt ? m.added : undefined,
       tasks: parseTasks(await text(path.join(dir, "tasks.md"))),
       front,
       ...m,
@@ -246,6 +264,7 @@ export function toItems(c: Change, active = new Set<string>(), opts: Derive = {}
     trade: "epic",
     status,
     closedAt: c.closedAt,
+    closeReason: c.closeReason,
     waitsOn,
     blocked: !c.closedAt && waitsOn.some((n) => active.has(n)),
     labels,
@@ -259,6 +278,7 @@ export function toItems(c: Change, active = new Set<string>(), opts: Derive = {}
     labels: TAG.exec(t.text)?.slice(1) ?? [],
     status: c.closedAt || t.done ? "closed" : "open",
     closedAt: c.closedAt,
+    closeReason: c.closeReason,
   }));
   return [epic, ...kids];
 }
