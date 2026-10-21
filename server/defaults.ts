@@ -1,4 +1,4 @@
-export type SourceName = "beads" | "openspec";
+export type SourceName = "beads" | "openspec" | "demo";
 
 export type Config = {
   /** Which tracker drives the site when both .beads/ and openspec/ exist. */

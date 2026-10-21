@@ -12,6 +12,10 @@ describe("pickSource", () => {
     expect(pickSource({ beads: true, openspec: true }, "openspec")).toBe("openspec");
     expect(pickSource({ beads: true, openspec: false }, "openspec")).toBe("beads");
   });
+  it("demo wins when asked", () => {
+    expect(pickSource({ beads: true, openspec: true, demo: true }, "openspec")).toBe("demo");
+    expect(pickSource({ beads: false, openspec: false }, "demo")).toBe("beads");
+  });
 });
 
 describe("prompts", () => {

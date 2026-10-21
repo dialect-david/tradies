@@ -35,8 +35,12 @@ export type Source = {
   watchPath?: string;
 };
 
-/** .beads/ wins over openspec/ unless config says otherwise. */
-export function pickSource(has: { beads: boolean; openspec: boolean }, prefer?: SourceName): SourceName {
-  if (prefer && has[prefer]) return prefer;
+/** demo when asked; else .beads/ wins over openspec/ unless config says otherwise. */
+export function pickSource(
+  has: { beads: boolean; openspec: boolean; demo?: boolean },
+  prefer?: SourceName,
+): SourceName {
+  if (has.demo) return "demo";
+  if (prefer && prefer !== "demo" && has[prefer]) return prefer;
   return has.openspec && !has.beads ? "openspec" : "beads";
 }

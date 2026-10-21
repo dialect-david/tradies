@@ -1,12 +1,13 @@
 import type { Item } from "../server/model.js";
 
 import type { Epic } from "./street.js";
-import type { Config } from "../server/defaults.js";
+import type { Config, SourceName } from "../server/defaults.js";
 import type { Prompts } from "../server/source.js";
 import type { Review } from "../server/review.js";
 
 export type Site = {
   site: string;
+  source: SourceName;
   closed: number;
   epics: Epic[];
   config: Config;

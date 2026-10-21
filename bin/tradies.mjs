@@ -12,12 +12,14 @@ const vite = path.join(
   "bin",
   "vite.js",
 );
-const site = path.resolve(process.argv[2] ?? process.cwd());
+const args = process.argv.slice(2);
+const demo = args.includes("--demo");
+const site = path.resolve(args.find((a) => !a.startsWith("--")) ?? process.cwd());
 
 const child = spawn(process.execPath, [vite], {
   cwd: pkg,
   stdio: "inherit",
-  env: { ...process.env, TRADIES_SITE: site },
+  env: { ...process.env, TRADIES_SITE: site, ...(demo ? { TRADIES_DEMO: "1" } : {}) },
 });
 for (const sig of ["SIGINT", "SIGTERM", "SIGHUP"]) process.on(sig, () => child.kill(sig));
 child.on("exit", (code, sig) => process.exit(code ?? (sig ? 1 : 0)));

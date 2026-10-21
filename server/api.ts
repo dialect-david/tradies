@@ -2,6 +2,7 @@ import type { Plugin, ViteDevServer } from "vite";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { beads } from "./beads.js";
 import { openspec } from "./openspec.js";
+import { demo } from "./demo.js";
 import { pickSource, type Action } from "./source.js";
 import * as gh from "./gh.js";
 import * as git from "./git.js";
@@ -38,15 +39,15 @@ function sameOrigin(req: IncomingMessage): boolean {
   }
 }
 
-const source = {
-  beads,
-  openspec,
-}[
-  pickSource(
-    { beads: existsSync(path.join(site, ".beads")), openspec: existsSync(path.join(site, "openspec")) },
-    loadConfig().source,
-  )
-];
+const sourceName = pickSource(
+  {
+    beads: existsSync(path.join(site, ".beads")),
+    openspec: existsSync(path.join(site, "openspec")),
+    demo: !!process.env.TRADIES_DEMO,
+  },
+  loadConfig().source,
+);
+const source = { beads, openspec, demo }[sourceName];
 
 export const ACTIONS: Record<string, Action> = {
   merge: { run: (id) => gh.merge(id).then(() => id), done: "certified" },
@@ -76,7 +77,8 @@ export function api(): Plugin {
               source.houses(config),
             ]);
             return send(res, 200, {
-              site: site.split("/").pop(),
+              site: sourceName === "demo" ? "brew" : site.split("/").pop(),
+              source: sourceName,
               closed,
               epics,
               actions: Object.keys(ACTIONS),

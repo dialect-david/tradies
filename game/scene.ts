@@ -424,13 +424,14 @@ export class Site extends Phaser.Scene {
 
   async refresh() {
     try {
-      const { site, closed, epics, config, review, items, actions, prompts } = await fetchItems();
+      const { site, source, closed, epics, config, review, items, actions, prompts } = await fetchItems();
       this.closed = closed;
       this.review = review;
       setItems(items, actions, prompts);
       this.current = cast(items, new Date(), config, new Set(epics.map((e) => e.id)));
       this.siteName = site;
-      this.hud.querySelector("#site")!.textContent = `🏗 ${site}`;
+      this.hud.querySelector("#site")!.textContent =
+        `🏗 ${site}` + (source === "demo" ? " · DEMO · nothing is saved" : "");
       this.street(layoutStreet(epics, items));
       if (!this.onSmoko && !this.knockedOff) this.place(this.current);
     } catch (e) {
