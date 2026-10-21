@@ -1,38 +1,37 @@
 # tradies
 
-Your [beads](https://github.com/gastownhall/beads) issues and GitHub pull requests as a construction site. We're building a house.
+Your [beads](https://github.com/gastownhall/beads) or [OpenSpec](https://github.com/Fission-AI/OpenSpec) work and GitHub pull requests as a construction site. We're building a house.
 
 ![the demo site](https://raw.githubusercontent.com/dialect-david/tradies/main/docs/demo.png)
 
 ## Try it
 
-No beads, no gh, nothing saved: a made-up cafe app with every feature lit. Claim a job from the sign, watch the tradie walk to its house, close it and the tinnie flies.
-
 ```sh
 npx @stottula/tradies --demo
 ```
 
-## Run
+A made-up cafe app with every feature lit. Nothing is saved: claim a job, close it, watch the tinnie fly.
 
-From the repo you want to see:
+## Run
 
 ```sh
 npx @stottula/tradies              # this repo
 npx @stottula/tradies /path/to/repo
 ```
 
-Opens http://localhost:5173. The site refreshes when the tracker changes.
+Opens http://localhost:5173, refreshes when the tracker changes.
 
-Tired of typing it: `npm i -g @stottula/tradies`, then `tradies`. Hacking on tradies itself: clone, `yarn`, `yarn start` from the repo you want to see.
+- Global: `npm i -g @stottula/tradies`, then `tradies`.
+- From a clone: `yarn`, then `yarn start` in the repo you want to see.
 
 ## Requirements
 
 - Node 24
-- One tracker in the repo:
-  - [beads](https://github.com/gastownhall/beads): `.beads/` present and `bd` on your PATH. Everything on the legend.
-  - [OpenSpec](https://github.com/Fission-AI/OpenSpec): `openspec/` present. Changes are houses, tasks are chits; see [OpenSpec mode](#openspec-mode) for what stays quiet.
-  - Both present: beads wins; `"source": "openspec"` in `.tradies.json` flips it.
-- `gh` (GitHub CLI), logged in, for pull requests. Optional: without it the road is just empty.
+- A tracker in the repo, one of:
+  - beads: `.beads/` and `bd` on PATH
+  - OpenSpec: `openspec/`. Fewer features, see [OpenSpec mode](#openspec-mode)
+  - Both: beads wins unless `.tradies.json` says `"source": "openspec"`
+- `gh` logged in, for pull requests. Optional.
 
 ## Legend
 
@@ -80,7 +79,7 @@ tradies is read-only. Agents use `bd` and `gh` as normal.
 
 ## OpenSpec mode
 
-A workspace with `openspec/` and no `.beads/` is read from [OpenSpec](https://github.com/Fission-AI/OpenSpec) instead (both present: `"source": "openspec"` in config). No `bd` needed; `openspec` on PATH for archive and create.
+No `bd` needed. `openspec` on PATH only for close and new.
 
 | On site           | OpenSpec                                                               |
 | ----------------- | ---------------------------------------------------------------------- |
@@ -108,7 +107,7 @@ Without it the boom gate, toolbox, cones and Kelpie stay quiet, and there is no 
 
 ## Config
 
-Layered, later wins, each file optional. Defaults:
+`.tradies.json` in the repo, `~/.config/tradies.json` for you. Later wins. Defaults:
 
 ```json
 {
@@ -119,27 +118,20 @@ Layered, later wins, each file optional. Defaults:
   "goneDays": 30,
   "reviewAfter": 15,
   "reviewSkill": "/code-review {from}..{to}",
-  "hazardLabels": ["hs"]
+  "hazardLabels": ["hs"],
+  "foreman": "<BEADS_ACTOR, else git user.name>"
 }
 ```
 
-1. `config.json` in the tradies repo
-2. `.tradies.json` in the workspace, shared vocabulary:
-   ```json
-   { "foremanLabels": ["needs-", "blocked-on-"], "houseTypes": ["epic"] }
-   ```
-3. `~/.config/tradies.json`, personal:
-   ```json
-   {
-     "foreman": "Dave",
-     "staleDays": 3,
-     "reviewSkill": "/open-code-review:delegate-review --from {from} --to {to}"
-   }
-   ```
+## Inspections
 
-`foreman` defaults to `BEADS_ACTOR`, else git `user.name`.
+The health & safety officer counts commits since `refs/reviewed`. Start the count:
 
-The officer counts commits since `refs/reviewed`; with no marker she counts the last `reviewAfter`. Arm it with `git update-ref refs/reviewed HEAD`.
+```sh
+git update-ref refs/reviewed HEAD
+```
+
+No marker: she counts the last `reviewAfter` commits.
 
 ## Credits
 
