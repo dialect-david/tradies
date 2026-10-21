@@ -74,6 +74,24 @@ Opens http://localhost:5173. State lives in `bd` and `gh` only; the site refresh
 
 Card: copy a Claude Code prompt (work or plan), copy id, waits-on / blocks links; claim / note / close / merge fold under "by hand". Every board has a find box: id, title, labels, close reason. Briefing: copy as markdown. Drag, wheel or arrow keys to pan.
 
+## For agents
+
+Agents work through `bd` and `gh`; tradies only draws it. `tradies prime` prints the one page of conventions it reads (houses, `needs-*`, `today`, `hs`, close reasons, `refs/reviewed`). Feed it at session start, next to `bd prime`, in `.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "SessionStart": [{ "matcher": "", "hooks": [{ "type": "command", "command": "tradies prime" }] }]
+  }
+}
+```
+
+Or once, as a skill the agent can call by name (`/tradies`):
+
+```sh
+tradies init    # writes .claude/skills/tradies/SKILL.md and .agents/skills/tradies/SKILL.md
+```
+
 ## OpenSpec mode
 
 A workspace with `openspec/` and no `.beads/` is read from [OpenSpec](https://github.com/Fission-AI/OpenSpec) instead (both present: `"source": "openspec"` in config). No `bd` needed; `openspec` on PATH for archive and create.
