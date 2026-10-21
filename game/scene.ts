@@ -1175,7 +1175,7 @@ export class Site extends Phaser.Scene {
   async knockoff() {
     if (this.onSmoko) this.backToWork();
     this.knockedOff = true;
-    this.hud.querySelector("#knockoff")!.textContent = "new day";
+    this.hud.querySelector("#knockoff")!.textContent = "sparrows";
     const { height: h } = this.scale;
     this.tweens.add({ targets: this.dusk, fillAlpha: 0.5, duration: 2500 });
     this.tweens.add({ targets: this.sun, y: h * GROUND + 40, duration: 3000, ease: "Sine.In" });
@@ -1212,7 +1212,7 @@ export class Site extends Phaser.Scene {
   day() {
     if (!this.knockedOff) return;
     this.knockedOff = false;
-    this.hud.querySelector("#knockoff")!.textContent = "knock-off";
+    this.hud.querySelector("#knockoff")!.textContent = "beers";
     toast("new day. kettle's on.");
     if (this.current.today.length) openBoard(this.current.today, "today", false);
     this.cameras.main.pan(this.scale.width / 2, this.scale.height / 2, 1500, Phaser.Math.Easing.Sine.InOut);
@@ -1223,7 +1223,7 @@ export class Site extends Phaser.Scene {
 
   smoko() {
     this.onSmoko = true;
-    this.hud.querySelector("#smoko")!.textContent = "back to work";
+    this.hud.querySelector("#smoko")!.textContent = "tools";
     toast("smoko. ten minutes.");
     this.cameras.main.pan(this.empties.x + 100, this.scale.height / 2, 1500, Phaser.Math.Easing.Sine.InOut);
     const { height: h } = this.scale;
