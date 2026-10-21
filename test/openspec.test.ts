@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import path from "node:path";
-import { parseTasks, readChanges, toItems } from "../server/openspec.js";
+import { kebab, parseTasks, readChanges, tick, toItems } from "../server/openspec.js";
 
 const root = path.join(import.meta.dirname, "fixtures", "openspec");
 const meta = async () => ({ updatedAt: new Date("2026-10-01T00:00:00Z"), owner: "dave" });
@@ -34,5 +34,12 @@ describe("openspec", () => {
     expect(items[1].closedAt).toEqual(login.updatedAt);
     const archived = toItems(old);
     expect(archived.every((i) => i.status === "closed" && i.closedAt === old.closedAt)).toBe(true);
+  });
+  it("ticks the nth checkbox in place", () => {
+    expect(tick("- [x] a\n\n- [ ] b [ ] c\n", 2)).toBe("- [x] a\n\n- [x] b [ ] c\n");
+    expect(() => tick("- [ ] a", 2)).toThrow("no task 2");
+  });
+  it("kebabs a title into a change name", () => {
+    expect(kebab("  Add Login (v2)! ")).toBe("add-login-v2");
   });
 });

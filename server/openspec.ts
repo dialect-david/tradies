@@ -1,4 +1,4 @@
-import { readdir, readFile, stat } from "node:fs/promises";
+import { appendFile, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { sh, site } from "./shell.js";
 import { userName } from "./git.js";
@@ -99,6 +99,38 @@ const isOpen = (i: Item) => i.status !== "closed";
 const byClosed = (items: Item[]) =>
   items.sort((a, b) => (b.closedAt?.getTime() ?? 0) - (a.closedAt?.getTime() ?? 0));
 
+export const kebab = (s: string) =>
+  s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+/** Ticks the nth checkbox (1-based) of a tasks.md; returns the new text. */
+export function tick(text: string, n: number): string {
+  const task = parseTasks(text)[n - 1];
+  if (!task) throw new Error(`no task ${n}`);
+  const lines = text.split("\n");
+  lines[task.line] = lines[task.line].replace("[ ]", "[x]");
+  return lines.join("\n");
+}
+
+async function change(id: string): Promise<Change> {
+  const name = id.split("#")[0];
+  const c = (await readChanges()).find((x) => x.name === name);
+  if (!c) throw new Error(`no change ${name}`);
+  return c;
+}
+
+async function close(id: string): Promise<string> {
+  const c = await change(id);
+  const n = Number(id.split("#")[1]);
+  if (n) {
+    const file = path.join(c.dir, "tasks.md");
+    await writeFile(file, tick(await text(file), n));
+  } else await sh("openspec", ["archive", c.name, "-y"]);
+  return id;
+}
+
 export const openspec: Source = {
   items: async () => (await all()).filter(isOpen),
   houses: async (cfg) => houses(await all(), cfg),
@@ -106,12 +138,27 @@ export const openspec: Source = {
   closedSince: async (since) => byClosed((await all()).filter((i) => i.closedAt && i.closedAt >= since)),
   closedRecent: async (limit = 200) => byClosed((await all()).filter((i) => !isOpen(i))).slice(0, limit),
   show: async (id) => {
-    const name = id.split("#")[0];
-    const c = (await readChanges()).find((x) => x.name === name);
-    if (!c) throw new Error(`no change ${name}`);
+    const c = await change(id);
     return [await text(path.join(c.dir, "proposal.md")), await text(path.join(c.dir, "tasks.md"))].join("\n");
   },
   actor: userName,
-  actions: {},
+  actions: {
+    close: { run: close, done: "knocked off" },
+    note: {
+      run: async (id, a) => {
+        await appendFile(path.join((await change(id)).dir, "design.md"), `\n${a.text}\n`);
+        return id;
+      },
+      done: "noted",
+    },
+    create: {
+      run: async (_, a) => {
+        const name = kebab(a.text ?? "");
+        await sh("openspec", ["new", "change", name]);
+        return name;
+      },
+      done: "proposed",
+    },
+  },
   watchPath: ROOT,
 };
