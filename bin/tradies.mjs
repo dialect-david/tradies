@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { spawn } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,6 +12,22 @@ const [cmd] = args;
 
 if (cmd === "prime") {
   process.stdout.write(doc());
+  process.exit(0);
+}
+
+if (cmd === "init") {
+  const force = args.includes("--force");
+  const skill = `---\nname: tradies\ndescription: How beads and PRs show up on the tradies site; the labels, deps and close reasons it reads\n---\n\n${doc()}`;
+  for (const dir of [".claude/skills/tradies", ".agents/skills/tradies"]) {
+    const file = path.join(process.cwd(), dir, "SKILL.md");
+    if (existsSync(file) && !force) {
+      console.error(`${file} exists; use --force to overwrite`);
+      process.exit(1);
+    }
+    mkdirSync(path.dirname(file), { recursive: true });
+    writeFileSync(file, skill);
+    console.log(`wrote ${file}`);
+  }
   process.exit(0);
 }
 
