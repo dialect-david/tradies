@@ -21,7 +21,7 @@ yarn   # or: npm install
 From the workspace whose beads you want to see:
 
 ```sh
-tradies                  # after: npm i -g @dialect-david/tradies
+tradies                  # after: npm i -g @stottula/tradies
 tradies /path/to/repo    # or name the workspace
 ```
 
