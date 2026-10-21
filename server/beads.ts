@@ -21,7 +21,7 @@ export async function actor(): Promise<string | undefined> {
 
 export const beads: Source = {
   items: async () => (await list("open,in_progress,blocked,deferred")).map(fromBead),
-  houses: async (cfg) => houses(await list("open,in_progress,blocked,deferred,closed"), cfg),
+  houses: async (cfg) => houses((await list("open,in_progress,blocked,deferred,closed")).map(fromBead), cfg),
   closedCount: async () => Number(/\d+/.exec(await sh("bd", ["count", "--status", "closed"]))?.[0] ?? 0),
   closedSince: async (since) =>
     byClosed((await list("closed", ["--closed-after", since.toISOString()])).map(fromBead)),

@@ -1,29 +1,27 @@
-import type { Bead } from "./model.js";
+import type { Item } from "./model.js";
 import type { Config } from "./defaults.js";
 
 export type HouseStat = { id: string; title: string; status: string; closed: number; total: number };
 
-export function houses(all: Bead[], cfg: Pick<Config, "houseTypes">): HouseStat[] {
-  const byId = new Map(all.map((b) => [b.id, b]));
+export function houses(all: Item[], cfg: Pick<Config, "houseTypes">): HouseStat[] {
+  const byId = new Map(all.map((i) => [i.id, i]));
   const parent = new Map<string, string>();
   const children = new Map<string, string[]>();
-  for (const b of all)
-    for (const d of b.dependencies ?? [])
-      if (d.type === "parent-child" && byId.has(d.depends_on_id)) {
-        parent.set(b.id, d.depends_on_id);
-        children.set(d.depends_on_id, [...(children.get(d.depends_on_id) ?? []), b.id]);
-      }
-  const wants = (b: Bead) =>
-    cfg.houseTypes.includes(b.issue_type) && (b.issue_type === "epic" || children.has(b.id));
-  const candidates = new Set(all.filter(wants).map((b) => b.id));
+  for (const i of all)
+    if (i.parent && byId.has(i.parent)) {
+      parent.set(i.id, i.parent);
+      children.set(i.parent, [...(children.get(i.parent) ?? []), i.id]);
+    }
+  const wants = (i: Item) => cfg.houseTypes.includes(i.trade) && (i.trade === "epic" || children.has(i.id));
+  const candidates = new Set(all.filter(wants).map((i) => i.id));
   const nested = (id: string) => {
     for (let p = parent.get(id); p; p = parent.get(p)) if (candidates.has(p)) return true;
     return false;
   };
-  const tops = new Set(all.filter((b) => candidates.has(b.id) && !nested(b.id)).map((b) => b.id));
+  const tops = new Set(all.filter((i) => candidates.has(i.id) && !nested(i.id)).map((i) => i.id));
   return all
-    .filter((b) => tops.has(b.id))
-    .map((b) => {
+    .filter((i) => tops.has(i.id))
+    .map((i) => {
       let closed = 0;
       let total = 0;
       const walk = (id: string) => {
@@ -34,7 +32,7 @@ export function houses(all: Bead[], cfg: Pick<Config, "houseTypes">): HouseStat[
           walk(c);
         }
       };
-      walk(b.id);
-      return { id: b.id, title: b.title, status: b.status, closed, total };
+      walk(i.id);
+      return { id: i.id, title: i.title, status: i.status, closed, total };
     });
 }

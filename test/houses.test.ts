@@ -1,30 +1,34 @@
 import { describe, expect, it } from "vitest";
 import { houses } from "../server/houses.js";
-import type { Bead } from "../server/model.js";
+import type { Item } from "../server/model.js";
 
-const bead = (id: string, over: Partial<Bead> = {}, parent?: string): Bead => ({
+const bead = (id: string, over: Partial<Item> = {}, parent?: string): Item => ({
+  kind: "bead",
   id,
   title: id,
   status: "open",
   priority: 2,
-  issue_type: "task",
-  updated_at: "2026-10-01T00:00:00Z",
-  dependencies: parent ? [{ depends_on_id: parent, type: "parent-child" }] : [],
+  trade: "task",
+  updatedAt: new Date("2026-10-01T00:00:00Z"),
+  blocked: false,
+  waitsOn: [],
+  parent,
+  labels: [],
   ...over,
 });
 
 describe("houses", () => {
   const all = [
-    bead("epic", { issue_type: "epic" }),
+    bead("epic", { trade: "epic" }),
     bead("epic.1", {}, "epic"),
     bead("epic.2", { status: "closed" }, "epic"),
-    bead("epic.feat", { issue_type: "feature" }, "epic"),
+    bead("epic.feat", { trade: "feature" }, "epic"),
     bead("epic.feat.a", { status: "closed" }, "epic.feat"),
-    bead("feat", { issue_type: "feature" }),
+    bead("feat", { trade: "feature" }),
     bead("feat.1", {}, "feat"),
     bead("feat.2", { status: "closed" }, "feat"),
-    bead("leaf-feature", { issue_type: "feature" }),
-    bead("empty-epic", { issue_type: "epic", status: "closed" }),
+    bead("leaf-feature", { trade: "feature" }),
+    bead("empty-epic", { trade: "epic", status: "closed" }),
   ];
   it("epics always; other house types only with children; nested ones fold into the outer house", () => {
     const h = houses(all, { houseTypes: ["epic", "feature"] });
