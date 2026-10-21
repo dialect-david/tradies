@@ -166,7 +166,7 @@ export function openBoard(ready: Item[], title = "job board", pinnable = true) {
         ? `<form class="new"><input name="title" placeholder="new job…" autocomplete="off" />
       <select name="priority"><option>2</option><option>0</option><option>1</option><option>3</option><option>4</option></select>
       <select name="kind"><option>task</option><option>bug</option><option>feature</option><option>chore</option></select>
-      <button>pin it</button></form>`
+      <button>new</button></form>`
         : "",
     )}
     <div class="chits">${chits || "<i>nobody here.</i>"}</div>`;

@@ -55,7 +55,7 @@ Opens http://localhost:5173. State lives in `bd` and `gh` only; the site refresh
 | ON THE TOOLS board                         | in_progress beads; click a row for the card                                                                                                                                                           |
 | boom gate down, tradies queued behind it   | waiting on the foreman: `needs-*` label, or blocked and assigned to you; click the gate for the list; arm lifts when nobody is waiting                                                                |
 | tradies sitting on the esky, empties       | stale beads, 7 to 30 days untouched                                                                                                                                                                   |
-| jobs sign                                  | ready beads; "pin it" under by hand to create one                                                                                                                                                     |
+| jobs sign                                  | ready beads; "new" under by hand to create one                                                                                                                                                     |
 | pallets, tradies arms crossed              | blocked, waiting on materials                                                                                                                                                                         |
 | rolled plans on the shed wall              | click for the dependency map (mermaid, click a node for its card, copy the text for your docs); deferred beads behind a button there                                                                  |
 | Kelpie on a root blocker                   | HUD says "closing X frees N": the bead whose closure unblocks the most others                                                                                                                         |
@@ -87,7 +87,7 @@ A workspace with `openspec/` and no `.beads/` is read from [OpenSpec](https://gi
 | who, when         | last commit touching the change folder                                 |
 | close             | ticks the box; on the house, `openspec archive <name> -y`              |
 | note              | appends to design.md                                                   |
-| pin it            | `openspec new change <kebab-title>`                                    |
+| new               | `openspec new change <kebab-title>`                                    |
 
 Optional frontmatter at the top of proposal.md fills in what OpenSpec has no word for:
 
