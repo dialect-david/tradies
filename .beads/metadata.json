@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "tradies",
+  "project_id": "90583c50-3ba9-4449-86cc-4d6f7a52e959"
+}
