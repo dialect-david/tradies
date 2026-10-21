@@ -1,13 +1,12 @@
 import type { Plugin, ViteDevServer } from "vite";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import * as bd from "./bd.js";
+import { beads as source } from "./beads.js";
+import type { Action } from "./source.js";
 import * as gh from "./gh.js";
 import * as git from "./git.js";
 import { site } from "./shell.js";
 import { loadConfig } from "./config.js";
-import { houses } from "./houses.js";
 import { watch } from "node:fs";
-import path from "node:path";
 
 type Res = ServerResponse<IncomingMessage>;
 const listeners = new Set<Res>();
@@ -27,20 +26,6 @@ async function body(req: IncomingMessage): Promise<Record<string, string>> {
   return s ? (JSON.parse(s) as Record<string, string>) : {};
 }
 
-/** run does the work and returns the id to name in the toast. */
-type Action = { run: (id: string, a: Record<string, string>) => Promise<string>; done: string };
-
-export const ACTIONS: Record<string, Action> = {
-  claim: { run: (id) => bd.claim(id).then(() => id), done: "on the tools" },
-  close: { run: (id, a) => bd.close(id, a.text).then(() => id), done: "knocked off" },
-  note: { run: (id, a) => bd.note(id, a.text).then(() => id), done: "noted" },
-  merge: { run: (id) => gh.merge(id).then(() => id), done: "certified" },
-  create: {
-    run: (_, a) => bd.quick(a.text ?? "", a.priority || "2", a.kind || "task"),
-    done: "pinned to the board",
-  },
-};
-
 function sameOrigin(req: IncomingMessage): boolean {
   const origin = req.headers.origin;
   if (!origin) return true;
@@ -50,6 +35,11 @@ function sameOrigin(req: IncomingMessage): boolean {
     return false;
   }
 }
+
+export const ACTIONS: Record<string, Action> = {
+  ...source.actions,
+  merge: { run: (id) => gh.merge(id).then(() => id), done: "certified" },
+};
 
 async function act(a: Record<string, string>): Promise<string> {
   const action = ACTIONS[a.type];
@@ -65,32 +55,37 @@ export function api(): Plugin {
         const url = new URL(req.url ?? "/", "http://x");
         try {
           if (url.pathname === "/items") {
-            const [beads, prs, closed, all, actor] = await Promise.all([
-              bd.listBeads(),
-              gh.listPrs(),
-              bd.closedCount(),
-              bd.allBeads(),
-              bd.actor(),
-            ]);
+            const actor = await source.actor();
             const config = loadConfig(undefined, actor);
+            const [items, prs, closed, epics] = await Promise.all([
+              source.items(),
+              gh.listPrs(),
+              source.closedCount(),
+              source.houses(config),
+            ]);
             return send(res, 200, {
               site: site.split("/").pop(),
               closed,
-              epics: houses(all, config),
+              epics,
               config,
               review: await git.review(config.reviewAfter),
-              items: [...beads, ...prs],
+              items: [...items, ...prs],
             });
           }
           if (url.pathname === "/knockoff") {
             const start = new Date();
             start.setHours(0, 0, 0, 0);
-            return send(res, 200, { since: start, today: await bd.closedSince(start) });
+            return send(res, 200, { since: start, today: await source.closedSince(start) });
           }
-          if (url.pathname === "/closed") return send(res, 200, await bd.closedRecent());
+          if (url.pathname === "/closed") return send(res, 200, await source.closedRecent());
           if (url.pathname === "/show") {
             const id = url.searchParams.get("id") ?? "";
-            return send(res, 200, id.startsWith("#") ? await gh.view(id) : await bd.show(id), "text/plain");
+            return send(
+              res,
+              200,
+              id.startsWith("#") ? await gh.view(id) : await source.show(id),
+              "text/plain",
+            );
           }
           if (url.pathname === "/act" && req.method === "POST") {
             if (!sameOrigin(req)) return send(res, 403, { error: "cross-origin action refused" });
@@ -112,14 +107,15 @@ export function api(): Plugin {
       });
       setInterval(notify, 30_000).unref();
       let timer: NodeJS.Timeout | undefined;
-      try {
-        watch(path.join(site, ".beads"), () => {
-          clearTimeout(timer);
-          timer = setTimeout(notify, 300);
-        }).unref();
-      } catch {
-        /* no .beads here; the 30s tick still runs */
-      }
+      if (source.watchPath)
+        try {
+          watch(source.watchPath, () => {
+            clearTimeout(timer);
+            timer = setTimeout(notify, 300);
+          }).unref();
+        } catch {
+          /* nothing to watch; the 30s tick still runs */
+        }
     },
   };
 }
