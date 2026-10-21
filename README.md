@@ -2,7 +2,7 @@
 
 Your [beads](https://github.com/gastownhall/beads) issues and GitHub pull requests as a construction site. We're building a house.
 
-![the demo site](docs/demo.png)
+![the demo site](https://raw.githubusercontent.com/dialect-david/tradies/main/docs/demo.png)
 
 ## Try it
 
