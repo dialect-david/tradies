@@ -57,6 +57,11 @@ export function parseFront(text: string): Front {
   return out;
 }
 
+export function localDate(ymd: string): Date {
+  const [y, m, d] = ymd.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
 export function parseTasks(text: string): Task[] {
   return text.split("\n").flatMap((l, line) => {
     const m = TASK.exec(l);
@@ -111,7 +116,7 @@ export async function readChanges(root = ROOT, meta = gitMeta): Promise<Change[]
     .map((n) => load(n, path.join(changes, n)));
   const archived = (await dirs(path.join(changes, "archive"))).flatMap((n) => {
     const m = ARCHIVE.exec(n);
-    return m ? [load(m[2], path.join(changes, "archive", n), new Date(m[1]))] : [];
+    return m ? [load(m[2], path.join(changes, "archive", n), localDate(m[1]))] : [];
   });
   return Promise.all([...active, ...archived]);
 }

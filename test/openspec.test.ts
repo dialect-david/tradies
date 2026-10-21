@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import path from "node:path";
-import { kebab, parseFront, parseTasks, readChanges, tick, toItems } from "../server/openspec.js";
+import { kebab, localDate, parseFront, parseTasks, readChanges, tick, toItems } from "../server/openspec.js";
 
 const root = path.join(import.meta.dirname, "fixtures", "openspec");
 const meta = async () => ({ updatedAt: new Date("2026-10-01T00:00:00Z"), owner: "dave" });
@@ -15,10 +15,10 @@ describe("openspec", () => {
   });
   it("reads active and archived changes", async () => {
     const c = await readChanges(root, meta);
-    expect(c.map((x) => [x.name, x.title, x.tasks.length, x.closedAt?.toISOString().slice(0, 10)])).toEqual([
+    expect(c.map((x) => [x.name, x.title, x.tasks.length, x.closedAt])).toEqual([
       ["add-login", "Add login", 3, undefined],
       ["remove-legacy", "Remove legacy", 1, undefined],
-      ["old-thing", "Old thing", 1, "2026-09-01"],
+      ["old-thing", "Old thing", 1, new Date(2026, 8, 1)],
     ]);
     expect(c[0].owner).toBe("dave");
     expect(c[1].owner).toBe("sam");
@@ -35,6 +35,10 @@ describe("openspec", () => {
     expect(items[1].closedAt).toEqual(login.updatedAt);
     const archived = toItems(old);
     expect(archived.every((i) => i.status === "closed" && i.closedAt === old.closedAt)).toBe(true);
+  });
+  it("archive dates are local midnight", () => {
+    const d = localDate("2026-09-01");
+    expect([d.getFullYear(), d.getMonth(), d.getDate(), d.getHours()]).toEqual([2026, 8, 1, 0]);
   });
   it("ticks the nth checkbox in place", () => {
     expect(tick("- [x] a\n\n- [ ] b [ ] c\n", 2)).toBe("- [x] a\n\n- [x] b [ ] c\n");
