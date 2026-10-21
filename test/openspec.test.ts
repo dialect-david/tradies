@@ -10,6 +10,7 @@ import {
   parseTasks,
   phase,
   readChanges,
+  setOwner,
   tick,
   toItems,
 } from "../server/openspec.js";
@@ -99,6 +100,20 @@ describe("openspec", () => {
     expect(toItems(login)[0].labels).toEqual([]);
     const legacy = await byName("remove-legacy");
     expect(toItems(legacy, new Set(), { needs: "needs-" })[0].labels).toEqual(["needs-signoff"]);
+  });
+  it("claim: owner frontmatter or a branch named after the change puts it on the tools", async () => {
+    expect(setOwner("# T\n", "sam")).toBe("---\nowner: sam\n---\n# T\n");
+    expect(setOwner("---\npriority: 1\n---\n# T", "sam")).toBe("---\npriority: 1\nowner: sam\n---\n# T");
+    expect(setOwner("---\nowner: old\npriority: 1\n---\n", "sam")).toBe(
+      "---\nowner: sam\npriority: 1\n---\n",
+    );
+    const legacy = await byName("remove-legacy");
+    expect(toItems(legacy)[0].status).toBe("in_progress");
+    const fresh = await byName("just-made");
+    expect(toItems(fresh)[0].status).toBe("open");
+    const [onIt] = toItems(fresh, new Set(), { branch: "feat/just-made", actor: "kim" });
+    expect([onIt.status, onIt.owner]).toEqual(["in_progress", "kim"]);
+    expect(toItems(fresh, new Set(), { branch: "just-made-2" })[0].status).toBe("open");
   });
   it("archive dates are local midnight", () => {
     const d = localDate("2026-09-01");

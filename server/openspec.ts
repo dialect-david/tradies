@@ -203,21 +203,38 @@ export function phase(c: Change): Phase {
 export type Derive = {
   /** Label prefix that queues at the gate, e.g. `needs-`. */
   needs?: string;
+  /** Checked-out git branch; one named after the change puts it in progress. */
+  branch?: string;
+  actor?: string;
 };
+
+export const onBranch = (c: Change, branch?: string) =>
+  !!branch && (branch === c.name || branch.endsWith(`/${c.name}`));
+
+/** Sets `owner:` in the frontmatter of a proposal, adding the block when there is none. */
+export function setOwner(text: string, owner: string): string {
+  const m = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
+  if (!m) return `---\nowner: ${owner}\n---\n${text}`;
+  const body = /^owner:.*$/m.test(m[1])
+    ? m[1].replace(/^owner:.*$/m, `owner: ${owner}`)
+    : `${m[1]}\nowner: ${owner}`;
+  return text.replace(m[0], `---\n${body}\n---`);
+}
 
 /** active = names of changes not yet archived; a change waiting on one of them is blocked. */
 export function toItems(c: Change, active = new Set<string>(), opts: Derive = {}): Item[] {
+  const claimed = !!c.front.owner || onBranch(c, opts.branch);
   const base = {
     kind: "bead" as const,
     priority: c.front.priority ?? 2,
-    owner: c.owner,
+    owner: c.front.owner ?? (onBranch(c, opts.branch) ? opts.actor : undefined) ?? c.owner,
     updatedAt: c.updatedAt,
     blocked: false,
     waitsOn: [],
     labels: [],
   };
   const ticked = c.tasks.filter((t) => t.done).length;
-  const status = c.closedAt ? "closed" : ticked ? "in_progress" : "open";
+  const status = c.closedAt ? "closed" : ticked || claimed ? "in_progress" : "open";
   const waitsOn = c.front.blocks ?? c.dependsOn;
   const labels = c.front.labels ?? [];
   if (c.questions && opts.needs && !labels.some((l) => l.startsWith(opts.needs!)))
@@ -249,7 +266,14 @@ export function toItems(c: Change, active = new Set<string>(), opts: Derive = {}
 async function all(changes?: Change[]): Promise<Item[]> {
   changes ??= await readChanges();
   const active = new Set(changes.filter((c) => !c.closedAt).map((c) => c.name));
-  const opts: Derive = { needs: loadConfig().foremanLabels[0] };
+  const [branch, actor] = await Promise.all([
+    sh("git", ["branch", "--show-current"]).then(
+      (b) => b.trim() || undefined,
+      () => undefined,
+    ),
+    userName(),
+  ]);
+  const opts: Derive = { needs: loadConfig().foremanLabels[0], branch, actor };
   return changes.flatMap((c) => toItems(c, active, opts));
 }
 const isOpen = (i: Item) => i.status !== "closed";
@@ -305,6 +329,15 @@ export const openspec: Source = {
   },
   actor: userName,
   actions: {
+    claim: {
+      run: async (id) => {
+        const c = await change(id);
+        const file = path.join(c.dir, "proposal.md");
+        await writeFile(file, setOwner(await text(file), (await userName()) ?? "me"));
+        return c.name;
+      },
+      done: "on the tools",
+    },
     close: { run: close, done: "knocked off" },
     note: {
       run: async (id, a) => {
