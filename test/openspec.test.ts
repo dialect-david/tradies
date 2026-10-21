@@ -6,6 +6,7 @@ import {
   localDate,
   parseFront,
   parseTasks,
+  phase,
   readChanges,
   tick,
   toItems,
@@ -56,6 +57,28 @@ describe("openspec", () => {
     expect(items[1].closedAt).toBeUndefined();
     const archived = toItems(old);
     expect(archived.every((i) => i.status === "closed" && i.closedAt === old.closedAt)).toBe(true);
+  });
+  it("a label: prefix on a task is a label", async () => {
+    const c = await byName("add-login");
+    c.tasks.push({ text: "hs: server/x.ts: leaks the key", done: false, line: 9 });
+    const kid = toItems(c).at(-1)!;
+    expect(kid.labels).toEqual(["hs"]);
+    expect(toItems(c)[1].labels).toEqual([]);
+  });
+  it("phase follows the artifacts, then the ticks, then the archive", async () => {
+    const by = Object.fromEntries((await readChanges(root, meta)).map((c) => [c.name, c]));
+    expect(by["just-made"].has).toEqual({ proposal: false, design: false, specs: false });
+    expect(phase(by["just-made"])).toBe("site");
+    expect(phase({ ...by["just-made"], has: { proposal: true, design: false, specs: false } })).toBe("slab");
+    expect(phase(by["remove-legacy"])).toBe("frame");
+    expect(phase({ ...by["remove-legacy"], has: { proposal: true, design: true, specs: true } })).toBe(
+      "roof",
+    );
+    expect(phase(by["add-login"])).toBe("lockup");
+    expect(
+      phase({ ...by["add-login"], tasks: by["add-login"].tasks.map((t) => ({ ...t, done: true })) }),
+    ).toBe("fitout");
+    expect(phase(by["old-thing"])).toBe("done");
   });
   it("archive dates are local midnight", () => {
     const d = localDate("2026-09-01");

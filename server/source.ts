@@ -5,8 +5,8 @@ import type { Config, SourceName } from "./defaults.js";
 /** run does the work and returns the id to name in the toast. */
 export type Action = { run: (id: string, a: Record<string, string>) => Promise<string>; done: string };
 
-/** Templates for the copied Claude prompts; {id} and {title} are filled by the card. */
-export type Prompts = { work: string; plan: string };
+/** Templates for the copied Claude prompts; {id} and {title} are filled by the card. review: how to file a finding, {hazard} is the label. */
+export type Prompts = { work: string; plan: string; review: string };
 
 export const CONVENTIONS = "Conventions: run `npx @stottula/tradies prime` first.";
 

@@ -110,6 +110,8 @@ export function demoSource(f: Fixture = fixture()): Source {
     prompts: {
       work: "Work on {id}: {title}. This is the tradies demo; nothing here is saved.",
       plan: "Give me a plan for {id} ({title}). This is the tradies demo; nothing here is saved.",
+      review:
+        'File each High or Medium finding as a bead: `bd create "<file>: <one line>" -t bug -p 1 -l {hazard}`.',
     },
   };
 }

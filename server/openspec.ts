@@ -3,12 +3,13 @@ import path from "node:path";
 import { sh, site } from "./shell.js";
 import { userName } from "./git.js";
 import type { Item } from "./model.js";
-import { houses } from "./houses.js";
+import { houses, type Phase } from "./houses.js";
 import type { Source } from "./source.js";
 
 export type Task = { text: string; done: boolean; line: number };
 export type Meta = { updatedAt: Date; owner?: string };
 export type Front = { priority?: number; labels?: string[]; blocks?: string[]; owner?: string };
+export type Artifacts = { proposal: boolean; design: boolean; specs: boolean };
 export type Change = Meta & {
   name: string;
   title: string;
@@ -16,10 +17,13 @@ export type Change = Meta & {
   closedAt?: Date;
   tasks: Task[];
   front: Front;
+  has: Artifacts;
 };
 
 export const ROOT = path.join(site, "openspec");
 const TASK = /^\s*[-*]\s+\[([ xX])\]\s+(.*)$/;
+/** `label: text` on a task is a label. */
+const TAG = /^([a-z][\w-]*):\s/;
 const ARCHIVE = /^(\d{4}-\d{2}-\d{2})-(.+)$/;
 
 const LIST_KEYS = ["labels", "blocks"] as const;
@@ -68,6 +72,12 @@ export function parseTasks(text: string): Task[] {
     return m ? [{ text: m[2].trim(), done: m[1] !== " ", line }] : [];
   });
 }
+
+const exists = (p: string) =>
+  stat(p).then(
+    () => true,
+    () => false,
+  );
 
 async function dirs(p: string): Promise<string[]> {
   try {
@@ -135,7 +145,16 @@ export async function readChanges(root = ROOT, metaOf: MetaOf = (d) => gitMeta(d
     const front = parseFront(proposal);
     const m = meta.get(dir) ?? { updatedAt: new Date(0) };
     const heading = (md: string) => /^#\s+(.+)$/m.exec(md)?.[1].trim();
+    const specs = await dirs(path.join(dir, "specs"));
+    const has: Artifacts = {
+      proposal: !!proposal,
+      design: await exists(path.join(dir, "design.md")),
+      specs: (await Promise.all(specs.map((s) => exists(path.join(dir, "specs", s, "spec.md"))))).some(
+        Boolean,
+      ),
+    };
     return {
+      has,
       name,
       title: heading(proposal) ?? heading(await text(path.join(dir, "README.md"))) ?? name,
       dir,
@@ -147,6 +166,16 @@ export async function readChanges(root = ROOT, metaOf: MetaOf = (d) => gitMeta(d
     };
   };
   return Promise.all([...live, ...old].map(load));
+}
+
+/** spec-driven: proposal, then design and specs, then tasks ticked, then archived. */
+export function phase(c: Change): Phase {
+  if (c.closedAt) return "done";
+  const ticked = c.tasks.filter((t) => t.done).length;
+  if (ticked) return ticked * 2 >= c.tasks.length ? "fitout" : "lockup";
+  if (c.has.design && c.has.specs) return "roof";
+  if (c.has.design || c.has.specs) return "frame";
+  return c.has.proposal ? "slab" : "site";
 }
 
 /** active = names of changes not yet archived; a change waiting on one of them is blocked. */
@@ -180,14 +209,15 @@ export function toItems(c: Change, active = new Set<string>()): Item[] {
     title: t.text,
     trade: "task",
     parent: c.name,
+    labels: TAG.exec(t.text)?.slice(1) ?? [],
     status: c.closedAt || t.done ? "closed" : "open",
     closedAt: c.closedAt,
   }));
   return [epic, ...kids];
 }
 
-async function all(): Promise<Item[]> {
-  const changes = await readChanges();
+async function all(changes?: Change[]): Promise<Item[]> {
+  changes ??= await readChanges();
   const active = new Set(changes.filter((c) => !c.closedAt).map((c) => c.name));
   return changes.flatMap((c) => toItems(c, active));
 }
@@ -230,7 +260,11 @@ async function close(id: string): Promise<string> {
 
 export const openspec: Source = {
   items: async () => (await all()).filter(isOpen),
-  houses: async (cfg) => houses(await all(), cfg),
+  houses: async (cfg) => {
+    const changes = await readChanges();
+    const phases = new Map(changes.map((c) => [c.name, phase(c)]));
+    return houses(await all(changes), cfg, (id) => phases.get(id));
+  },
   closedCount: async () => archived(await all()).length,
   closedSince: async (since) => byClosed(archived(await all()).filter((i) => i.closedAt! >= since)),
   closedRecent: async (limit = 200) => byClosed(archived(await all())).slice(0, limit),
@@ -260,6 +294,8 @@ export const openspec: Source = {
   prompts: {
     work: "Work on {id}: {title}. Read openspec/changes/{change}/proposal.md, design.md and tasks.md first, tick the boxes in tasks.md as you finish them, and run `openspec archive {change} -y` when all are ticked.",
     plan: "Give me a plan for {id} ({title}). Read openspec/changes/{change}/proposal.md, design.md and tasks.md first, then propose the approach; don't change anything yet.",
+    review:
+      "File each High or Medium finding as a task `- [ ] {hazard}: <file>: <one line>` under a `## Hazards` heading in tasks.md of the change it belongs to, or openspec/changes/hazards/tasks.md when none fits.",
   },
   watchPath: ROOT,
 };

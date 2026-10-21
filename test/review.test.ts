@@ -16,7 +16,13 @@ describe("review", () => {
       commits: 16,
       lines: 400,
     };
-    const p = reviewPrompt(r, "sheila", "/open-code-review:delegate-review --from {from} --to {to}", "hs");
+    const p = reviewPrompt(
+      r,
+      "sheila",
+      "/open-code-review:delegate-review --from {from} --to {to}",
+      "hs",
+      "File it: -l {hazard}.",
+    );
     expect(p).toContain(
       "Run /open-code-review:delegate-review --from 0123456789abcdef --to abcdef0123456789.",
     );

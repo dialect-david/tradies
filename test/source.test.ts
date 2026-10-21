@@ -31,6 +31,7 @@ describe("prompts", () => {
     const { demoSource } = await import("../server/demo.js");
     for (const s of [beads, openspec, demoSource()])
       for (const t of [s.prompts.work, s.prompts.plan]) {
+        expect(s.prompts.review).toContain("{hazard}");
         expect(fillPrompt(t, item)).toContain("add-login#2");
         expect(fillPrompt(t, item)).toContain("tradies prime");
       }

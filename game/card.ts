@@ -12,7 +12,7 @@ const toastEl = document.getElementById("toast")!;
 
 let onSite: Item[] = [];
 let can = new Set<string>();
-let prompts: Prompts = { work: "{id}: {title}", plan: "{id}: {title}" };
+let prompts: Prompts = { work: "{id}: {title}", plan: "{id}: {title}", review: "" };
 export const setItems = (items: Item[], actions: string[] = [...can], p = prompts) => (
   (onSite = items),
   (can = new Set(actions)),
@@ -137,7 +137,10 @@ export function openReview(r: Review, site: string, cfg: Config) {
   card
     .querySelector("[data-review]")!
     .addEventListener("click", () =>
-      copyText(reviewPrompt(r, site, cfg.reviewSkill, cfg.hazardLabels[0] ?? "hs"), "review prompt copied"),
+      copyText(
+        reviewPrompt(r, site, cfg.reviewSkill, cfg.hazardLabels[0] ?? "hs", prompts.review),
+        "review prompt copied",
+      ),
     );
 }
 
