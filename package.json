@@ -4,7 +4,7 @@
   "description": "Your beads issues and GitHub pull requests as a construction site",
   "repository": {
     "type": "git",
-    "url": "https://github.com/dialect-david/tradies.git"
+    "url": "git+https://github.com/dialect-david/tradies.git"
   },
   "type": "module",
   "bin": {
