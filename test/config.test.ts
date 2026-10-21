@@ -23,6 +23,8 @@ describe("config", () => {
     });
     expect(parseConfig('{"foremanLabels":[]}').foremanLabels).toEqual([]);
     expect(parseConfig('{"todayLabels":["next"]}').todayLabels).toEqual(["next"]);
+    expect(parseConfig('{"source":"openspec"}').source).toBe("openspec");
+    expect(parseConfig('{"source":"jira"}').source).toBeUndefined();
   });
   it("later files override earlier ones key by key", () => {
     const project = file(".tradies.json", '{"houseTypes":["epic"],"staleDays":3}');

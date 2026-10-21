@@ -1,12 +1,14 @@
 import type { Plugin, ViteDevServer } from "vite";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { beads as source } from "./beads.js";
-import type { Action } from "./source.js";
+import { beads } from "./beads.js";
+import { openspec } from "./openspec.js";
+import { pickSource, type Action } from "./source.js";
 import * as gh from "./gh.js";
 import * as git from "./git.js";
 import { site } from "./shell.js";
 import { loadConfig } from "./config.js";
-import { watch } from "node:fs";
+import { existsSync, watch } from "node:fs";
+import path from "node:path";
 
 type Res = ServerResponse<IncomingMessage>;
 const listeners = new Set<Res>();
@@ -35,6 +37,16 @@ function sameOrigin(req: IncomingMessage): boolean {
     return false;
   }
 }
+
+const source = {
+  beads,
+  openspec,
+}[
+  pickSource(
+    { beads: existsSync(path.join(site, ".beads")), openspec: existsSync(path.join(site, "openspec")) },
+    loadConfig().source,
+  )
+];
 
 export const ACTIONS: Record<string, Action> = {
   ...source.actions,

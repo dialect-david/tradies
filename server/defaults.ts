@@ -1,4 +1,8 @@
+export type SourceName = "beads" | "openspec";
+
 export type Config = {
+  /** Which tracker drives the site when both .beads/ and openspec/ exist. */
+  source?: SourceName;
   foremanLabels: string[];
   todayLabels: string[];
   foreman?: string;

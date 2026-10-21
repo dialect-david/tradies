@@ -1,6 +1,6 @@
 import type { Item } from "./model.js";
 import type { HouseStat } from "./houses.js";
-import type { Config } from "./defaults.js";
+import type { Config, SourceName } from "./defaults.js";
 
 /** run does the work and returns the id to name in the toast. */
 export type Action = { run: (id: string, a: Record<string, string>) => Promise<string>; done: string };
@@ -17,3 +17,9 @@ export type Source = {
   /** Directory whose changes mean the site should refresh. */
   watchPath?: string;
 };
+
+/** .beads/ wins over openspec/ unless config says otherwise. */
+export function pickSource(has: { beads: boolean; openspec: boolean }, prefer?: SourceName): SourceName {
+  if (prefer && has[prefer]) return prefer;
+  return has.openspec && !has.beads ? "openspec" : "beads";
+}

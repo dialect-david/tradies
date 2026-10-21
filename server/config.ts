@@ -26,6 +26,7 @@ export function parseConfig(text: string | undefined): Partial<Config> {
     const v = raw[k];
     if (typeof v === "number" && v > 0) out[k] = v;
   }
+  if (raw.source === "beads" || raw.source === "openspec") out.source = raw.source;
   for (const k of ["foreman", "reviewSkill"] as const)
     if (typeof raw[k] === "string" && (raw[k] as string).trim()) out[k] = (raw[k] as string).trim();
   return out;
