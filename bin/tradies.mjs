@@ -94,7 +94,21 @@ if (cmd === "doctor") {
     hasRef: (ref) => ok("git", ["rev-parse", "--verify", "-q", ref]),
   });
   console.log(`site: ${site}\n${render(checks)}`);
-  process.exit(failed(checks).length ? 1 : 0);
+  if (failed(checks).length) process.exit(1);
+  if (args.includes("--demo")) process.env.TRADIES_DEMO = "1";
+  const { dataChecks, readiness } = await import("../server/doctor.ts");
+  const { currentSource } = await import("../server/sources.ts");
+  const { loadConfig } = await import("../server/config.ts");
+  const cfg = loadConfig();
+  const { name, source } = currentSource(cfg.source);
+  const [items, houses, closed] = await Promise.all([
+    source.items(),
+    source.houses(cfg),
+    source.closedRecent(),
+  ]);
+  const data = dataChecks({ items, houses, closed, cfg, source: name });
+  console.log(`\n${render(data)}\n${readiness(data)}`);
+  process.exit(0);
 }
 
 const vite = path.join(

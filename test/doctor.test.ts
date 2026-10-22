@@ -1,5 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { configProblems, failed, render, setupChecks, type Env } from "../server/doctor.ts";
+import {
+  configProblems,
+  dataChecks,
+  failed,
+  readiness,
+  render,
+  setupChecks,
+  type Env,
+} from "../server/doctor.ts";
+import { fixture } from "../server/demo/fixture.ts";
+import { houses } from "../server/houses.ts";
+import { DEFAULTS } from "../server/defaults.ts";
+import type { Item } from "../server/model.ts";
 
 const env = (over: Partial<Env> = {}): Env => ({
   nodeVersion: "v24.1.0",
@@ -56,5 +68,65 @@ describe("doctor setup", () => {
     expect(configProblems("[]")).toEqual(["not an object"]);
     expect(configProblems('{"foremanLabels":["needs-"],"foreman":"Sam"}')).toEqual([]);
     expect(configProblems('{"source":"demo"}')).toEqual(["source must be beads or openspec"]);
+  });
+});
+
+const now = new Date("2026-10-22T09:00:00");
+const bead = (id: string, over: Partial<Item> = {}): Item => ({
+  kind: "bead",
+  id,
+  title: id,
+  status: "open",
+  priority: 2,
+  trade: "task",
+  updatedAt: now,
+  blocked: false,
+  waitsOn: [],
+  labels: [],
+  ...over,
+});
+
+describe("doctor data", () => {
+  it("demo fixture passes everything", () => {
+    const { items } = fixture(now);
+    const open = items.filter((i) => i.status !== "closed");
+    const closed = items.filter((i) => i.status === "closed");
+    const c = dataChecks({
+      items: open,
+      houses: houses(items, DEFAULTS),
+      closed,
+      cfg: DEFAULTS,
+      source: "beads",
+      now,
+    });
+    expect(c.filter((x) => !x.ok)).toEqual([]);
+    expect(readiness(c)).toBe("site readiness 7/7");
+  });
+  it("a flat backlog of fresh unlabelled beads fails five of seven", () => {
+    const items = [bead("a"), bead("b"), bead("c")];
+    const c = dataChecks({ items, houses: [], closed: [], cfg: DEFAULTS, source: "beads", now });
+    expect(c.filter((x) => !x.ok).map((x) => x.id)).toEqual([
+      "houses",
+      "parented",
+      "blocks",
+      "reasons",
+      "labels",
+      "working",
+    ]);
+    expect(c.find((x) => x.id === "houses")!.fix).toContain("-t epic");
+    expect(readiness(c)).toBe("site readiness 1/7");
+  });
+  it("stale ratio and close reasons use thresholds", () => {
+    const old = new Date(now.getTime() - 10 * 86_400_000);
+    const items = [bead("a", { updatedAt: old }), bead("b", { updatedAt: old }), bead("c")];
+    const closed = [bead("x", { status: "closed", closeReason: "done" }), bead("y", { status: "closed" })];
+    const c = dataChecks({ items, houses: [], closed, cfg: DEFAULTS, source: "beads", now });
+    expect(c.find((x) => x.id === "stale")!.ok).toBe(false);
+    expect(c.find((x) => x.id === "reasons")!.ok).toBe(true);
+  });
+  it("openspec skips labels and reasons", () => {
+    const c = dataChecks({ items: [], houses: [], closed: [], cfg: DEFAULTS, source: "openspec", now });
+    expect(c.map((x) => x.id)).toEqual(["houses", "parented", "blocks", "stale", "working"]);
+    expect(readiness(c)).toMatch(/\/5$/);
   });
 });

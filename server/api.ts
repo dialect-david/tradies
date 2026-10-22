@@ -1,14 +1,12 @@
 import type { Plugin, ViteDevServer } from "vite";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { beads } from "./beads.ts";
-import { openspec } from "./openspec.ts";
-import { demo } from "./demo.ts";
-import { pickSource, type Action } from "./source.ts";
+import { currentSource } from "./sources.ts";
+import type { Action } from "./source.ts";
 import * as gh from "./gh.ts";
 import * as git from "./git.ts";
 import { site } from "./shell.ts";
 import { loadConfig } from "./config.ts";
-import { existsSync, watch } from "node:fs";
+import { watch } from "node:fs";
 import path from "node:path";
 
 type Res = ServerResponse<IncomingMessage>;
@@ -39,15 +37,7 @@ function sameOrigin(req: IncomingMessage): boolean {
   }
 }
 
-const sourceName = pickSource(
-  {
-    beads: existsSync(path.join(site, ".beads")),
-    openspec: existsSync(path.join(site, "openspec")),
-    demo: !!process.env.TRADIES_DEMO,
-  },
-  loadConfig().source,
-);
-const source = { beads, openspec, demo }[sourceName];
+const { name: sourceName, source } = currentSource(loadConfig().source);
 
 export const ACTIONS: Record<string, Action> = {
   merge: { run: (id) => gh.merge(id).then(() => id), done: "certified" },

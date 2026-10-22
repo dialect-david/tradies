@@ -1,4 +1,6 @@
-import { DEFAULTS, type Config } from "./defaults.ts";
+import { DEFAULTS, type Config, type SourceName } from "./defaults.ts";
+import { isStale, type Item } from "./model.ts";
+import type { HouseStat } from "./houses.ts";
 
 export type Check = { id: string; ok: boolean; says: string; fix?: string; optional?: boolean };
 
@@ -114,4 +116,110 @@ export function render(checks: Check[]): string {
     .join("\n");
 }
 
-export type { Config };
+export type Data = {
+  items: Item[];
+  houses: HouseStat[];
+  closed: Item[];
+  cfg: Pick<Config, "foremanLabels" | "todayLabels" | "hazardLabels" | "staleDays">;
+  source: SourceName;
+  now?: Date;
+};
+
+const pct = (n: number, d: number) => (d ? Math.round((100 * n) / d) : 0);
+
+export function dataChecks({ items, houses, closed, cfg, source, now = new Date() }: Data): Check[] {
+  const beads = items.filter((i) => i.kind === "bead" && i.status !== "closed");
+  const bd = source !== "openspec";
+  const out: Check[] = [];
+  const parented = beads.filter((i) => i.parent).length;
+  const houseCmd = bd
+    ? 'bd create "<area>" -t epic; bd update <id> --parent <epic>'
+    : "openspec new change <name>; its tasks.md boxes are the chits";
+
+  out.push({
+    id: "houses",
+    ok: houses.length > 0,
+    says: houses.length
+      ? `${houses.length} houses`
+      : "no houses: everything is at the shed, no street to walk",
+    fix: houses.length ? undefined : houseCmd,
+  });
+  out.push({
+    id: "parented",
+    ok: beads.length > 0 && pct(parented, beads.length) >= 50,
+    says: beads.length
+      ? `${pct(parented, beads.length)}% of open work has a house`
+      : "no open work: nobody on site",
+    fix:
+      beads.length && pct(parented, beads.length) >= 50
+        ? undefined
+        : beads.length
+          ? `below half: houses look empty, the shed overflows. ${houseCmd}`
+          : bd
+            ? 'bd q "<title>"'
+            : "openspec new change <name>",
+  });
+  const blocks = beads.filter((i) => i.waitsOn.length).length;
+  out.push({
+    id: "blocks",
+    ok: blocks > 0,
+    says: blocks
+      ? `${blocks} waiting on something`
+      : "no blocks deps: no pallets, no Kelpie, no 'closing X frees N'",
+    fix: blocks
+      ? undefined
+      : bd
+        ? "bd dep add <bead> <blocker> --type blocks"
+        : "'depends on: <change>' in proposal.md",
+  });
+  if (bd) {
+    const reasoned = closed.filter((i) => i.closeReason?.trim()).length;
+    out.push({
+      id: "reasons",
+      ok: closed.length > 0 && pct(reasoned, closed.length) >= 50,
+      says: closed.length
+        ? `${pct(reasoned, closed.length)}% of closed work says why`
+        : "nothing closed yet: the beer wall is bare",
+      fix:
+        closed.length && pct(reasoned, closed.length) >= 50
+          ? undefined
+          : 'bd close <id> --reason "<one human line>"; it goes on the beer wall',
+    });
+    const wanted = (l: string) =>
+      cfg.foremanLabels.some((p) => l.startsWith(p)) ||
+      cfg.todayLabels.includes(l) ||
+      cfg.hazardLabels.includes(l);
+    const labelled = beads.some((i) => i.labels.some(wanted));
+    out.push({
+      id: "labels",
+      ok: labelled,
+      says: labelled
+        ? "site labels in use"
+        : `none of ${[...cfg.foremanLabels.map((p) => `${p}*`), ...cfg.todayLabels, ...cfg.hazardLabels].join(", ")} in use: gate, toolbox and cones stay quiet`,
+      fix: labelled ? undefined : `bd label add <id> ${cfg.todayLabels[0] ?? "today"}`,
+    });
+  }
+  const stale = beads.filter((i) => isStale(i, now, cfg.staleDays)).length;
+  out.push({
+    id: "stale",
+    ok: beads.length === 0 || pct(stale, beads.length) <= 30,
+    says: `${pct(stale, beads.length)}% untouched ${cfg.staleDays}+ days`,
+    fix:
+      beads.length && pct(stale, beads.length) > 30
+        ? bd
+          ? "the esky is full: bd update <id> --claim, or bd close / bd defer what is not happening"
+          : "the esky is full: tick a box, or archive what is not happening"
+        : undefined,
+  });
+  const working = beads.filter((i) => i.status === "in_progress").length;
+  out.push({
+    id: "working",
+    ok: working > 0,
+    says: working ? `${working} on the tools` : "nobody on the tools",
+    fix: working ? undefined : bd ? "bd update <id> --claim" : "tick a box in tasks.md",
+  });
+  return out;
+}
+
+export const readiness = (checks: Check[]) =>
+  `site readiness ${checks.filter((c) => c.ok).length}/${checks.length}`;
