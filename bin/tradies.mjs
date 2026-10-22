@@ -96,7 +96,8 @@ if (cmd === "doctor") {
   console.log(`site: ${site}\n${render(checks)}`);
   if (failed(checks).length) process.exit(1);
   if (args.includes("--demo")) process.env.TRADIES_DEMO = "1";
-  const { dataChecks, readiness, proposeEpics, renderGroups } = await import("../server/doctor.ts");
+  const { dataChecks, readiness, proposeEpics, renderGroups, agentPrompt } =
+    await import("../server/doctor.ts");
   const { currentSource } = await import("../server/sources.ts");
   const { loadConfig } = await import("../server/config.ts");
   const cfg = loadConfig();
@@ -111,7 +112,9 @@ if (cmd === "doctor") {
     ? proposeEpics(items)
     : [];
   const proposal = renderGroups(groups, name);
+  const prompt = agentPrompt(data, groups, name);
   console.log(`\n${render(data)}\n${readiness(data)}${proposal ? `\n\n${proposal}` : ""}`);
+  if (prompt) console.log(`\n---\nfor your agent:\n\n${prompt}`);
   process.exit(0);
 }
 

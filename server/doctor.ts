@@ -293,3 +293,19 @@ export function renderGroups(groups: Group[], source: SourceName): string {
   );
   return `houses to build:\n${lines.join("\n")}`;
 }
+
+export function agentPrompt(checks: Check[], groups: Group[], source: SourceName): string {
+  const bad = checks.filter((c) => !c.ok);
+  if (!bad.length && !groups.length) return "";
+  const bd = source !== "openspec";
+  const lines = ["Run `npx @stottula/tradies prime` first, then tidy the site:"];
+  for (const c of bad) lines.push(`- ${c.says}${c.fix ? `. Fix: ${c.fix}` : ""}`);
+  for (const g of groups)
+    lines.push(
+      bd
+        ? `- Create an epic "${g.name}" (${g.why}) and parent ${g.ids.join(", ")} to it.`
+        : `- Create a change "${g.name}" (${g.why}) and move ${g.ids.join(", ")} into its tasks.md.`,
+    );
+  lines.push("Close nothing, defer nothing, ask before guessing a parent.");
+  return lines.join("\n");
+}

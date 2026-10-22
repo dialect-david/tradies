@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   configProblems,
+  agentPrompt,
   proposeEpics,
   renderGroups,
   dataChecks,
@@ -189,5 +190,24 @@ describe("doctor proposes epics", () => {
     expect(bd).toContain("bd update b-1 --parent <epic>");
     expect(renderGroups(groups, "openspec")).toContain("openspec new change decide-schema");
     expect(renderGroups([], "beads")).toBe("");
+  });
+});
+
+describe("doctor agent prompt", () => {
+  const checks = [
+    { id: "houses", ok: false, says: "no houses", fix: 'bd create "<area>" -t epic' },
+    { id: "stale", ok: true, says: "fine" },
+  ];
+  const groups = [{ name: "auth", why: "label auth", ids: ["a-1", "a-2"] }];
+  it("prime first, failing signals, proposals, bd wording", () => {
+    const p = agentPrompt(checks, groups, "beads");
+    expect(p.startsWith("Run `npx @stottula/tradies prime` first")).toBe(true);
+    expect(p).toContain("- no houses. Fix: bd create");
+    expect(p).not.toContain("fine");
+    expect(p).toContain('epic "auth" (label auth) and parent a-1, a-2');
+  });
+  it("openspec wording, empty when all green", () => {
+    expect(agentPrompt(checks, groups, "openspec")).toContain("tasks.md");
+    expect(agentPrompt([{ id: "x", ok: true, says: "ok" }], [], "beads")).toBe("");
   });
 });
