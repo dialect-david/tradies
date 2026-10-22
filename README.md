@@ -21,6 +21,10 @@ npx @stottula/tradies /path/to/repo
 
 Opens http://localhost:5173, refreshes when the tracker changes.
 
+```sh
+npx @stottula/tradies doctor       # what is missing, and what it costs on site
+```
+
 - Global: `npm i -g @stottula/tradies`, then `tradies`.
 - From a clone: `yarn`, then `yarn start` in the repo you want to see.
 
@@ -32,6 +36,8 @@ Opens http://localhost:5173, refreshes when the tracker changes.
   - OpenSpec: `openspec/`. Fewer features, see [OpenSpec mode](#openspec-mode)
   - Both: beads wins unless `.tradies.json` says `"source": "openspec"`
 - `gh` logged in, for pull requests. Optional.
+
+Not sure? `npx @stottula/tradies doctor` checks all of it, then whether the tracker data gives the site anything to show.
 
 ## Legend
 

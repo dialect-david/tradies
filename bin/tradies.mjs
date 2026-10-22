@@ -12,45 +12,32 @@ const [cmd] = args;
 const SUB = new Set(["prime", "init", "doctor"]);
 const site = path.resolve(args.find((a) => !a.startsWith("--") && !SUB.has(a)) ?? process.cwd());
 
-function config() {
-  const files = [
-    path.join(pkg, "config.json"),
-    path.join(os.homedir(), ".config", "tradies.json"),
-    path.join(site, ".tradies.json"),
-  ];
-  const cfg = {};
-  for (const f of files) if (existsSync(f)) Object.assign(cfg, JSON.parse(readFileSync(f, "utf8")));
-  return cfg;
-}
-
-function source(cfg) {
-  const has = {
-    beads: existsSync(path.join(site, ".beads")),
-    openspec: existsSync(path.join(site, "openspec")),
-  };
-  if (cfg.source && has[cfg.source]) return cfg.source;
-  return has.openspec && !has.beads ? "openspec" : "beads";
-}
-
-function doc() {
-  const cfg = config();
+async function doc() {
+  process.env.TRADIES_SITE = site;
+  const { loadConfig } = await import("../server/config.ts");
+  const { pickSource } = await import("../server/source.ts");
+  const cfg = loadConfig();
+  const src = pickSource(
+    { beads: existsSync(path.join(site, ".beads")), openspec: existsSync(path.join(site, "openspec")) },
+    cfg.source,
+  );
   const word = (k, v) =>
     Array.isArray(v) ? v.map((x) => `\`${x}${k === "foremanLabels" ? "*" : ""}\``).join(" / ") : String(v);
-  const file = source(cfg) === "openspec" ? "agents-openspec.md" : "agents.md";
+  const file = src === "openspec" ? "agents-openspec.md" : "agents.md";
   const text = readFileSync(path.join(pkg, "docs", file), "utf8").replace(/\{(\w+)\}/g, (m, k) =>
     k in cfg ? word(k, cfg[k]) : m,
   );
-  return { text, source: source(cfg) };
+  return { text, source: src };
 }
 
 if (cmd === "prime") {
-  process.stdout.write(doc().text);
+  process.stdout.write((await doc()).text);
   process.exit(0);
 }
 
 if (cmd === "init") {
   const force = args.includes("--force");
-  const { text, source: src } = doc();
+  const { text, source: src } = await doc();
   const what =
     src === "openspec" ? "OpenSpec changes, tasks and frontmatter" : "beads, labels, deps and close reasons";
   const front = `---\nname: tradies\ndescription: How ${what} show up on the tradies site, and what it reads\n---\n\n`;
