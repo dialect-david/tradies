@@ -53,9 +53,11 @@ if (cmd === "init") {
   const { text, source: src } = doc();
   const what =
     src === "openspec" ? "OpenSpec changes, tasks and frontmatter" : "beads, labels, deps and close reasons";
-  const skill = `---\nname: tradies\ndescription: How ${what} show up on the tradies site, and what it reads\n---\n\n${text}`;
+  const front = `---\nname: tradies\ndescription: How ${what} show up on the tradies site, and what it reads\n---\n\n`;
+  const live = "!`npx -y @stottula/tradies prime`\n";
   const root = args.includes("--repo") ? process.cwd() : os.homedir();
-  for (const dir of [".claude/skills/tradies", ".agents/skills/tradies"]) {
+  const skills = { ".claude/skills/tradies": front + live, ".agents/skills/tradies": front + text };
+  for (const [dir, skill] of Object.entries(skills)) {
     const file = path.join(root, dir, "SKILL.md");
     if (existsSync(file) && !force) {
       console.error(`${file} exists; use --force to overwrite`);

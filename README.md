@@ -75,7 +75,7 @@ tradies is read-only. Agents use `bd` (or `openspec`) and `gh` as normal. `prime
   }
   ```
 
-- Or `npx @stottula/tradies init` writes it as a `/tradies` skill in your home dir (`--repo` for this repo instead).
+- Or `npx @stottula/tradies init` writes a `/tradies` skill to your home dir (`--repo` for this repo). The Claude skill runs `prime` when used, so config changes show up without rerunning init.
 
 ## OpenSpec mode
 
