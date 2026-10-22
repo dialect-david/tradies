@@ -148,13 +148,15 @@ export function dataChecks({ items, houses, closed, cfg, source, now = new Date(
     id: "parented",
     ok: beads.length > 0 && pct(parented, beads.length) >= 50,
     says: beads.length
-      ? `${pct(parented, beads.length)}% of open work has a house`
+      ? `${pct(parented, beads.length)}% of open work has a house${
+          pct(parented, beads.length) < 50 ? ": houses look empty, the shed overflows" : ""
+        }`
       : "no open work: nobody on site",
     fix:
       beads.length && pct(parented, beads.length) >= 50
         ? undefined
         : beads.length
-          ? `below half: houses look empty, the shed overflows. ${houseCmd}`
+          ? houseCmd
           : bd
             ? 'bd q "<title>"'
             : "openspec new change <name>",
@@ -291,7 +293,7 @@ export function renderGroups(groups: Group[], source: SourceName): string {
         ]
       : [`openspec new change ${g.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}   # ${g.why}`],
   );
-  return `houses to build:\n${lines.join("\n")}`;
+  return lines.length ? `houses to build:\n${lines.join("\n")}` : "";
 }
 
 export function agentPrompt(checks: Check[], groups: Group[], source: SourceName): string {
