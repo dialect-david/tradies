@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import os from "node:os";
@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 const pkg = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
 const [cmd] = args;
-const SUB = new Set(["prime", "init"]);
+const SUB = new Set(["prime", "init", "doctor"]);
 const site = path.resolve(args.find((a) => !a.startsWith("--") && !SUB.has(a)) ?? process.cwd());
 
 function config() {
@@ -68,6 +68,33 @@ if (cmd === "init") {
     console.log(`wrote ${file}`);
   }
   process.exit(0);
+}
+
+if (cmd === "doctor") {
+  process.env.TRADIES_SITE = site;
+  const { setupChecks, render, failed } = await import("../server/doctor.ts");
+  const ok = (cmd, a) => {
+    try {
+      execFileSync(cmd, a, { stdio: "ignore", cwd: site });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  const home = os.homedir();
+  const checks = setupChecks({
+    nodeVersion: process.version,
+    exists: (p) => existsSync(path.join(site, p)),
+    which: (c) => ok("sh", ["-c", `command -v ${c}`]),
+    ghAuthed: () => ok("gh", ["auth", "status"]),
+    configFiles: [path.join(home, ".config", "tradies.json"), path.join(site, ".tradies.json")].map((p) => ({
+      path: p.startsWith(home) ? p.replace(home, "~") : path.relative(site, p) || p,
+      text: existsSync(p) ? readFileSync(p, "utf8") : undefined,
+    })),
+    hasRef: (ref) => ok("git", ["rev-parse", "--verify", "-q", ref]),
+  });
+  console.log(`site: ${site}\n${render(checks)}`);
+  process.exit(failed(checks).length ? 1 : 0);
 }
 
 const vite = path.join(
