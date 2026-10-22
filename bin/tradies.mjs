@@ -96,7 +96,7 @@ if (cmd === "doctor") {
   console.log(`site: ${site}\n${render(checks)}`);
   if (failed(checks).length) process.exit(1);
   if (args.includes("--demo")) process.env.TRADIES_DEMO = "1";
-  const { dataChecks, readiness } = await import("../server/doctor.ts");
+  const { dataChecks, readiness, proposeEpics, renderGroups } = await import("../server/doctor.ts");
   const { currentSource } = await import("../server/sources.ts");
   const { loadConfig } = await import("../server/config.ts");
   const cfg = loadConfig();
@@ -107,7 +107,11 @@ if (cmd === "doctor") {
     source.closedRecent(),
   ]);
   const data = dataChecks({ items, houses, closed, cfg, source: name });
-  console.log(`\n${render(data)}\n${readiness(data)}`);
+  const groups = data.some((c) => !c.ok && (c.id === "houses" || c.id === "parented"))
+    ? proposeEpics(items)
+    : [];
+  const proposal = renderGroups(groups, name);
+  console.log(`\n${render(data)}\n${readiness(data)}${proposal ? `\n\n${proposal}` : ""}`);
   process.exit(0);
 }
 

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   configProblems,
+  proposeEpics,
+  renderGroups,
   dataChecks,
   failed,
   readiness,
@@ -128,5 +130,64 @@ describe("doctor data", () => {
     const c = dataChecks({ items: [], houses: [], closed: [], cfg: DEFAULTS, source: "openspec", now });
     expect(c.map((x) => x.id)).toEqual(["houses", "parented", "blocks", "stale", "working"]);
     expect(readiness(c)).toMatch(/\/5$/);
+  });
+});
+
+const loose = (id: string, title: string, over: Partial<Item> = {}): Item => ({
+  kind: "bead",
+  id,
+  title,
+  status: "open",
+  priority: 2,
+  trade: "task",
+  updatedAt: new Date(),
+  blocked: false,
+  waitsOn: [],
+  labels: [],
+  ...over,
+});
+
+describe("doctor proposes epics", () => {
+  const thirty: Item[] = [
+    ...[1, 2, 3, 4].map((n) => loose(`a-${n}`, `Auth thing ${n}`, { labels: ["auth"] })),
+    ...[1, 2, 3].map((n) => loose(`b-${n}`, `billing: invoice ${n}`)),
+    ...[1, 2, 3].map((n) => loose(`c-${n}`, `[ui] button ${n}`)),
+    loose("d-1", "Decide schema"),
+    loose("d-2", "Write migration", { waitsOn: ["d-1"] }),
+    loose("d-3", "Backfill rows", { waitsOn: ["d-2"] }),
+    loose("e-1", "Pick a logger", { labels: ["ops"] }),
+    loose("e-2", "Rotate logs", { labels: ["ops"] }),
+    ...[1, 2, 3, 4, 5].map((n) => loose(`f-${n}`, `odd job ${n}`)),
+    ...[1, 2, 3, 4, 5].map((n) => loose(`g-${n}`, `closed ${n}`, { status: "closed" })),
+    ...[1, 2, 3].map((n) => loose(`h-${n}`, `housed ${n}`, { parent: "epic-1", labels: ["auth"] })),
+    loose("i-1", "auth: leftover with label", { labels: ["auth"] }),
+  ];
+  const groups = proposeEpics(thirty);
+  const by = Object.fromEntries(groups.map((g) => [g.name, g]));
+
+  it("labels first, then prefixes, then blocks chains", () => {
+    expect(groups.map((g) => g.why)).toEqual([
+      "label auth",
+      "title prefix billing",
+      "title prefix ui",
+      "blocks chain from d-1",
+    ]);
+  });
+  it("a bead lands in one group, first rule wins", () => {
+    expect(by.auth.ids).toEqual(["a-1", "a-2", "a-3", "a-4", "i-1"]);
+    expect(by.billing.ids).toEqual(["b-1", "b-2", "b-3"]);
+    expect(by.ui.ids).toEqual(["c-1", "c-2", "c-3"]);
+    expect(by["Decide schema"].ids.sort()).toEqual(["d-1", "d-2", "d-3"]);
+  });
+  it("skips small labels, housed, closed and leftovers", () => {
+    const all = groups.flatMap((g) => g.ids);
+    expect(all.some((id) => /^(e|f|g|h)-/.test(id))).toBe(false);
+  });
+  it("renders bd lines or openspec lines", () => {
+    const bd = renderGroups(groups, "beads");
+    expect(bd).toContain('bd create "auth" -t epic');
+    expect(bd).toContain("bd update b-1 --parent <epic>");
+    expect(renderGroups(groups, "openspec")).toContain("openspec new change decide-schema");
+    expect(renderGroups([], "beads")).toBe("");
   });
 });

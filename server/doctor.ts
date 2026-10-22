@@ -223,3 +223,73 @@ export function dataChecks({ items, houses, closed, cfg, source, now = new Date(
 
 export const readiness = (checks: Check[]) =>
   `site readiness ${checks.filter((c) => c.ok).length}/${checks.length}`;
+
+export type Group = { name: string; why: string; ids: string[] };
+
+const PREFIX = /^(?:\[([^\]]+)\]|([A-Za-z][\w-]*):)\s+/;
+
+/** Unparented open beads, grouped by label, title prefix, then blocks component. First rule wins. */
+export function proposeEpics(items: Item[]): Group[] {
+  const loose = items.filter((i) => i.kind === "bead" && i.status !== "closed" && !i.parent);
+  const taken = new Set<string>();
+  const out: Group[] = [];
+  const claim = (name: string, why: string, ids: string[]) => {
+    const fresh = ids.filter((id) => !taken.has(id));
+    if (fresh.length < 2) return;
+    for (const id of fresh) taken.add(id);
+    out.push({ name, why, ids: fresh });
+  };
+
+  const byLabel = new Map<string, string[]>();
+  for (const i of loose) for (const l of i.labels) byLabel.set(l, [...(byLabel.get(l) ?? []), i.id]);
+  for (const [label, ids] of [...byLabel].sort((a, b) => b[1].length - a[1].length))
+    if (ids.length >= 3) claim(label, `label ${label}`, ids);
+
+  const byPrefix = new Map<string, string[]>();
+  for (const i of loose) {
+    const m = PREFIX.exec(i.title);
+    const p = (m?.[1] ?? m?.[2])?.toLowerCase();
+    if (p) byPrefix.set(p, [...(byPrefix.get(p) ?? []), i.id]);
+  }
+  for (const [prefix, ids] of [...byPrefix].sort((a, b) => b[1].length - a[1].length))
+    if (ids.length >= 3) claim(prefix, `title prefix ${prefix}`, ids);
+
+  const ids = new Set(loose.map((i) => i.id));
+  const adj = new Map<string, Set<string>>();
+  const link = (a: string, b: string) => {
+    adj.set(a, (adj.get(a) ?? new Set()).add(b));
+    adj.set(b, (adj.get(b) ?? new Set()).add(a));
+  };
+  for (const i of loose) for (const w of i.waitsOn) if (ids.has(w)) link(i.id, w);
+  const seen = new Set<string>();
+  for (const i of loose) {
+    if (seen.has(i.id) || !adj.has(i.id)) continue;
+    const comp: string[] = [];
+    const stack = [i.id];
+    while (stack.length) {
+      const id = stack.pop()!;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      comp.push(id);
+      for (const n of adj.get(id) ?? []) stack.push(n);
+    }
+    const root =
+      comp.find((id) => !loose.find((x) => x.id === id)!.waitsOn.some((w) => ids.has(w))) ?? comp[0];
+    claim(loose.find((x) => x.id === root)!.title, `blocks chain from ${root}`, comp);
+  }
+  return out;
+}
+
+export function renderGroups(groups: Group[], source: SourceName): string {
+  if (!groups.length) return "";
+  const bd = source !== "openspec";
+  const lines = groups.flatMap((g) =>
+    bd
+      ? [
+          `bd create "${g.name}" -t epic   # ${g.why}`,
+          ...g.ids.map((id) => `bd update ${id} --parent <epic>`),
+        ]
+      : [`openspec new change ${g.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}   # ${g.why}`],
+  );
+  return `houses to build:\n${lines.join("\n")}`;
+}
