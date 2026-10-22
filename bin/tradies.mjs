@@ -54,8 +54,9 @@ if (cmd === "init") {
   const what =
     src === "openspec" ? "OpenSpec changes, tasks and frontmatter" : "beads, labels, deps and close reasons";
   const skill = `---\nname: tradies\ndescription: How ${what} show up on the tradies site, and what it reads\n---\n\n${text}`;
+  const root = args.includes("--repo") ? process.cwd() : os.homedir();
   for (const dir of [".claude/skills/tradies", ".agents/skills/tradies"]) {
-    const file = path.join(process.cwd(), dir, "SKILL.md");
+    const file = path.join(root, dir, "SKILL.md");
     if (existsSync(file) && !force) {
       console.error(`${file} exists; use --force to overwrite`);
       process.exit(1);
