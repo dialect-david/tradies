@@ -2,7 +2,7 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { DEFAULTS, loadConfig, parseConfig } from "../server/config.js";
+import { DEFAULTS, loadConfig, parseConfig } from "../server/config.ts";
 
 const file = (name: string, body: string) => {
   const p = path.join(mkdtempSync(path.join(os.tmpdir(), "tradies-")), name);

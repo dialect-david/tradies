@@ -1,9 +1,9 @@
 import path from "node:path";
-import { json, sh, site } from "./shell.js";
-import { fromBead, type Bead, type Item } from "./model.js";
-import { houses } from "./houses.js";
-import { userName } from "./git.js";
-import type { Source } from "./source.js";
+import { json, sh, site } from "./shell.ts";
+import { fromBead, type Bead, type Item } from "./model.ts";
+import { houses } from "./houses.ts";
+import { userName } from "./git.ts";
+import type { Source } from "./source.ts";
 
 const list = (status: string, extra: string[] = []) =>
   json<Bead[]>("bd", ["list", "--json", "--limit", "0", "--status", status, ...extra]);

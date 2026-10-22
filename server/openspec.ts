@@ -1,11 +1,11 @@
 import { appendFile, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { json, sh, site } from "./shell.js";
-import { userName } from "./git.js";
-import type { Item } from "./model.js";
-import { houses, type Phase } from "./houses.js";
-import type { Source } from "./source.js";
-import { loadConfig } from "./config.js";
+import { json, sh, site } from "./shell.ts";
+import { userName } from "./git.ts";
+import type { Item } from "./model.ts";
+import { houses, type Phase } from "./houses.ts";
+import type { Source } from "./source.ts";
+import { loadConfig } from "./config.ts";
 
 export type Task = { text: string; done: boolean; line: number };
 /** added: subject of the oldest commit that put a file in the dir; the archive move, for archived changes. */

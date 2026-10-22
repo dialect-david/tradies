@@ -1,5 +1,5 @@
 import { defineConfig } from "vite";
-import { api } from "./server/api.js";
+import { api } from "./server/api.ts";
 
 export default defineConfig({
   root: "game",

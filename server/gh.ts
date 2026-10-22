@@ -1,5 +1,5 @@
-import { json, sh } from "./shell.js";
-import { fromPr, type Item, type Pr } from "./model.js";
+import { json, sh } from "./shell.ts";
+import { fromPr, type Item, type Pr } from "./model.ts";
 
 const FIELDS = "number,title,state,isDraft,reviewDecision,statusCheckRollup,author,updatedAt,url";
 

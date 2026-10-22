@@ -1,4 +1,4 @@
-import type { Item } from "../model.js";
+import type { Item } from "../model.ts";
 
 export type Fixture = { items: Item[]; prs: Item[]; foreman: string };
 

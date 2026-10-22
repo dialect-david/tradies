@@ -1,5 +1,5 @@
-import type { Item } from "./model.js";
-import type { Config } from "./defaults.js";
+import type { Item } from "./model.ts";
+import type { Config } from "./defaults.ts";
 
 export const PHASES = ["site", "slab", "frame", "roof", "lockup", "fitout", "done"] as const;
 export type Phase = (typeof PHASES)[number];

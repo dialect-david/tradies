@@ -11,8 +11,8 @@ import {
   YARD_GAP,
   YARD_W,
   type Epic,
-} from "../game/street.js";
-import type { Item } from "../server/model.js";
+} from "../game/street.ts";
+import type { Item } from "../server/model.ts";
 
 const item = (over: Partial<Item>): Item => ({
   kind: "bead",
@@ -80,7 +80,7 @@ describe("street", () => {
   });
 });
 
-import { shortTitle } from "../game/street.js";
+import { shortTitle } from "../game/street.ts";
 
 describe("shortTitle", () => {
   it("drops the kind prefix and everything after a dash or colon, then caps at a word", () => {

@@ -1,9 +1,9 @@
-import type { Item } from "../server/model.js";
+import type { Item } from "../server/model.ts";
 
-import type { Epic } from "./street.js";
-import type { Config, SourceName } from "../server/defaults.js";
-import type { Prompts } from "../server/source.js";
-import type { Review } from "../server/review.js";
+import type { Epic } from "./street.ts";
+import type { Config, SourceName } from "../server/defaults.ts";
+import type { Prompts } from "../server/source.ts";
+import type { Review } from "../server/review.ts";
 
 export type Site = {
   site: string;

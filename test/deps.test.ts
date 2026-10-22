@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { frees, mermaid, rootBlocker } from "../server/deps.js";
-import type { Item } from "../server/model.js";
+import { frees, mermaid, rootBlocker } from "../server/deps.ts";
+import type { Item } from "../server/model.ts";
 
 const item = (id: string, waitsOn: string[] = [], over: Partial<Item> = {}): Item => ({
   kind: "bead",

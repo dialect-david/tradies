@@ -1,6 +1,6 @@
-import type { Item } from "./model.js";
-import type { HouseStat } from "./houses.js";
-import type { Config, SourceName } from "./defaults.js";
+import type { Item } from "./model.ts";
+import type { HouseStat } from "./houses.ts";
+import type { Config, SourceName } from "./defaults.ts";
 
 /** run does the work and returns the id to name in the toast. */
 export type Action = { run: (id: string, a: Record<string, string>) => Promise<string>; done: string };

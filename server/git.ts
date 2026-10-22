@@ -1,5 +1,5 @@
-import { sh } from "./shell.js";
-import { NOTES_REF, parseShortstat, REVIEW_REF, type Review } from "./review.js";
+import { sh } from "./shell.ts";
+import { NOTES_REF, parseShortstat, REVIEW_REF, type Review } from "./review.ts";
 
 const rev = async (ref: string) => (await sh("git", ["rev-parse", "--verify", "-q", ref])).trim();
 

@@ -1,6 +1,6 @@
-import { ageDays, byUrgency, isStale, type Item } from "../server/model.js";
-import { DEFAULTS, type Config } from "../server/defaults.js";
-import { rootBlocker } from "../server/deps.js";
+import { ageDays, byUrgency, isStale, type Item } from "../server/model.ts";
+import { DEFAULTS, type Config } from "../server/defaults.ts";
+import { rootBlocker } from "../server/deps.ts";
 
 export const needsSomeone = (i: Item, cfg: Config = DEFAULTS) =>
   i.labels.some((l) => cfg.foremanLabels.some((p) => l.startsWith(p))) ||

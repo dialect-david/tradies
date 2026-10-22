@@ -3,8 +3,8 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { DEFAULTS, type Config } from "./defaults.js";
-import { site } from "./shell.js";
+import { DEFAULTS, type Config } from "./defaults.ts";
+import { site } from "./shell.ts";
 
 export { DEFAULTS, type Config };
 

@@ -1,4 +1,4 @@
-import type { Item } from "./model.js";
+import type { Item } from "./model.ts";
 
 /** Blocker id → ids it holds up, directly or through other open beads. */
 export function frees(items: Item[]): Map<string, Set<string>> {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { houses } from "../server/houses.js";
-import type { Item } from "../server/model.js";
+import { houses } from "../server/houses.ts";
+import type { Item } from "../server/model.ts";
 
 const bead = (id: string, over: Partial<Item> = {}, parent?: string): Item => ({
   kind: "bead",

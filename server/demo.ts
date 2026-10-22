@@ -1,7 +1,7 @@
-import type { Item } from "./model.js";
-import { houses } from "./houses.js";
-import type { Source } from "./source.js";
-import { fixture, type Fixture } from "./demo/fixture.js";
+import type { Item } from "./model.ts";
+import { houses } from "./houses.ts";
+import type { Source } from "./source.ts";
+import { fixture, type Fixture } from "./demo/fixture.ts";
 
 const byClosed = (items: Item[]) =>
   items.sort((a, b) => (b.closedAt?.getTime() ?? 0) - (a.closedAt?.getTime() ?? 0));

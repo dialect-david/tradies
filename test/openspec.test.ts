@@ -17,7 +17,7 @@ import {
   tickKey,
   tickedSince,
   toItems,
-} from "../server/openspec.js";
+} from "../server/openspec.ts";
 
 const root = path.join(import.meta.dirname, "fixtures", "openspec");
 const byName = async (name: string) => (await readChanges(root, meta)).find((c) => c.name === name)!;

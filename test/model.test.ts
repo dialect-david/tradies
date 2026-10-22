@@ -8,7 +8,7 @@ import {
   isStale,
   type Bead,
   type Pr,
-} from "../server/model.js";
+} from "../server/model.ts";
 
 const bead = (over: Partial<Bead> = {}): Bead => ({
   id: "x-1",

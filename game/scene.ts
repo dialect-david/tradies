@@ -1,10 +1,10 @@
 import Phaser from "phaser";
-import type { Item } from "../server/model.js";
-import { cast, TRADE_COLOUR, type Cast } from "./cast.js";
-import { items as fetchItems, closed as fetchClosed, knockoff, onRefresh } from "./client.js";
-import { openCard, openBoard, openKnockoff, openPlans, openReview, setItems, toast } from "./card.js";
-import { toggleTuner } from "./crt.js";
-import type { Review } from "../server/review.js";
+import type { Item } from "../server/model.ts";
+import { cast, TRADE_COLOUR, type Cast } from "./cast.ts";
+import { items as fetchItems, closed as fetchClosed, knockoff, onRefresh } from "./client.ts";
+import { openCard, openBoard, openKnockoff, openPlans, openReview, setItems, toast } from "./card.ts";
+import { toggleTuner } from "./crt.ts";
+import type { Review } from "../server/review.ts";
 import {
   CLOSE_GAP,
   HOUSE_W,
@@ -16,7 +16,7 @@ import {
   YARD_W,
   type House,
   type Street,
-} from "./street.js";
+} from "./street.ts";
 import {
   CAN_FRAMES,
   CAN_PALETTE,
@@ -45,7 +45,7 @@ import {
   LETTERBOX_PALETTE,
   TOOLBOX_PALETTE,
   type Stage,
-} from "./sprites.js";
+} from "./sprites.ts";
 
 const GROUND = 0.78;
 const T = 18;

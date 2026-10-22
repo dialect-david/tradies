@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { cast } from "../game/cast.js";
-import { DEFAULTS } from "../server/defaults.js";
-import { houses } from "../server/houses.js";
-import { fixture } from "../server/demo/fixture.js";
+import { cast } from "../game/cast.ts";
+import { DEFAULTS } from "../server/defaults.ts";
+import { houses } from "../server/houses.ts";
+import { fixture } from "../server/demo/fixture.ts";
 
 const now = new Date("2026-10-21T12:00:00Z");
 const { items, prs, foreman } = fixture(now);
@@ -75,7 +75,7 @@ describe("demo fixture", () => {
 
 describe("demo source", () => {
   it("claim shows in_progress, close lands in closedSince", async () => {
-    const { demoSource } = await import("../server/demo.js");
+    const { demoSource } = await import("../server/demo.ts");
     const s = demoSource();
     const ready = (await s.items()).find((i) => i.status === "open" && i.parent && !i.blocked)!;
     await s.actions.claim.run(ready.id, {});

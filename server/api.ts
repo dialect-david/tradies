@@ -1,13 +1,13 @@
 import type { Plugin, ViteDevServer } from "vite";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { beads } from "./beads.js";
-import { openspec } from "./openspec.js";
-import { demo } from "./demo.js";
-import { pickSource, type Action } from "./source.js";
-import * as gh from "./gh.js";
-import * as git from "./git.js";
-import { site } from "./shell.js";
-import { loadConfig } from "./config.js";
+import { beads } from "./beads.ts";
+import { openspec } from "./openspec.ts";
+import { demo } from "./demo.ts";
+import { pickSource, type Action } from "./source.ts";
+import * as gh from "./gh.ts";
+import * as git from "./git.ts";
+import { site } from "./shell.ts";
+import { loadConfig } from "./config.ts";
 import { existsSync, watch } from "node:fs";
 import path from "node:path";
 

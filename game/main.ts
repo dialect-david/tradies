@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { Site } from "./scene.js";
+import { Site } from "./scene.ts";
 
 new Phaser.Game({
   type: Phaser.AUTO,

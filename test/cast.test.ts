@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { cast, score } from "../game/cast.js";
-import { DEFAULTS } from "../server/config.js";
-import type { Item } from "../server/model.js";
+import { cast, score } from "../game/cast.ts";
+import { DEFAULTS } from "../server/config.ts";
+import type { Item } from "../server/model.ts";
 
 const now = new Date("2026-10-10T00:00:00Z");
 const item = (over: Partial<Item>): Item => ({

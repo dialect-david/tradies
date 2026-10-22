@@ -1,10 +1,10 @@
-import { ageDays, type Item } from "../server/model.js";
-import { act, show } from "./client.js";
-import { score, type Cast } from "./cast.js";
-import { REVIEW_REF, reviewPrompt, short, type Review } from "../server/review.js";
-import type { Config } from "../server/defaults.js";
-import { fillPrompt, type Prompts } from "../server/source.js";
-import { mermaid } from "../server/deps.js";
+import { ageDays, type Item } from "../server/model.ts";
+import { act, show } from "./client.ts";
+import { score, type Cast } from "./cast.ts";
+import { REVIEW_REF, reviewPrompt, short, type Review } from "../server/review.ts";
+import type { Config } from "../server/defaults.ts";
+import { fillPrompt, type Prompts } from "../server/source.ts";
+import { mermaid } from "../server/deps.ts";
 
 const card = document.getElementById("card")!;
 const board = document.getElementById("board")!;

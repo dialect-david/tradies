@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CONVENTIONS, fillPrompt, pickSource } from "../server/source.js";
+import { CONVENTIONS, fillPrompt, pickSource } from "../server/source.ts";
 
 describe("pickSource", () => {
   it("beads by default, openspec only when it is the one present", () => {
@@ -26,9 +26,9 @@ describe("prompts", () => {
     );
   });
   it("every source names the item and points at prime", async () => {
-    const { beads } = await import("../server/beads.js");
-    const { openspec } = await import("../server/openspec.js");
-    const { demoSource } = await import("../server/demo.js");
+    const { beads } = await import("../server/beads.ts");
+    const { openspec } = await import("../server/openspec.ts");
+    const { demoSource } = await import("../server/demo.ts");
     for (const s of [beads, openspec, demoSource()])
       for (const t of [s.prompts.work, s.prompts.plan]) {
         expect(s.prompts.review).toContain("{hazard}");

@@ -1,6 +1,6 @@
-import type { Item } from "../server/model.js";
-import type { HouseStat } from "../server/houses.js";
-import { stage, type Stage } from "./sprites.js";
+import type { Item } from "../server/model.ts";
+import type { HouseStat } from "../server/houses.ts";
+import { stage, type Stage } from "./sprites.ts";
 
 export type Epic = HouseStat;
 

@@ -6,7 +6,7 @@ import {
   SOLD_FRAMES,
   stage,
   TRADIE_FRAMES,
-} from "../game/sprites.js";
+} from "../game/sprites.ts";
 
 describe("sprites", () => {
   it("frames are rectangular", () => {
@@ -27,7 +27,7 @@ describe("sprites", () => {
   });
 });
 
-import { CAN_FRAMES, SLAB_FRAMES, slabs, UTE_FRAMES } from "../game/sprites.js";
+import { CAN_FRAMES, SLAB_FRAMES, slabs, UTE_FRAMES } from "../game/sprites.ts";
 
 describe("beers", () => {
   it("a slab is 24 closed beads, the rest are loose tinnies", () => {
@@ -43,7 +43,7 @@ describe("beers", () => {
   });
 });
 
-import { ROOF_FRAMES, TRUSS_FRAMES } from "../game/sprites.js";
+import { ROOF_FRAMES, TRUSS_FRAMES } from "../game/sprites.ts";
 
 describe("roof", () => {
   it("roof and truss are the same size, three house tiles wide plus eaves", () => {

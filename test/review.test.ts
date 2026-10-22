@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseShortstat, reviewPrompt, type Review } from "../server/review.js";
+import { parseShortstat, reviewPrompt, type Review } from "../server/review.ts";
 
 describe("review", () => {
   it("sums insertions and deletions", () => {
