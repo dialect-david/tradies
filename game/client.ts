@@ -4,6 +4,7 @@ import type { Epic } from "./street.ts";
 import type { Config, SourceName } from "../server/defaults.ts";
 import type { Prompts } from "../server/source.ts";
 import type { Review } from "../server/review.ts";
+import type { Check } from "../server/doctor.ts";
 
 export type Site = {
   site: string;
@@ -62,4 +63,10 @@ export async function knockoff(): Promise<{ since: Date; today: Item[] }> {
   const k = (await r.json()) as { since: string; today: Item[] };
   for (const i of k.today) ((i.updatedAt = new Date(i.updatedAt)), (i.closedAt = new Date(i.closedAt!)));
   return { since: new Date(k.since), today: k.today };
+}
+
+export async function doctor(): Promise<{ checks: Check[]; readiness: string }> {
+  const r = await fetch("/api/doctor");
+  if (!r.ok) throw new Error((await r.json()).error);
+  return r.json();
 }

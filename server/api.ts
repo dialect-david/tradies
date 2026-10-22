@@ -6,6 +6,7 @@ import * as gh from "./gh.ts";
 import * as git from "./git.ts";
 import { site } from "./shell.ts";
 import { loadConfig } from "./config.ts";
+import { dataChecks, readiness } from "./doctor.ts";
 import { watch } from "node:fs";
 import path from "node:path";
 
@@ -84,6 +85,16 @@ export function api(): Plugin {
             return send(res, 200, { since: start, today: await source.closedSince(start) });
           }
           if (url.pathname === "/closed") return send(res, 200, await source.closedRecent());
+          if (url.pathname === "/doctor") {
+            const cfg = loadConfig();
+            const [items, houses, closed] = await Promise.all([
+              source.items(),
+              source.houses(cfg),
+              source.closedRecent(),
+            ]);
+            const checks = dataChecks({ items, houses, closed, cfg, source: sourceName });
+            return send(res, 200, { checks, readiness: readiness(checks) });
+          }
           if (url.pathname === "/show") {
             const id = url.searchParams.get("id") ?? "";
             return send(

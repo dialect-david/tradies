@@ -1,5 +1,5 @@
 import { ageDays, type Item } from "../server/model.ts";
-import { act, show } from "./client.ts";
+import { act, doctor, show } from "./client.ts";
 import { score, type Cast } from "./cast.ts";
 import { REVIEW_REF, reviewPrompt, short, type Review } from "../server/review.ts";
 import type { Config } from "../server/defaults.ts";
@@ -288,8 +288,17 @@ export function openKnockoff(today: Item[], c: Cast, onClose: () => void, title 
     ${c.ready
       .slice(0, 3)
       .map((i) => row(i))
-      .join("")}`;
+      .join("")}
+    <h4 data-survey>site survey …</h4>`;
   wireCopy(board);
+  const survey = board.querySelector<HTMLElement>("[data-survey]")!;
+  doctor().then(
+    ({ checks, readiness }) => {
+      const bad = checks.filter((k) => !k.ok).map((k) => k.id);
+      survey.textContent = `${readiness}${bad.length ? ` · missing: ${bad.join(", ")}` : ""}`;
+    },
+    () => survey.remove(),
+  );
   board
     .querySelector("[data-md]")!
     .addEventListener("click", () => copyText(briefingMarkdown(today, c, worry, site), "briefing copied"));
@@ -302,6 +311,15 @@ export function openKnockoff(today: Item[], c: Cast, onClose: () => void, title 
 }
 
 let knockoffClose: (() => void) | undefined;
+
+export const DOCTOR_CMD = "npx @stottula/tradies doctor";
+
+export function openSurvey() {
+  card.classList.add("open");
+  card.innerHTML = `<h3>nothing to build</h3><pre>No houses yet: no epic has children, so the street is empty. The doctor says what is missing and what it costs on site.</pre>
+    <div class="row"><button data-copy="${DOCTOR_CMD}">copy ${DOCTOR_CMD}</button></div>`;
+  wireCopy(card);
+}
 
 export function briefingMarkdown(today: Item[], c: Cast, worry: Item[], site: string): string {
   const li = (i: Item, extra = "") => `- ${i.id} — ${i.title}${extra}`;

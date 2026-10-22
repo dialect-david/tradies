@@ -2,7 +2,16 @@ import Phaser from "phaser";
 import type { Item } from "../server/model.ts";
 import { cast, TRADE_COLOUR, type Cast } from "./cast.ts";
 import { items as fetchItems, closed as fetchClosed, knockoff, onRefresh } from "./client.ts";
-import { openCard, openBoard, openKnockoff, openPlans, openReview, setItems, toast } from "./card.ts";
+import {
+  openCard,
+  openBoard,
+  openKnockoff,
+  openPlans,
+  openReview,
+  openSurvey,
+  setItems,
+  toast,
+} from "./card.ts";
 import { toggleTuner } from "./crt.ts";
 import type { Review } from "../server/review.ts";
 import {
@@ -102,6 +111,7 @@ export class Site extends Phaser.Scene {
   private actors = new Map<string, Actor>();
   private lots = new Map<string, Lot>();
   private closeSign!: Phaser.GameObjects.Container;
+  private surveySign!: Phaser.GameObjects.Container;
   private board!: Phaser.GameObjects.Container;
   private boardRows: Item[] = [];
   private boardTop = 0;
@@ -302,6 +312,19 @@ export class Site extends Phaser.Scene {
         .on("pointerdown", () => openBoard(this.current.ready)),
       this.add.text(0, -22 * HS, "jobs", { fontSize: "9px", color: "#fff" }).setOrigin(0.5, 1),
     ]);
+    this.surveySign = this.add
+      .container(0, gy, [
+        this.add
+          .image(0, 0, "tiles", TILE.sign)
+          .setOrigin(0.5, 1)
+          .setScale(HS)
+          .setInteractive()
+          .on("pointerdown", openSurvey),
+        this.add
+          .text(0, -22 * HS, "nothing\nto build", { fontSize: "9px", color: "#fff", align: "center" })
+          .setOrigin(0.5, 1),
+      ])
+      .setVisible(false);
     this.beers = this.add.container(0, gy);
     this.boom = this.add.container(0, -44);
     const stripes = [0, 1, 2, 3, 4].map((n) =>
@@ -433,6 +456,7 @@ export class Site extends Phaser.Scene {
       this.hud.querySelector("#site")!.textContent =
         `🏗 ${site}` + (source === "demo" ? " · DEMO · nothing is saved" : "");
       this.street(layoutStreet(epics, items));
+      this.surveySign.setVisible(epics.length === 0 && source !== "demo");
       if (!this.onSmoko && !this.knockedOff) this.place(this.current);
     } catch (e) {
       toast(`strewth: ${(e as Error).message}`);
@@ -447,6 +471,7 @@ export class Site extends Phaser.Scene {
     this.signoff.setX(yard + 30);
     this.empties.setX(yard + 170);
     this.sign.setX(yard + 360);
+    this.surveySign.setX(yard + 250);
     this.pallets.setX(yard + 410);
     this.plans.setX(yard + 670);
     this.beers.setX(yard + 760);
