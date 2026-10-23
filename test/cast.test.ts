@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cast, score } from "../game/cast.ts";
+import { byInspection, cast, score } from "../game/cast.ts";
 import { DEFAULTS } from "../server/config.ts";
 import type { Item } from "../server/model.ts";
 
@@ -157,5 +157,32 @@ describe("root blocker", () => {
     );
     expect(c.blocker).toEqual({ item: expect.objectContaining({ id: "root" }), frees: 3 });
     expect(c.worst?.id).toBe("root");
+  });
+});
+
+describe("inspectors", () => {
+  const pr = (over: Partial<Item>): Item => item({ kind: "pr", trade: "inspector", ...over });
+  it("line up failed, approved, review, draft; newest first within a group", () => {
+    const cars = [
+      pr({ id: "#1", status: "draft", updatedAt: new Date("2026-10-09") }),
+      pr({ id: "#2", status: "review", updatedAt: new Date("2026-10-08") }),
+      pr({ id: "#3", status: "approved", updatedAt: new Date("2026-10-01") }),
+      pr({
+        id: "#4",
+        status: "review",
+        blocked: true,
+        labels: ["ci:fail"],
+        updatedAt: new Date("2026-10-02"),
+      }),
+      pr({ id: "#5", status: "review", updatedAt: new Date("2026-10-09") }),
+    ];
+    expect([...cars].sort(byInspection).map((i) => i.id)).toEqual(["#4", "#3", "#5", "#2", "#1"]);
+    expect(cast(cars, now, DEFAULTS, new Set()).inspectors.map((i) => i.id)).toEqual([
+      "#4",
+      "#3",
+      "#5",
+      "#2",
+      "#1",
+    ]);
   });
 });

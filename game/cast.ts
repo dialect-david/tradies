@@ -41,7 +41,7 @@ export function cast(
   const all = items.filter((i) => i.kind === "bead" && (!house(i) || needsSomeone(i, cfg)));
   const deferred = all.filter((i) => i.status === "deferred");
   const beads = all.filter((i) => i.status !== "deferred");
-  const prs = items.filter((i) => i.kind === "pr");
+  const prs = items.filter((i) => i.kind === "pr").sort(byInspection);
   const byScore = (a: Item, b: Item) => score(b, now, cfg) - score(a, now, cfg);
   const working = beads.filter((i) => i.status === "in_progress" && !house(i));
   const asleep = working.filter(stale);
@@ -91,6 +91,13 @@ export function cast(
     today,
     cfg,
   };
+}
+
+const INSPECTION = ["approved", "review", "draft"];
+/** Failing CI first, then approved, review, draft; newest first within a group. */
+export function byInspection(a: Item, b: Item): number {
+  const rank = (i: Item) => (i.blocked ? 0 : 1 + Math.max(0, INSPECTION.indexOf(i.status)));
+  return rank(a) - rank(b) || b.updatedAt.getTime() - a.updatedAt.getTime();
 }
 
 export function score(i: Item, now: Date, cfg: Config = DEFAULTS): number {
