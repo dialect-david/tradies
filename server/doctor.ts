@@ -42,12 +42,13 @@ export function configProblems(text: string): string[] {
 
 export function setupChecks(env: Env): Check[] {
   const out: Check[] = [];
-  const major = Number(/\d+/.exec(env.nodeVersion)?.[0] ?? 0);
+  const [major, minor] = (/(\d+)\.(\d+)/.exec(env.nodeVersion) ?? []).slice(1).map(Number);
+  const nodeOk = (major === 20 && minor >= 19) || (major === 22 && minor >= 12) || major >= 23;
   out.push({
     id: "node",
-    ok: major >= 24,
+    ok: nodeOk,
     says: `node ${env.nodeVersion}`,
-    fix: major >= 24 ? undefined : "needs node 24: https://nodejs.org",
+    fix: nodeOk ? undefined : "needs node 20.19, 22.12 or newer: https://nodejs.org",
   });
 
   const beads = env.exists(".beads");

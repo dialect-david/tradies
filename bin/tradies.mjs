@@ -5,8 +5,10 @@ import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { tsImport } from "tsx/esm/api";
 
 const pkg = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const load = (p) => tsImport(p, import.meta.url);
 const args = process.argv.slice(2);
 const [cmd] = args;
 const SUB = new Set(["prime", "init", "doctor"]);
@@ -22,8 +24,8 @@ let site = path.resolve(positional[0] ?? process.cwd());
 
 async function doc() {
   process.env.TRADIES_SITE = site;
-  const { loadConfig } = await import("../server/config.ts");
-  const { pickSource } = await import("../server/source.ts");
+  const { loadConfig } = await load("../server/config.ts");
+  const { pickSource } = await load("../server/source.ts");
   const cfg = loadConfig();
   const src = pickSource(
     { beads: existsSync(path.join(site, ".beads")), openspec: existsSync(path.join(site, "openspec")) },
@@ -67,7 +69,7 @@ if (cmd === "init") {
 
 if (cmd === "doctor") {
   process.env.TRADIES_SITE = site;
-  const { setupChecks, render, failed } = await import("../server/doctor.ts");
+  const { setupChecks, render, failed } = await load("../server/doctor.ts");
   const ok = (cmd, a) => {
     try {
       execFileSync(cmd, a, { stdio: "ignore", cwd: site });
@@ -92,9 +94,9 @@ if (cmd === "doctor") {
   if (failed(checks).length) process.exit(1);
   if (args.includes("--demo")) process.env.TRADIES_DEMO = "1";
   const { dataChecks, readiness, proposeEpics, renderGroups, agentPrompt } =
-    await import("../server/doctor.ts");
-  const { currentSource } = await import("../server/sources.ts");
-  const { loadConfig } = await import("../server/config.ts");
+    await load("../server/doctor.ts");
+  const { currentSource } = await load("../server/sources.ts");
+  const { loadConfig } = await load("../server/config.ts");
   const cfg = loadConfig();
   const { name, source } = currentSource(cfg.source);
   const [items, houses, closed] = await Promise.all([

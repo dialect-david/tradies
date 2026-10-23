@@ -29,13 +29,16 @@
   },
   "dependencies": {
     "phaser": "^4.2.1",
+    "tsx": "^4",
     "vite": "^8.3.2"
   },
   "devDependencies": {
     "@types/node": "^24",
     "prettier": "^3",
-    "tsx": "^4",
     "typescript": "^5",
     "vitest": "^3"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
   }
 }

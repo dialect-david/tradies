@@ -31,7 +31,7 @@ npx @stottula/tradies doctor       # what is missing, and what it costs on site
 
 ## Requirements
 
-- Node 24
+- Node 20.19, 22.12 or newer
 - A tracker in the repo, one of:
   - beads: `.beads/` and `bd` on PATH
   - OpenSpec: `openspec/`. Fewer features, see [OpenSpec mode](#openspec-mode)
