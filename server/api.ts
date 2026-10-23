@@ -39,6 +39,8 @@ function sameOrigin(req: IncomingMessage): boolean {
 }
 
 const { name: sourceName, source } = currentSource(loadConfig().source);
+const DEMO_NAMES: Record<string, string> = { "1": "brew", openspec: "specs" };
+const siteName = () => DEMO_NAMES[process.env.TRADIES_DEMO ?? ""] ?? site.split("/").pop();
 
 export const ACTIONS: Record<string, Action> = {
   merge: { run: (id) => gh.merge(id).then(() => id), done: "certified" },
@@ -68,8 +70,9 @@ export function api(): Plugin {
               source.houses(config),
             ]);
             return send(res, 200, {
-              site: sourceName === "demo" ? "brew" : site.split("/").pop(),
+              site: siteName(),
               source: sourceName,
+              demo: !!process.env.TRADIES_DEMO,
               closed,
               epics,
               actions: Object.keys(ACTIONS),

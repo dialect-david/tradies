@@ -7,7 +7,8 @@ Your [beads](https://github.com/gastownhall/beads) or [OpenSpec](https://github.
 ## Try it
 
 ```sh
-npx @stottula/tradies --demo
+npx @stottula/tradies --demo            # beads, in memory
+npx @stottula/tradies --demo openspec   # an OpenSpec site in a temp dir
 ```
 
 A made-up cafe app with every feature lit. Nothing is saved: claim a job, close it, watch the tinnie fly.

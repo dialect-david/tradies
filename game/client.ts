@@ -9,6 +9,7 @@ import type { Check } from "../server/doctor.ts";
 export type Site = {
   site: string;
   source: SourceName;
+  demo: boolean;
   closed: number;
   epics: Epic[];
   config: Config;

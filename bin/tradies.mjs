@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { execFileSync, spawn } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
@@ -10,7 +10,15 @@ const pkg = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
 const [cmd] = args;
 const SUB = new Set(["prime", "init", "doctor"]);
-const site = path.resolve(args.find((a) => !a.startsWith("--") && !SUB.has(a)) ?? process.cwd());
+const demoAt = args.indexOf("--demo");
+const demo =
+  args.find((a) => a.startsWith("--demo="))?.slice(7) ?? (demoAt >= 0 ? args[demoAt + 1] : undefined);
+const demoKind =
+  demo === "openspec" ? "openspec" : demoAt >= 0 || args.some((a) => a.startsWith("--demo=")) ? "1" : "";
+const positional = args.filter(
+  (a, i) => !a.startsWith("--") && !SUB.has(a) && !(demoAt >= 0 && i === demoAt + 1 && a === "openspec"),
+);
+let site = path.resolve(positional[0] ?? process.cwd());
 
 async function doc() {
   process.env.TRADIES_SITE = site;
@@ -112,12 +120,34 @@ const vite = path.join(
   "bin",
   "vite.js",
 );
-const demo = args.includes("--demo");
+let cleanup = () => {};
+if (demoKind === "openspec") {
+  const tmp = mkdtempSync(path.join(os.tmpdir(), "tradies-demo-"));
+  cpSync(path.join(pkg, "test", "fixtures", "openspec"), path.join(tmp, "openspec"), { recursive: true });
+  const git = (a) =>
+    execFileSync("git", ["-c", "user.name=demo", "-c", "user.email=demo@site", ...a], {
+      cwd: tmp,
+      stdio: "ignore",
+    });
+  git(["init", "-q"]);
+  git(["add", "-A"]);
+  git(["commit", "-q", "-m", "site set up"]);
+  site = tmp;
+  cleanup = () => rmSync(tmp, { recursive: true, force: true });
+  try {
+    execFileSync("sh", ["-c", "command -v openspec"], { stdio: "ignore" });
+  } catch {
+    console.error("openspec not on PATH: archiving a house won't work");
+  }
+}
 
 const child = spawn(process.execPath, [vite], {
   cwd: pkg,
   stdio: "inherit",
-  env: { ...process.env, TRADIES_SITE: site, ...(demo ? { TRADIES_DEMO: "1" } : {}) },
+  env: { ...process.env, TRADIES_SITE: site, ...(demoKind ? { TRADIES_DEMO: demoKind } : {}) },
 });
 for (const sig of ["SIGINT", "SIGTERM", "SIGHUP"]) process.on(sig, () => child.kill(sig));
-child.on("exit", (code, sig) => process.exit(code ?? (sig ? 1 : 0)));
+child.on("exit", (code, sig) => {
+  cleanup();
+  process.exit(code ?? (sig ? 1 : 0));
+});

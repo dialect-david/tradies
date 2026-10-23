@@ -17,7 +17,8 @@
     "config.json",
     "vite.config.ts",
     "tsconfig.json",
-    "docs"
+    "docs",
+    "test/fixtures/openspec"
   ],
   "scripts": {
     "start": "vite",

@@ -12,7 +12,7 @@ export function currentSource(prefer?: SourceName): { name: SourceName; source: 
     {
       beads: existsSync(path.join(site, ".beads")),
       openspec: existsSync(path.join(site, "openspec")),
-      demo: !!process.env.TRADIES_DEMO,
+      demo: process.env.TRADIES_DEMO === "1",
     },
     prefer,
   );
