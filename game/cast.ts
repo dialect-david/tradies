@@ -93,7 +93,7 @@ export function cast(
   };
 }
 
-const INSPECTION = ["approved", "review", "draft"];
+const INSPECTION = ["review", "draft", "approved"];
 /** Failing CI first, then approved, review, draft; newest first within a group. */
 export function byInspection(a: Item, b: Item): number {
   const rank = (i: Item) => (i.blocked ? 0 : 1 + Math.max(0, INSPECTION.indexOf(i.status)));

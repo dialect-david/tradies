@@ -162,7 +162,7 @@ describe("root blocker", () => {
 
 describe("inspectors", () => {
   const pr = (over: Partial<Item>): Item => item({ kind: "pr", trade: "inspector", ...over });
-  it("line up failed, approved, review, draft; newest first within a group", () => {
+  it("line up failed, review, draft, approved; newest first within a group", () => {
     const cars = [
       pr({ id: "#1", status: "draft", updatedAt: new Date("2026-10-09") }),
       pr({ id: "#2", status: "review", updatedAt: new Date("2026-10-08") }),
@@ -176,13 +176,13 @@ describe("inspectors", () => {
       }),
       pr({ id: "#5", status: "review", updatedAt: new Date("2026-10-09") }),
     ];
-    expect([...cars].sort(byInspection).map((i) => i.id)).toEqual(["#4", "#3", "#5", "#2", "#1"]);
+    expect([...cars].sort(byInspection).map((i) => i.id)).toEqual(["#4", "#5", "#2", "#1", "#3"]);
     expect(cast(cars, now, DEFAULTS, new Set()).inspectors.map((i) => i.id)).toEqual([
       "#4",
-      "#3",
       "#5",
       "#2",
       "#1",
+      "#3",
     ]);
   });
 });
