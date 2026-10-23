@@ -25,6 +25,10 @@ import {
   YARD_W,
   type House,
   type Street,
+  CAR_PITCH,
+  ROAD_START,
+  carPark,
+  roadFits,
 } from "./street.ts";
 import {
   CAN_FRAMES,
@@ -135,6 +139,10 @@ export class Site extends Phaser.Scene {
   private ute!: Phaser.GameObjects.Container;
   private sign!: Phaser.GameObjects.Container;
   private cars = new Map<string, Phaser.GameObjects.Container>();
+  private carpark!: Phaser.GameObjects.Container;
+  private parkSign!: Phaser.GameObjects.Container;
+  private streetW = 0;
+  private lotEnd = 0;
   private roadY = 0;
   private grass!: Phaser.GameObjects.TileSprite;
   private dirt!: Phaser.GameObjects.TileSprite;
@@ -325,6 +333,21 @@ export class Site extends Phaser.Scene {
           .setOrigin(0.5, 1),
       ])
       .setVisible(false);
+    this.carpark = this.add.container(0, 0);
+    this.parkSign = this.add
+      .container(w - 50, this.roadY - 22, [
+        this.add
+          .image(0, 0, "tiles", TILE.sign)
+          .setOrigin(0.5, 1)
+          .setScale(HS)
+          .setInteractive()
+          .on("pointerdown", () => this.visitCarPark()),
+        this.add
+          .text(0, -22 * HS, "P", { fontSize: "9px", color: "#fff", align: "center" })
+          .setOrigin(0.5, 1),
+      ])
+      .setDepth(3)
+      .setVisible(false);
     this.beers = this.add.container(0, gy);
     this.boom = this.add.container(0, -44);
     const stripes = [0, 1, 2, 3, 4].map((n) =>
@@ -476,12 +499,8 @@ export class Site extends Phaser.Scene {
     this.beers.setX(yard + 760);
     this.ute.setX(yard + 1030);
     this.closeSign.setX(yard + YARD_W + CLOSE_GAP / 2).setVisible(houses.some((h) => h.sold));
-    this.worldW = Math.max(w, width);
-    this.grass.setSize(this.worldW, this.grass.height);
-    this.dirt.setSize(this.worldW, this.dirt.height);
-    this.road.setSize(this.worldW, 44);
-    this.lines.setSize(this.worldW, 3);
-    this.cameras.main.setBounds(0, 0, this.worldW, h);
+    this.streetW = width;
+    this.sizeWorld();
     this.rain.updateConfig({ x: { min: 0, max: w } });
 
     const seen = new Set<string>();
@@ -857,11 +876,79 @@ export class Site extends Phaser.Scene {
     this.empties.addAt(e, 0);
   }
 
+  sizeWorld() {
+    const { width: w, height: h } = this.scale;
+    this.worldW = Math.max(w, this.streetW, this.lotEnd);
+    this.grass.setSize(this.worldW, this.grass.height);
+    this.dirt.setSize(this.worldW, this.dirt.height);
+    this.road.setSize(this.worldW, 44);
+    this.lines.setSize(this.worldW, 3);
+    this.cameras.main.setBounds(0, 0, this.worldW, h);
+  }
+
+  visitCarPark() {
+    const lot = this.carpark.getData("lot") as { x: number; width: number } | undefined;
+    if (!lot) return;
+    this.cameras.main.pan(lot.x + lot.width / 2, this.scale.height / 2, 1500, Phaser.Math.Easing.Sine.InOut);
+  }
+
+  /** Tarmac, bays, booth and attendant for n parked cars; rebuilt only when the shape changes. */
+  buildCarPark(n: number): { x: number; width: number; bays: { x: number; row: number }[] } {
+    const gy = this.scale.height * GROUND;
+    const lot = carPark(this.streetW, n);
+    this.lotEnd = n ? lot.x + lot.width + 40 : 0;
+    this.carpark.setData("lot", lot).setVisible(n > 0);
+    this.parkSign.setVisible(n > 0);
+    (this.parkSign.getAt(1) as Phaser.GameObjects.Text).setText(`P\n+${n}`);
+    const shape = `${lot.x}:${lot.width}:${Math.max(...lot.bays.map((b) => b.row), 0)}`;
+    if (this.carpark.getData("shape") === shape) return lot;
+    this.carpark.setData("shape", shape).removeAll(true);
+    const rows = Math.max(...lot.bays.map((b) => b.row), 0) + 1;
+    const top = Math.min(gy, this.bayY(rows - 1) - 48);
+    const bottom = this.roadY - 22;
+    this.carpark.add(
+      this.add.rectangle(lot.x - 90, top, lot.width + 90, bottom - top, 0x3d3d3d).setOrigin(0, 0),
+    );
+    const lines = this.add.graphics().lineStyle(2, 0xf4f4f4, 0.8);
+    for (const b of lot.bays) {
+      const y = this.bayY(b.row);
+      lines.lineBetween(lot.x + b.x - 50, y - 40, lot.x + b.x - 50, y);
+      lines.lineBetween(lot.x + b.x + 50, y - 40, lot.x + b.x + 50, y);
+    }
+    this.carpark.add(lines);
+    const booth = this.add
+      .rectangle(lot.x - 70, bottom, 26, 46, 0x8b5a2b)
+      .setOrigin(0.5, 1)
+      .setStrokeStyle(1, 0x1a1a1a);
+    const window = this.add.rectangle(lot.x - 70, bottom - 30, 16, 12, 0x87ceeb).setOrigin(0.5, 0.5);
+    const attendant = this.add.sprite(lot.x - 40, bottom, "tradie-inspector", 0).setOrigin(0.5, 1);
+    const title = this.add
+      .text(lot.x + lot.width / 2, top - 4, "inspectors' car park", {
+        fontSize: "9px",
+        color: "#fff",
+        backgroundColor: "#0008",
+      })
+      .setOrigin(0.5, 1);
+    this.carpark.add([booth, window, attendant, title]);
+    return lot;
+  }
+
+  bayY(row: number): number {
+    return this.roadY - 26 - row * 52;
+  }
+
   inspect(prs: Item[]) {
+    const { width: w } = this.scale;
+    const fit = roadFits(w);
+    const parked = prs.slice(fit);
+    const lot = this.buildCarPark(parked.length);
+    this.sizeWorld();
     const seen = new Set<string>();
     prs.forEach((pr, n) => {
       seen.add(pr.id);
-      const x = 160 + n * 150;
+      const bay = n >= fit ? lot.bays[n - fit] : undefined;
+      const x = bay ? lot.x + bay.x : ROAD_START + n * CAR_PITCH;
+      const y = bay ? this.bayY(bay.row) : this.roadY;
       let car = this.cars.get(pr.id);
       if (!car) {
         car = this.add.container(-120, this.roadY).setDepth(2);
@@ -874,13 +961,16 @@ export class Site extends Phaser.Scene {
           .setOrigin(0.5, 0);
         car.add([body, who, label]);
         this.cars.set(pr.id, car);
-        this.tweens.add({ targets: car, x, duration: 2500, ease: "Quad.Out" });
-      } else this.tweens.add({ targets: car, x, duration: 800 });
+        this.tweens.add({ targets: car, x, y, duration: 2500, ease: "Quad.Out" });
+      } else this.tweens.add({ targets: car, x, y, duration: 800 });
+      (car.getAt(1) as Phaser.GameObjects.Sprite).setVisible(!bay);
       const ci = pr.labels.find((l) => l.startsWith("ci:"))?.slice(3);
       const mood =
         pr.status === "draft" ? "L plates" : pr.status === "approved" ? "signed off ✓" : "inspecting";
       (car.getAt(2) as Phaser.GameObjects.Text).setText(
-        `${pr.id} · ${mood}${ci === "fail" ? " · ☔ failed" : ci === "pending" ? " · checking" : ""}`,
+        bay
+          ? pr.id
+          : `${pr.id} · ${mood}${ci === "fail" ? " · ☔ failed" : ci === "pending" ? " · checking" : ""}`,
       );
       (car.getAt(0) as Phaser.GameObjects.Image).setTint(
         ci === "fail" ? 0xff8080 : pr.status === "approved" ? 0xa0ffa0 : 0xffffff,
@@ -892,6 +982,7 @@ export class Site extends Phaser.Scene {
         this.tweens.add({
           targets: car,
           x: this.worldW + 150,
+          y: this.roadY,
           duration: 2000,
           ease: "Quad.In",
           onComplete: () => car.destroy(),

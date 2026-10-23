@@ -3,6 +3,10 @@ import {
   epicOf,
   HOUSE_PITCH,
   layoutStreet,
+  carPark,
+  roadFits,
+  BAY_PITCH,
+  CARPARK_GAP,
   SHED,
   STREET_START,
   CLOSE_GAP,
@@ -81,6 +85,19 @@ describe("street", () => {
 });
 
 import { shortTitle } from "../game/street.ts";
+
+describe("car park", () => {
+  it("seven cars fit a 1400 road; the rest take bays in rows of six past the street", () => {
+    expect(roadFits(1400)).toBe(7);
+    const lot = carPark(3000, 8);
+    expect(lot.x).toBe(3000 + CARPARK_GAP);
+    expect(lot.bays).toHaveLength(8);
+    expect(lot.bays.slice(0, 6).map((b) => b.row)).toEqual([0, 0, 0, 0, 0, 0]);
+    expect(lot.bays.slice(6).map((b) => b.row)).toEqual([1, 1]);
+    expect(lot.bays[1].x - lot.bays[0].x).toBe(BAY_PITCH);
+    expect(lot.x + lot.width).toBeGreaterThan(lot.x + lot.bays[5].x);
+  });
+});
 
 describe("shortTitle", () => {
   it("drops the kind prefix and everything after a dash or colon, then caps at a word", () => {
