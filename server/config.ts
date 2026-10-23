@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { DEFAULTS, type Config } from "./defaults.ts";
+import { DEFAULTS, type Config, type PrFilter } from "./defaults.ts";
 import { site } from "./shell.ts";
 
 export { DEFAULTS, type Config };
@@ -27,6 +27,14 @@ export function parseConfig(text: string | undefined): Partial<Config> {
     if (typeof v === "number" && v > 0) out[k] = v;
   }
   if (raw.source === "beads" || raw.source === "openspec") out.source = raw.source;
+  if (raw.prs && typeof raw.prs === "object") {
+    const p = raw.prs as Record<string, unknown>;
+    const prs: PrFilter = {};
+    for (const k of ["author", "base", "label"] as const)
+      if (typeof p[k] === "string" && (p[k] as string).trim()) prs[k] = (p[k] as string).trim();
+    if (typeof p.limit === "number" && Number.isInteger(p.limit) && p.limit > 0) prs.limit = p.limit;
+    if (Object.keys(prs).length) out.prs = prs;
+  }
   for (const k of ["foreman", "reviewSkill"] as const)
     if (typeof raw[k] === "string" && (raw[k] as string).trim()) out[k] = (raw[k] as string).trim();
   return out;

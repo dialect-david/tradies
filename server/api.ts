@@ -65,7 +65,7 @@ export function api(): Plugin {
             const config = loadConfig(undefined, actor);
             const [items, prs, closed, epics] = await Promise.all([
               source.items(),
-              source.prs?.() ?? gh.listPrs(),
+              source.prs?.() ?? gh.listPrs(config.prs),
               source.closedCount(),
               source.houses(config),
             ]);
@@ -90,12 +90,13 @@ export function api(): Plugin {
           if (url.pathname === "/closed") return send(res, 200, await source.closedRecent());
           if (url.pathname === "/doctor") {
             const cfg = loadConfig();
-            const [items, houses, closed] = await Promise.all([
+            const [items, houses, closed, prs] = await Promise.all([
               source.items(),
               source.houses(cfg),
               source.closedRecent(),
+              source.prs?.() ?? gh.listPrs(cfg.prs),
             ]);
-            const checks = dataChecks({ items, houses, closed, cfg, source: sourceName });
+            const checks = dataChecks({ items, houses, closed, prs, cfg, source: sourceName });
             return send(res, 200, { checks, readiness: readiness(checks) });
           }
           if (url.pathname === "/show") {

@@ -127,6 +127,26 @@ describe("doctor data", () => {
     expect(c.find((x) => x.id === "stale")!.ok).toBe(false);
     expect(c.find((x) => x.id === "reasons")!.ok).toBe(true);
   });
+  it("a full road with no filter is flagged, optional, not counted", () => {
+    const pr = (n: number): Item => ({ ...bead(`#${n}`), kind: "pr", trade: "inspector" });
+    const prs = Array.from({ length: 50 }, (_, i) => pr(i));
+    const full = dataChecks({ items: [], houses: [], closed: [], prs, cfg: DEFAULTS, source: "beads", now });
+    const check = full.find((x) => x.id === "prs")!;
+    expect(check.ok).toBe(false);
+    expect(check.optional).toBe(true);
+    expect(check.says).toContain("road is full");
+    expect(readiness(full)).toMatch(/\/7$/);
+    const filtered = dataChecks({
+      items: [],
+      houses: [],
+      closed: [],
+      prs,
+      cfg: { ...DEFAULTS, prs: { author: "@me" } },
+      source: "beads",
+      now,
+    });
+    expect(filtered.find((x) => x.id === "prs")!.ok).toBe(true);
+  });
   it("openspec skips labels and reasons", () => {
     const c = dataChecks({ items: [], houses: [], closed: [], cfg: DEFAULTS, source: "openspec", now });
     expect(c.map((x) => x.id)).toEqual(["houses", "parented", "blocks", "stale", "working"]);

@@ -25,6 +25,11 @@ describe("config", () => {
     expect(parseConfig('{"todayLabels":["next"]}').todayLabels).toEqual(["next"]);
     expect(parseConfig('{"source":"openspec"}').source).toBe("openspec");
     expect(parseConfig('{"source":"jira"}').source).toBeUndefined();
+    expect(parseConfig('{"prs":{"author":"@me","limit":20,"base":""}}').prs).toEqual({
+      author: "@me",
+      limit: 20,
+    });
+    expect(parseConfig('{"prs":{"limit":-1}}').prs).toBeUndefined();
   });
   it("later files override earlier ones key by key", () => {
     const project = file(".tradies.json", '{"houseTypes":["epic"],"staleDays":3}');
@@ -36,5 +41,13 @@ describe("config", () => {
       foreman: "Dave",
       reviewSkill: "/ocr {from}..{to}",
     });
+  });
+});
+
+describe("gh pr list args", () => {
+  it("adds filters and the limit", async () => {
+    const { prArgs } = await import("../server/gh.ts");
+    expect(prArgs().slice(-2)).toEqual(["--limit", "50"]);
+    expect(prArgs({ author: "@me", limit: 20 }).slice(-4)).toEqual(["--limit", "20", "--author", "@me"]);
   });
 });

@@ -130,6 +130,12 @@ Without it the boom gate, toolbox, cones and Kelpie stay quiet, and there is no 
 }
 ```
 
+Many open PRs: `"prs"` narrows `gh pr list`. Keys `author`, `base`, `label`, `limit` (default 50).
+
+```json
+{ "prs": { "author": "@me" } }
+```
+
 ## Inspections
 
 The health & safety officer counts commits since `refs/reviewed`. Start the count:

@@ -1,8 +1,12 @@
 export type SourceName = "beads" | "openspec" | "demo";
 
+export type PrFilter = { author?: string; base?: string; label?: string; limit?: number };
+
 export type Config = {
   /** Which tracker drives the site when both .beads/ and openspec/ exist. */
   source?: SourceName;
+  /** Passed to gh pr list as --author/--base/--label/--limit. */
+  prs?: PrFilter;
   foremanLabels: string[];
   todayLabels: string[];
   foreman?: string;

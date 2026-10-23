@@ -97,14 +97,16 @@ if (cmd === "doctor") {
     await load("../server/doctor.ts");
   const { currentSource } = await load("../server/sources.ts");
   const { loadConfig } = await load("../server/config.ts");
+  const gh = await load("../server/gh.ts");
   const cfg = loadConfig();
   const { name, source } = currentSource(cfg.source);
-  const [items, houses, closed] = await Promise.all([
+  const [items, houses, closed, prs] = await Promise.all([
     source.items(),
     source.houses(cfg),
     source.closedRecent(),
+    source.prs?.() ?? gh.listPrs(cfg.prs),
   ]);
-  const data = dataChecks({ items, houses, closed, cfg, source: name });
+  const data = dataChecks({ items, houses, closed, prs, cfg, source: name });
   const groups = data.some((c) => !c.ok && (c.id === "houses" || c.id === "parented"))
     ? proposeEpics(items)
     : [];

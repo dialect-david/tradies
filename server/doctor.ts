@@ -1,5 +1,6 @@
 import { DEFAULTS, type Config, type SourceName } from "./defaults.ts";
 import { isStale, type Item } from "./model.ts";
+import { PR_LIMIT } from "./gh.ts";
 import type { HouseStat } from "./houses.ts";
 
 export type Check = { id: string; ok: boolean; says: string; fix?: string; optional?: boolean };
@@ -14,7 +15,7 @@ export type Env = {
   hasRef(ref: string): boolean;
 };
 
-const KNOWN = new Set<string>([...Object.keys(DEFAULTS), "source", "foreman"]);
+const KNOWN = new Set<string>([...Object.keys(DEFAULTS), "source", "foreman", "prs"]);
 const LISTS = ["foremanLabels", "todayLabels", "houseTypes", "hazardLabels"];
 const DAYS = ["staleDays", "goneDays", "reviewAfter"];
 
@@ -121,14 +122,16 @@ export type Data = {
   items: Item[];
   houses: HouseStat[];
   closed: Item[];
-  cfg: Pick<Config, "foremanLabels" | "todayLabels" | "hazardLabels" | "staleDays">;
+  /** Open PRs as fetched; omitted = no PR check. */
+  prs?: Item[];
+  cfg: Pick<Config, "foremanLabels" | "todayLabels" | "hazardLabels" | "staleDays" | "prs">;
   source: SourceName;
   now?: Date;
 };
 
 const pct = (n: number, d: number) => (d ? Math.round((100 * n) / d) : 0);
 
-export function dataChecks({ items, houses, closed, cfg, source, now = new Date() }: Data): Check[] {
+export function dataChecks({ items, houses, closed, prs, cfg, source, now = new Date() }: Data): Check[] {
   const beads = items.filter((i) => i.kind === "bead" && i.status !== "closed");
   const bd = source !== "openspec";
   const out: Check[] = [];
@@ -221,11 +224,27 @@ export function dataChecks({ items, houses, closed, cfg, source, now = new Date(
     says: working ? `${working} on the tools` : "nobody on the tools",
     fix: working ? undefined : bd ? "bd update <id> --claim" : "tick a box in tasks.md",
   });
+  if (prs) {
+    const limit = cfg.prs?.limit ?? PR_LIMIT;
+    const filtered = !!(cfg.prs?.author || cfg.prs?.base || cfg.prs?.label);
+    const full = prs.length >= limit && !filtered;
+    out.push({
+      id: "prs",
+      ok: !full,
+      optional: true,
+      says: full
+        ? `${prs.length} PRs, the road is full: filter with prs.author in .tradies.json`
+        : `${prs.length} open PR${prs.length === 1 ? "" : "s"}`,
+      fix: full ? '"prs": { "author": "@me" }' : undefined,
+    });
+  }
   return out;
 }
 
-export const readiness = (checks: Check[]) =>
-  `site readiness ${checks.filter((c) => c.ok).length}/${checks.length}`;
+export const readiness = (checks: Check[]) => {
+  const counted = checks.filter((c) => !c.optional);
+  return `site readiness ${counted.filter((c) => c.ok).length}/${counted.length}`;
+};
 
 export type Group = { name: string; why: string; ids: string[] };
 
