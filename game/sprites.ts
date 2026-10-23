@@ -389,6 +389,25 @@ export const UTE_FRAMES: string[][] = [
   ],
 ];
 
+export const CAR_FRAMES: string[][] = [
+  [
+    "........oooooooo....",
+    ".......owwwwwwwwo...",
+    "......owttoottwwo...",
+    ".....owwttoottwwwo..",
+    "....owwwwwwwwwwwwwo.",
+    "...owwwwwwwwwwwwwwwo",
+    "..owwwwwwwwwwwwwwwwo",
+    "..owwwwwwwwwwwwwwwwo",
+    "..oooooooooooooooooo",
+    "....oooo......oooo..",
+    "...oddddo....oddddo.",
+    "...odrrdo....odrrdo.",
+    "...oddddo....oddddo.",
+    "....oooo......oooo..",
+  ],
+];
+
 export const ROOF_PALETTE = { o: outline, c: "#6b6b6b" };
 export const ROOF_COLOURS = {
   red: { r: "#c0392b", d: "#8e2a1f" },

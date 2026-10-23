@@ -45,6 +45,7 @@ import {
   slabs,
   TRADIE_FRAMES,
   TRADIE_PALETTE,
+  CAR_FRAMES,
   UTE_FRAMES,
   UTE_PALETTE,
   EMPTY_PALETTE,
@@ -175,7 +176,7 @@ export class Site extends Phaser.Scene {
     this.sheet("can", CAN_FRAMES, CAN_PALETTE);
     this.sheet("empty", CAN_FRAMES, EMPTY_PALETTE);
     this.sheet("ute", UTE_FRAMES, UTE_PALETTE);
-    this.sheet("car", UTE_FRAMES, { ...UTE_PALETTE, w: "#e8eef5", t: "#2c3e50" });
+    this.sheet("car", CAR_FRAMES, { ...UTE_PALETTE, w: "#e8eef5", t: "#2c3e50" });
     for (const [trade, colour] of Object.entries(TRADE_COLOUR))
       this.sheet(`tradie-${trade}`, TRADIE_FRAMES, {
         ...TRADIE_PALETTE,
