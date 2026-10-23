@@ -33,23 +33,24 @@ export const CAR_PITCH = 150;
 export const ROAD_START = 160;
 export const CARPARK_GAP = 160;
 export const BAY_PITCH = 110;
-export const BAYS_PER_ROW = 6;
+export const BAYS_PER_LEVEL = 6;
+export const LEVEL_H = 60;
 
-export type CarPark = { x: number; width: number; bays: { x: number; row: number }[] };
+export type CarPark = { x: number; width: number; levels: number; bays: { x: number; level: number }[] };
 
 /** How many cars fit on the first screen of road, leaving room for the car park sign. */
 export const roadFits = (screenW: number) =>
   Math.max(1, Math.floor((screenW - ROAD_START - 130) / CAR_PITCH));
 
-/** Bays for n overflow cars in a lot past the street; x offsets are lot-relative, row 0 nearest the road. */
+/** Multi-storey past the street. Bay x is lot-relative; level 1 is the first floor, ground is the booth. */
 export function carPark(streetWidth: number, n: number): CarPark {
   const x = streetWidth + CARPARK_GAP;
-  const perRow = Math.min(BAYS_PER_ROW, Math.max(1, n));
+  const levels = Math.max(2, Math.ceil(n / BAYS_PER_LEVEL));
   const bays = Array.from({ length: n }, (_, i) => ({
-    x: 70 + (i % perRow) * BAY_PITCH,
-    row: Math.floor(i / perRow),
+    x: 60 + (i % BAYS_PER_LEVEL) * BAY_PITCH,
+    level: 1 + Math.floor(i / BAYS_PER_LEVEL),
   }));
-  return { x, width: 70 + perRow * BAY_PITCH + 20, bays };
+  return { x, width: 60 + BAYS_PER_LEVEL * BAY_PITCH, levels, bays };
 }
 
 export function epicOf(item: Item, byId: Map<string, Item>, epics: Set<string>): string {

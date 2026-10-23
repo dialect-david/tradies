@@ -14,6 +14,7 @@ import {
 } from "./card.ts";
 import { toggleTuner } from "./crt.ts";
 import type { Review } from "../server/review.ts";
+import type { CarPark } from "./street.ts";
 import {
   CLOSE_GAP,
   HOUSE_W,
@@ -28,6 +29,9 @@ import {
   CAR_PITCH,
   ROAD_START,
   carPark,
+  BAYS_PER_LEVEL,
+  BAY_PITCH,
+  LEVEL_H,
   roadFits,
 } from "./street.ts";
 import {
@@ -333,7 +337,7 @@ export class Site extends Phaser.Scene {
           .setOrigin(0.5, 1),
       ])
       .setVisible(false);
-    this.carpark = this.add.container(0, 0);
+    this.carpark = this.add.container(0, 0).setDepth(1);
     this.parkSign = this.add
       .container(w - 50, this.roadY - 22, [
         this.add
@@ -892,49 +896,99 @@ export class Site extends Phaser.Scene {
     this.cameras.main.pan(lot.x + lot.width / 2, this.scale.height / 2, 1500, Phaser.Math.Easing.Sine.InOut);
   }
 
-  /** Tarmac, bays, booth and attendant for n parked cars; rebuilt only when the shape changes. */
-  buildCarPark(n: number): { x: number; width: number; bays: { x: number; row: number }[] } {
+  /** Multi-storey for n parked cars: ramp off the road, booth on the ground floor, a level of bays per six. */
+  buildCarPark(n: number): CarPark {
     const gy = this.scale.height * GROUND;
     const lot = carPark(this.streetW, n);
     this.lotEnd = n ? lot.x + lot.width + 40 : 0;
     this.carpark.setData("lot", lot).setVisible(n > 0);
     this.parkSign.setVisible(n > 0);
     (this.parkSign.getAt(1) as Phaser.GameObjects.Text).setText(`P\n+${n}`);
-    const shape = `${lot.x}:${lot.width}:${Math.max(...lot.bays.map((b) => b.row), 0)}`;
-    if (this.carpark.getData("shape") === shape) return lot;
-    this.carpark.setData("shape", shape).removeAll(true);
-    const rows = Math.max(...lot.bays.map((b) => b.row), 0) + 1;
-    const top = Math.min(gy, this.bayY(rows - 1) - 48);
-    const bottom = this.roadY - 22;
-    this.carpark.add(
-      this.add.rectangle(lot.x - 90, top, lot.width + 90, bottom - top, 0x3d3d3d).setOrigin(0, 0),
-    );
-    const lines = this.add.graphics().lineStyle(2, 0xf4f4f4, 0.8);
-    for (const b of lot.bays) {
-      const y = this.bayY(b.row);
-      lines.lineBetween(lot.x + b.x - 50, y - 40, lot.x + b.x - 50, y);
-      lines.lineBetween(lot.x + b.x + 50, y - 40, lot.x + b.x + 50, y);
+    const shape = `${lot.x}:${lot.levels}`;
+    if (this.carpark.getData("shape") === shape) {
+      (this.carpark.getByName("roof") as Phaser.GameObjects.Text).setText(`P  +${n}`);
+      return lot;
     }
-    this.carpark.add(lines);
+    this.carpark.setData("shape", shape).removeAll(true);
+    const { x, width, levels } = lot;
+    const floor = (k: number) => gy - k * LEVEL_H;
+    const roofTop = floor(levels + 1);
+    const roadTop = this.roadY - 44;
+    const g = this.add.graphics();
+    const steps = 13;
+    for (let i = 0; i < steps; i++) {
+      const top = roadTop - ((roadTop - gy) * (i + 1)) / steps;
+      g.fillStyle(0x555555).fillRect(x - 130 + i * 10, top, 10, roadTop - top);
+      g.fillStyle(0xf4f4f4, 0.6).fillRect(x - 130 + i * 10, top, 10, 2);
+    }
+    g.fillStyle(0x2b2b2b).fillRect(x, roofTop, width, gy - roofTop);
+    for (let k = 1; k <= levels + 1; k++) {
+      g.fillStyle(0x7a7a7a).fillRect(x, floor(k), width, 8);
+      g.fillStyle(0x9a9a9a).fillRect(x, floor(k), width, 2);
+      for (let j = 0; j <= BAYS_PER_LEVEL; j++) {
+        const px = j === BAYS_PER_LEVEL ? x + width - 10 : x + j * BAY_PITCH;
+        g.fillStyle(0x8a8a8a).fillRect(px, floor(k) + 8, 10, LEVEL_H - 8);
+      }
+    }
+    for (let k = 1; k <= levels; k++) {
+      g.fillStyle(0xf4f4f4, 0.5);
+      for (let j = 0; j < BAYS_PER_LEVEL; j++) g.fillRect(x + 10 + j * BAY_PITCH, floor(k) - 2, 2, 2);
+    }
+    this.carpark.add(g);
     const booth = this.add
-      .rectangle(lot.x - 70, bottom, 26, 46, 0x8b5a2b)
+      .rectangle(x + 40, gy, 26, 46, 0x8b5a2b)
       .setOrigin(0.5, 1)
       .setStrokeStyle(1, 0x1a1a1a);
-    const window = this.add.rectangle(lot.x - 70, bottom - 30, 16, 12, 0x87ceeb).setOrigin(0.5, 0.5);
-    const attendant = this.add.sprite(lot.x - 40, bottom, "tradie-inspector", 0).setOrigin(0.5, 1);
+    const window = this.add.rectangle(x + 40, gy - 30, 16, 12, 0x87ceeb).setOrigin(0.5, 0.5);
+    const attendant = this.add.sprite(x + 75, gy, "tradie-inspector", 0).setOrigin(0.5, 1);
+    const roof = this.add
+      .text(x + width / 2, roofTop - 4, `P  +${n}`, {
+        fontSize: "16px",
+        fontStyle: "bold",
+        color: "#111",
+        backgroundColor: "#f1c40f",
+        padding: { x: 8, y: 2 },
+      })
+      .setOrigin(0.5, 1)
+      .setName("roof");
     const title = this.add
-      .text(lot.x + lot.width / 2, top - 4, "inspectors' car park", {
+      .text(x + width / 2 + 50, gy - 18, "inspectors' car park", {
         fontSize: "9px",
         color: "#fff",
         backgroundColor: "#0008",
       })
       .setOrigin(0.5, 1);
-    this.carpark.add([booth, window, attendant, title]);
+    this.carpark.add([booth, window, attendant, roof, title]);
     return lot;
   }
 
-  bayY(row: number): number {
-    return this.roadY - 26 - row * 52;
+  bayY(level: number): number {
+    return this.scale.height * GROUND - level * LEVEL_H;
+  }
+
+  /** Road cars drive; parked cars drive to the ramp, then appear on their level. */
+  park(
+    car: Phaser.GameObjects.Container,
+    x: number,
+    y: number,
+    lot: CarPark,
+    parked: boolean,
+    fresh: boolean,
+  ) {
+    this.tweens.killTweensOf(car);
+    if (!parked) {
+      if (car.y !== this.roadY) car.setY(this.roadY);
+      this.tweens.add({ targets: car, x, duration: fresh ? 2500 : 800, ease: "Quad.Out" });
+      return;
+    }
+    if (car.y !== this.roadY) return car.setPosition(x, y);
+    this.tweens.add({
+      targets: car,
+      x: lot.x - 80,
+      duration: fresh ? 2500 : 800,
+      ease: "Quad.Out",
+      onComplete: () => car.setPosition(x, y),
+    });
   }
 
   inspect(prs: Item[]) {
@@ -948,8 +1002,9 @@ export class Site extends Phaser.Scene {
       seen.add(pr.id);
       const bay = n >= fit ? lot.bays[n - fit] : undefined;
       const x = bay ? lot.x + bay.x : ROAD_START + n * CAR_PITCH;
-      const y = bay ? this.bayY(bay.row) : this.roadY;
+      const y = bay ? this.bayY(bay.level) : this.roadY;
       let car = this.cars.get(pr.id);
+      const fresh = !car;
       if (!car) {
         car = this.add.container(-120, this.roadY).setDepth(2);
         const body = this.add.image(0, 0, "car", 0).setOrigin(0.5, 1).setInteractive();
@@ -961,8 +1016,8 @@ export class Site extends Phaser.Scene {
           .setOrigin(0.5, 0);
         car.add([body, who, label]);
         this.cars.set(pr.id, car);
-        this.tweens.add({ targets: car, x, y, duration: 2500, ease: "Quad.Out" });
-      } else this.tweens.add({ targets: car, x, y, duration: 800 });
+      }
+      this.park(car, x, y, lot, !!bay, fresh);
       (car.getAt(1) as Phaser.GameObjects.Sprite).setVisible(!bay);
       const ci = pr.labels.find((l) => l.startsWith("ci:"))?.slice(3);
       const mood =
@@ -979,10 +1034,11 @@ export class Site extends Phaser.Scene {
     for (const [id, car] of this.cars)
       if (!seen.has(id)) {
         this.cars.delete(id);
+        this.tweens.killTweensOf(car);
+        car.setY(this.roadY);
         this.tweens.add({
           targets: car,
           x: this.worldW + 150,
-          y: this.roadY,
           duration: 2000,
           ease: "Quad.In",
           onComplete: () => car.destroy(),
