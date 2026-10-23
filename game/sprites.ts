@@ -393,9 +393,10 @@ export const CAR_FRAMES: string[][] = [
   [
     "........oooooooo................",
     ".......owwwwwwwwo...............",
-    "......owttoooottwo..............",
-    "......owttoooottwo..............",
-    "oooooowwttoooottwwoooooooooooooo",
+    "......owttooootwwo..............",
+    "......owttooootwwo..............",
+    "oooooowttooootwwoooooooooooooooo",
+    "owwwwwwwwwwwwwwwwwwwwwwwwwwwwwwo",
     "owwwwwwwwwwwwwwwwwwwwwwwwwwwwwwo",
     "owwwwwwwwwwwwwwwwwwwwwwwwwwwwwwo",
     "owwwwwwwwwwwwwwwwwwwwwwwwwwwwwwo",
