@@ -39,7 +39,7 @@ describe("beers", () => {
   it("sprites are rectangular", () => {
     expect(frameSize(SLAB_FRAMES)).toEqual({ w: 22, h: 9 });
     expect(frameSize(CAN_FRAMES)).toEqual({ w: 4, h: 6 });
-    expect(frameSize(UTE_FRAMES)).toEqual({ w: 32, h: 12 });
+    expect(frameSize(UTE_FRAMES)).toEqual({ w: 32, h: 15 });
   });
 });
 

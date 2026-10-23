@@ -377,23 +377,6 @@ export const UTE_FRAMES: string[][] = [
     "........oooooooo................",
     ".......owwwwwwwwo...............",
     "......owttooootwwo..............",
-    "oooooowttooootwwoooooooooooooooo",
-    "owwwwwwwwwwwwwwwwwwwwwwwwwwwwwwo",
-    "owwwwwwwwwwwwwwwwwwwwwwwwwwwwwwo",
-    "oooooooooooooooooooooooooooooooo",
-    "...oooo..............oooo.......",
-    "..oddddo............oddddo......",
-    "..odrrdo............odrrdo......",
-    "..oddddo............oddddo......",
-    "...oooo..............oooo.......",
-  ],
-];
-
-export const CAR_FRAMES: string[][] = [
-  [
-    "........oooooooo................",
-    ".......owwwwwwwwo...............",
-    "......owttooootwwo..............",
     "......owttooootwwo..............",
     "oooooowttooootwwoooooooooooooooo",
     "owwwwwwwwwwwwwwwwwwwwwwwwwwwwwwo",
