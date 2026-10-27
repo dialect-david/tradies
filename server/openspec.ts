@@ -473,10 +473,10 @@ export const openspec: Source = {
     },
   },
   prompts: {
-    work: "Work on {id}: {title}. Read openspec/changes/{change}/proposal.md, design.md and tasks.md first, tick the boxes in tasks.md as you finish them, and run `openspec archive {change} -y` when all are ticked.",
+    work: "Work on {id}: {title}. Read openspec/changes/{change}/proposal.md, design.md and tasks.md first, tick the boxes in tasks.md as you finish them, and run `openspec archive {change} -y` when all are ticked, with a one-line commit message.",
     plan: "Give me a plan for {id} ({title}). Read openspec/changes/{change}/proposal.md, design.md and tasks.md first, then propose the approach; don't change anything yet.",
     review:
-      "File each High or Medium finding as a task `- [ ] {hazard}: <file>: <one line>` under a `## Hazards` heading in tasks.md of the change it belongs to, or openspec/changes/hazards/tasks.md when none fits.",
+      "File each High or Medium finding as a one-line task `- [ ] {hazard}: <file>: <one line>` under a `## Hazards` heading in tasks.md of the change it belongs to, or openspec/changes/hazards/tasks.md when none fits.",
   },
   watchPath: ROOT,
 };

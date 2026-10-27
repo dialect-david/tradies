@@ -6,6 +6,7 @@ import {
   renderGroups,
   dataChecks,
   failed,
+  hasGlance,
   readiness,
   render,
   setupChecks,
@@ -104,6 +105,45 @@ describe("doctor data", () => {
     });
     expect(c.filter((x) => !x.ok)).toEqual([]);
     expect(readiness(c)).toBe("site readiness 7/7");
+    const g = c.find((x) => x.id === "glance")!;
+    expect(g.optional).toBe(true);
+    expect(g.says).toMatch(/^\d+ of \d+ open beads have a glance line$/);
+  });
+  it("glance share is informational: optional, never counted, quiet under five beads", () => {
+    const wall = "First sentence. Second sentence on the same line.";
+    const few = dataChecks({
+      items: [bead("a", { description: wall }), bead("b")],
+      houses: [],
+      closed: [],
+      cfg: DEFAULTS,
+      source: "beads",
+      now,
+    });
+    expect(few.find((x) => x.id === "glance")).toMatchObject({
+      ok: true,
+      optional: true,
+      says: "0 of 2 open beads have a glance line",
+    });
+    const items = Array.from({ length: 10 }, (_, i) =>
+      bead(`b${i}`, { description: i < 3 ? "One line that stands alone." : i < 6 ? wall : undefined }),
+    );
+    const c = dataChecks({ items, houses: [], closed: [], cfg: DEFAULTS, source: "beads", now });
+    const g = c.find((x) => x.id === "glance")!;
+    expect(g.ok).toBe(false);
+    expect(g.says).toBe("3 of 10 open beads have a glance line");
+    expect(g.fix).toContain("tradies prime");
+    expect(failed(c).map((x) => x.id)).not.toContain("glance");
+    expect(readiness(c)).toMatch(/\/7$/);
+    expect(render(c)).toContain("· 3 of 10 open beads have a glance line");
+  });
+  it("hasGlance", () => {
+    expect(hasGlance()).toBe(false);
+    expect(hasGlance("  ")).toBe(false);
+    expect(hasGlance("One sentence that stands alone.")).toBe(true);
+    expect(hasGlance("One sentence.\n\nThen the detail, as long as you like.")).toBe(true);
+    expect(hasGlance("One sentence.\nDetail with no blank line.")).toBe(false);
+    expect(hasGlance("Two sentences. On one line.")).toBe(false);
+    expect(hasGlance(`${"x".repeat(141)}\n\nmore`)).toBe(false);
   });
   it("a flat backlog of fresh unlabelled beads fails five of seven", () => {
     const items = [bead("a"), bead("b"), bead("c")];

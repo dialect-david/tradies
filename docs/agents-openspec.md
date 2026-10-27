@@ -41,6 +41,18 @@ A task whose text starts with `<label>:` carries that label, so `- [ ] {hazardLa
 
 - Change folder untouched {staleDays} days: stale, on the esky (in progress: asleep). {goneDays} days: gone home in the ute.
 
+## Writing so the card reads at a glance
+
+The site shows a change as a card: title, first paragraph of `## Why`, tasks as "done when", design, close reason. Write for that.
+
+- `# Title` ≤60ch, verb first.
+- `## Why`: first paragraph one sentence that stands alone, blank line, then the detail.
+- Tasks are the acceptance: one testable line each.
+- `design.md`: free.
+- Archive commit message: one sentence.
+
+Old changes are fine as they are; this is for what you write next.
+
 ## Pull requests
 
 - Open PRs are inspectors on the road: draft = L plates, approved = signed off, failing CI = rain over the site. Keep CI green.

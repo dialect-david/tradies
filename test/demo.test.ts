@@ -3,6 +3,8 @@ import { cast } from "../game/cast.ts";
 import { DEFAULTS } from "../server/defaults.ts";
 import { houses } from "../server/houses.ts";
 import { fixture } from "../server/demo/fixture.ts";
+import { glance } from "../server/detail.ts";
+import { hasGlance } from "../server/doctor.ts";
 
 const now = new Date("2026-10-21T12:00:00Z");
 const { items, prs, foreman } = fixture(now);
@@ -61,6 +63,18 @@ describe("demo fixture", () => {
     expect(c.ready.length).toBeGreaterThanOrEqual(12);
     const housesWithWork = new Set(c.ready.map((i) => i.parent).filter(Boolean));
     expect(housesWithWork.size).toBeGreaterThanOrEqual(4);
+  });
+
+  it("every open bead has a one-sentence glance line, bar the Payments wall of text", () => {
+    for (const i of open) {
+      if (i.id === "demo-2") continue;
+      expect(hasGlance(i.description), i.id).toBe(true);
+      const { summary } = glance(i.description);
+      expect(summary.length, i.id).toBeLessThanOrEqual(140);
+      expect(summary, i.id).toMatch(/^(?!.*[.!?]\s).*[.!?]$/);
+    }
+    expect(hasGlance(open.find((i) => i.id === "demo-2")!.description)).toBe(false);
+    expect(open.filter((i) => i.acceptance).length).toBeGreaterThanOrEqual(6);
   });
 
   it("fills the beer wall and today's knockoff", () => {

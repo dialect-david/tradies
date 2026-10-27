@@ -83,10 +83,10 @@ export const beads: Source = {
     },
   },
   prompts: {
-    work: "Work on {id}: {title}. Read `bd show {id}` first, claim it with `bd update {id} --claim`, and close it with a reason when done.",
+    work: "Work on {id}: {title}. Read `bd show {id}` first, claim it with `bd update {id} --claim`, add dated notes as you go (`bd note {id} '<date>: ...'`), and close it with a one-line reason when done.",
     plan: "Give me a plan for {id} ({title}). Read `bd show {id}` and its notes first, then propose the approach; don't change anything yet.",
     review:
-      'File each High or Medium finding as a bead: `bd create "<file>: <one line>" -t bug -p 1 -l {hazard} -d "<finding and fix>"`, with `--parent <epic>` when it clearly belongs to one.',
+      'File each High or Medium finding as a bead: `bd create "<file>: <one line>" -t bug -p 1 -l {hazard} -d "<one-sentence finding, blank line, the fix>"`, with `--parent <epic>` when it clearly belongs to one.',
   },
   watchPath: path.join(site, ".beads"),
 };

@@ -32,6 +32,19 @@ Blocked and assigned to the foreman also queues at the gate.
 - `bd close <id> --reason "<one human line>"`. The reason shows on the beer wall and in the knock-off briefing, so make it the one line you would tell the crew.
 - Status words matter: `in_progress` is a tradie at the house, `blocked` pallets, `deferred` behind the plans, `closed` a tinnie.
 
+## Writing so the card reads at a glance
+
+The site shows a bead as a card: title, first line of the description, "done when" from acceptance, design, notes, close reason. Write for that.
+
+- Title ≤60ch, verb first.
+- Description: first line one sentence that stands alone, blank line, then the detail.
+- Acceptance: testable bullets.
+- Design: free.
+- Notes: dated lines, append only (`bd note <id> "2026-10-28: ..."`).
+- Close reason: one sentence.
+
+Old beads are fine as they are; this is for what you write next.
+
 ## Pull requests
 
 - Open PRs are inspectors on the road: draft = L plates, approved = signed off, failing CI = rain over the site. Keep CI green.

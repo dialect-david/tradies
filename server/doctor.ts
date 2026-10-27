@@ -2,6 +2,7 @@ import { DEFAULTS, type Config, type SourceName } from "./defaults.ts";
 import { isStale, type Item } from "./model.ts";
 import { PR_LIMIT } from "./gh.ts";
 import type { HouseStat } from "./houses.ts";
+import { glance } from "./detail.ts";
 
 export type Check = { id: string; ok: boolean; says: string; fix?: string; optional?: boolean };
 
@@ -224,6 +225,19 @@ export function dataChecks({ items, houses, closed, prs, cfg, source, now = new 
     says: working ? `${working} on the tools` : "nobody on the tools",
     fix: working ? undefined : bd ? "bd update <id> --claim" : "tick a box in tasks.md",
   });
+  if (bd) {
+    const glanced = beads.filter((i) => hasGlance(i.description)).length;
+    out.push({
+      id: "glance",
+      ok: beads.length < 5 || glanced / beads.length >= 0.7,
+      optional: true,
+      says: `${glanced} of ${beads.length} open beads have a glance line`,
+      fix:
+        beads.length < 5 || glanced / beads.length >= 0.7
+          ? undefined
+          : "new beads get one once the agent has run `npx @stottula/tradies prime`",
+    });
+  }
   if (prs) {
     const limit = cfg.prs?.limit ?? PR_LIMIT;
     const filtered = !!(cfg.prs?.author || cfg.prs?.base || cfg.prs?.label);
@@ -239,6 +253,16 @@ export function dataChecks({ items, houses, closed, prs, cfg, source, now = new 
     });
   }
   return out;
+}
+
+const GLANCE_MAX = 140;
+
+/** Description opens with one line ≤140ch that is the whole text or is followed by a blank line. */
+export function hasGlance(description?: string): boolean {
+  const d = description?.trim() ?? "";
+  if (!d) return false;
+  const { summary, more } = glance(d);
+  return summary.length <= GLANCE_MAX && (!more || d.startsWith(`${summary}\n\n`));
 }
 
 export const readiness = (checks: Check[]) => {

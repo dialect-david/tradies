@@ -69,7 +69,7 @@ Not sure? `npx @stottula/tradies doctor` checks all of it, then whether the trac
 
 tradies is read-only. Agents use `bd` (or `openspec`) and `gh` as normal. `prime` and `init` pick the doc for the tracker in the repo.
 
-`npx @stottula/tradies prime` prints the conventions tradies draws (labels, houses, close reasons). Give it to your agent:
+`npx @stottula/tradies prime` prints the conventions tradies draws (labels, houses, close reasons) and how to write a bead so its card reads at a glance (`docs/agents.md`). Give it to your agent:
 
 - Copied prompts already say to run it. Nothing to do.
 - Or hook it into every session, `.claude/settings.json`:

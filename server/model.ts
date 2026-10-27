@@ -34,6 +34,7 @@ export type Bead = {
   updated_at: string;
   closed_at?: string;
   close_reason?: string;
+  description?: string;
   labels?: string[];
   dependencies?: { depends_on_id: string; type: string }[];
   dependency_count?: number;
@@ -67,6 +68,7 @@ export function fromBead(b: Bead): Item {
     updatedAt: new Date(b.updated_at),
     closedAt: b.closed_at ? new Date(b.closed_at) : undefined,
     closeReason: b.close_reason,
+    description: b.description || undefined,
     blocked,
     waitsOn: deps.filter((d) => d.type === "blocks").map((d) => d.depends_on_id),
     parent,
