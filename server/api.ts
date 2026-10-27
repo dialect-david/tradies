@@ -101,12 +101,10 @@ export function api(): Plugin {
           }
           if (url.pathname === "/show") {
             const id = url.searchParams.get("id") ?? "";
-            return send(
-              res,
-              200,
-              id.startsWith("#") ? await (source.view?.(id) ?? gh.view(id)) : await source.show(id),
-              "text/plain",
-            );
+            const detail = id.startsWith("#")
+              ? { summary: "", text: await (source.view?.(id) ?? gh.view(id)) }
+              : await source.show(id);
+            return send(res, 200, detail);
           }
           if (url.pathname === "/act" && req.method === "POST") {
             if (!sameOrigin(req)) return send(res, 403, { error: "cross-origin action refused" });

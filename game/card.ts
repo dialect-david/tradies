@@ -1,6 +1,8 @@
 import { ageDays, type Item } from "../server/model.ts";
 import { act, doctor, show } from "./client.ts";
-import { score, type Cast } from "./cast.ts";
+import { score, whyLine, type Cast } from "./cast.ts";
+import type { Detail, Note, Row } from "../server/detail.ts";
+import { DEFAULTS } from "../server/defaults.ts";
 import { REVIEW_REF, reviewPrompt, short, type Review } from "../server/review.ts";
 import type { Config } from "../server/defaults.ts";
 import { fillPrompt, type Prompts } from "../server/source.ts";
@@ -13,24 +15,16 @@ const toastEl = document.getElementById("toast")!;
 let onSite: Item[] = [];
 let can = new Set<string>();
 let prompts: Prompts = { work: "{id}: {title}", plan: "{id}: {title}", review: "" };
-export const setItems = (items: Item[], actions: string[] = [...can], p = prompts) => (
+let cfg: Config = DEFAULTS;
+export const setItems = (items: Item[], actions: string[] = [...can], p = prompts, c = cfg) => (
   (onSite = items),
   (can = new Set(actions)),
-  (prompts = p)
+  (prompts = p),
+  (cfg = c)
 );
 const button = (act: string, label: string) =>
   can.has(act) ? `<button data-act="${act}">${label}</button>` : "";
 
-function depLines(item: Item): string {
-  const open = new Map(onSite.map((i) => [i.id, i]));
-  const waits = item.waitsOn.filter((id) => open.has(id));
-  const blocks = onSite.filter((i) => i.waitsOn.includes(item.id)).map((i) => i.id);
-  const row = (h: string, ids: string[]) =>
-    ids.length
-      ? `<div class="deps">${h}: ${ids.map((id) => `<a data-open="${esc(id)}">${esc(id)}</a>`).join(", ")}</div>`
-      : "";
-  return row("waits on", waits) + row("blocks", blocks);
-}
 
 export function prompt(item: Item, plan: boolean): string {
   return fillPrompt(plan ? prompts.plan : prompts.work, item);
@@ -74,16 +68,95 @@ function wireByHand(root: HTMLElement) {
     localStorage.setItem(BY_HAND, byHandOpen ? "1" : "");
   });
 }
+const ago = (d: Date | string) => {
+  const days = Math.floor((Date.now() - new Date(d).getTime()) / 86_400_000);
+  return days === 0 ? "today" : days === 1 ? "yesterday" : `${days}d`;
+};
+const chips = (i: Item) =>
+  `<div class="chips">` +
+  [
+    `<span class="chip p${i.priority}">P${i.priority}</span>`,
+    `<span class="chip">${esc(i.trade)}</span>`,
+    i.status !== "open" ? `<span class="chip">${esc(i.status.replace("_", " "))}</span>` : "",
+    i.assignee ? `<span class="chip">${esc(i.assignee)}</span>` : "",
+    `<span class="chip dim">${ago(i.updatedAt)}</span>`,
+    ...i.labels.map((l) => `<span class="chip label">${esc(l)}</span>`),
+  ].join("") +
+  `</div>`;
+const prose = (t: string) =>
+  esc(t)
+    .split(/\n{2,}/)
+    .map((p) =>
+      /^(\s*[-*]\s)/m.test(p)
+        ? `<ul>${p.split("\n").map((l) => `<li>${l.replace(/^\s*[-*]\s*/, "")}</li>`).join("")}</ul>`
+        : `<p>${p.replace(/\n/g, "<br>")}</p>`,
+    )
+    .join("")
+    .replace(/`([^`]+)`/g, "<code>$1</code>");
+const linkIds = (html: string) => {
+  const ids = new Set(onSite.map((i) => i.id));
+  return html.replace(/[\w-]+/g, (w) => (ids.has(w) ? `<a data-open="${w}">${w}</a>` : w));
+};
+const OPEN = "tradies.cardOpen";
+const openSet = new Set<string>(JSON.parse(localStorage.getItem(OPEN) ?? "[]"));
+const fold = (key: string, head: string, body: string, open = openSet.has(key)) =>
+  body ? `<details class="fold" data-fold="${key}"${open ? " open" : ""}><summary>${head}</summary>${body}</details>` : "";
+const rows = (rs: Row[]) =>
+  rs.length
+    ? `<div class="rows">${rs
+        .map(
+          (r) =>
+            `<a class="r${r.status === "closed" ? " done" : ""}" data-open="${esc(r.id)}"><span class="chip p${r.priority}">P${r.priority}</span>${esc(r.title)}<span class="dim">${ago(r.updatedAt)}</span></a>`,
+        )
+        .join("")}</div>`
+    : "";
+const noteList = (ns: Note[]) =>
+  ns.length
+    ? `<div class="notes">${ns
+        .map((n) => `<div class="note">${n.who || n.when ? `<span class="dim">${esc(n.who ?? "")} ${n.when ? ago(n.when) : ""}</span>` : ""}${prose(n.text)}</div>`)
+        .join("")}</div>`
+    : "";
+function regions(item: Item, d: Detail): string {
+  const why = whyLine(item, onSite, new Date(), cfg);
+  const kids = d.children ?? [];
+  const doneKids = kids.filter((k) => k.status === "closed").length;
+  const deps = onSite.filter((i) => i.waitsOn.includes(item.id));
+  const waits = onSite.filter((i) => item.waitsOn.includes(i.id));
+  const asRows = (xs: Item[]) => xs.map((i) => ({ ...i, updatedAt: i.updatedAt.toISOString() }));
+  const parent = item.parent ? onSite.find((i) => i.id === item.parent) : undefined;
+  return [
+    parent ? `<div class="crumb">in <a data-open="${esc(parent.id)}">${esc(parent.title)}</a></div>` : "",
+    why ? `<div class="why">${linkIds(esc(why))}</div>` : "",
+    chips(item),
+    d.summary ? `<div class="summary">${prose(d.summary)}</div>` : "",
+    d.closeReason ? `<div class="summary">knocked off: ${esc(d.closeReason)}</div>` : "",
+    fold("more", "more", d.more ? prose(d.more) : ""),
+    fold("acceptance", "done when", d.acceptance ? prose(d.acceptance) : "", openSet.has("acceptance") || !openSet.size),
+    fold("children", `children · ${doneKids}/${kids.length}`, rows(kids)),
+    fold("waits", `waits on · ${waits.length}`, rows(asRows(waits)), true),
+    fold("blocks", `blocks · ${deps.length}`, rows(asRows(deps))),
+    fold("design", "design", d.design ? prose(d.design) : ""),
+    fold("notes", `notes · ${d.notes?.length ?? 0}`, noteList(d.notes ?? [])),
+    d.text ? `<pre>${esc(d.text)}</pre>` : "",
+  ].join("");
+}
+function wireFolds(root: HTMLElement) {
+  for (const f of root.querySelectorAll<HTMLDetailsElement>("details.fold"))
+    f.addEventListener("toggle", () => {
+      f.open ? openSet.add(f.dataset.fold!) : openSet.delete(f.dataset.fold!);
+      localStorage.setItem(OPEN, JSON.stringify([...openSet]));
+    });
+}
 let cardSeq = 0;
 export async function openCard(item: Item) {
   const seq = ++cardSeq;
   card.classList.add("open");
   card.innerHTML = `<h3>${idChip(item.id)} ${esc(item.title)}</h3><pre>loading…</pre>`;
-  let detail: string;
+  let detail: Detail;
   try {
     detail = await show(item.id);
   } catch (e) {
-    detail = `couldn't load: ${(e as Error).message}`;
+    detail = { summary: "", text: `couldn't load: ${(e as Error).message}` };
   }
   if (seq !== cardSeq) return;
   const hands = ["claim", "note", "close"].filter((a) => can.has(a));
@@ -96,9 +169,10 @@ export async function openCard(item: Item) {
         : "",
     )}`;
   const prActions = `<div class="row">${button("merge", "merge")}</div>`;
-  card.innerHTML = `<h3>${idChip(item.id)} ${esc(item.title)}</h3>${depLines(item)}<pre>${esc(detail)}</pre>${item.kind === "bead" ? beadActions : prActions}`;
+  card.innerHTML = `<h3>${idChip(item.id)} ${esc(item.title)}</h3>${regions(item, detail)}${item.kind === "bead" ? beadActions : prActions}`;
   wireCopy(card);
   wireByHand(card);
+  wireFolds(card);
   for (const a of card.querySelectorAll<HTMLElement>("[data-open]"))
     a.addEventListener("click", () => {
       const next = onSite.find((i) => i.id === a.dataset.open);

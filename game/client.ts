@@ -1,3 +1,4 @@
+import type { Detail } from "../server/detail.ts";
 import type { Item } from "../server/model.ts";
 
 import type { Epic } from "./street.ts";
@@ -27,10 +28,10 @@ export async function items(): Promise<Site> {
   return s;
 }
 
-export async function show(id: string): Promise<string> {
+export async function show(id: string): Promise<Detail> {
   const r = await fetch(`/api/show?id=${encodeURIComponent(id)}`);
   if (!r.ok) throw new Error((await r.json()).error);
-  return r.text();
+  return r.json();
 }
 
 export async function act(

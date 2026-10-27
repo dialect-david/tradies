@@ -1,3 +1,4 @@
+import type { Detail } from "./detail.ts";
 import type { Item } from "./model.ts";
 import type { HouseStat } from "./houses.ts";
 import type { Config, SourceName } from "./defaults.ts";
@@ -26,7 +27,7 @@ export type Source = {
   closedCount(): Promise<number>;
   closedSince(since: Date): Promise<Item[]>;
   closedRecent(limit?: number): Promise<Item[]>;
-  show(id: string): Promise<string>;
+  show(id: string): Promise<Detail>;
   actor(): Promise<string | undefined>;
   actions: Record<string, Action>;
   prompts: Prompts;

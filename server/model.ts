@@ -19,6 +19,8 @@ export type Item = {
   url?: string;
   closedAt?: Date;
   closeReason?: string;
+  description?: string;
+  acceptance?: string;
 };
 
 export type Bead = {

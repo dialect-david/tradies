@@ -1,6 +1,7 @@
 import type { Item } from "./model.ts";
 import { houses } from "./houses.ts";
 import type { Source } from "./source.ts";
+import { glance, row, type Detail } from "./detail.ts";
 import { fixture, type Fixture } from "./demo/fixture.ts";
 
 const byClosed = (items: Item[]) =>
@@ -24,19 +25,16 @@ export function demoSource(f: Fixture = fixture()): Source {
     closedCount: async () => closed().length,
     closedSince: async (since) => byClosed(closed().filter((i) => i.closedAt && i.closedAt >= since)),
     closedRecent: async (limit = 200) => byClosed(closed()).slice(0, limit),
-    show: async (id) => {
+    show: async (id): Promise<Detail> => {
       const i = find(id);
-      const lines = [
-        `${i.id} ${i.title}`,
-        `status: ${i.status}  priority: P${i.priority}  type: ${i.trade}`,
-        i.assignee ? `assignee: ${i.assignee}` : "",
-        i.labels.length ? `labels: ${i.labels.join(", ")}` : "",
-        i.parent ? `parent: ${i.parent}` : "",
-        i.waitsOn.length ? `waits on: ${i.waitsOn.join(", ")}` : "",
-        i.closeReason ? `closed: ${i.closeReason}` : "",
-        ...(notes.get(id) ?? []).map((n) => `note: ${n}`),
-      ];
-      return lines.filter(Boolean).join("\n");
+      const kids = items.filter((x) => x.parent === id);
+      return {
+        ...glance(i.description),
+        acceptance: i.acceptance,
+        notes: (notes.get(id) ?? []).map((text) => ({ text, who: f.foreman })),
+        closeReason: i.closeReason,
+        children: kids.map(row),
+      };
     },
     actor: async () => f.foreman,
     prs: async () => prs,

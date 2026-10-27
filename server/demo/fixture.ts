@@ -54,6 +54,9 @@ export function fixture(now = new Date()): Fixture {
       closedAt: ago(0, 3),
     }),
     kid("demo-1", "demo-15", "Pick milk, size and extras", {
+      description:
+        "Customers can't order an oat flat white yet; modifiers are the top request from the till.\n\nEach item gets modifier groups (milk, size, extras) with a price delta. Groups come from the menu model in demo-10, so no new tables. Extras are multi-select, milk and size are single.",
+      acceptance: "- Oat, soy, almond selectable on any coffee\n- Large adds 50c, shows in cart line\n- Two extras on one item in one order",
       status: "in_progress",
       assignee: "ella",
       owner: "ella",
@@ -64,6 +67,9 @@ export function fixture(now = new Date()): Fixture {
     kid("demo-1", "demo-17", "Reorder my usual in one tap", { trade: "feature" }),
     kid("demo-1", "demo-18", "Link allergen sheet from item card", { labels: ["today"] }),
     kid("demo-1", "demo-19", "Round cart total half-up, not banker's", {
+      description:
+        "Totals ending in .5c round down half the time, so the till and the app disagree by a cent.\n\nJS `toFixed` is banker's rounding on some engines. Use integer cents end to end and round once at display.",
+      acceptance: "- 4.125 shows 4.13 everywhere\n- Till export matches app total on the 40 orders from Tuesday",
       trade: "bug",
       priority: 1,
       labels: ["hs"],
@@ -72,16 +78,23 @@ export function fixture(now = new Date()): Fixture {
     kid("demo-1", "demo-1a", "Search menu by name", { priority: 3 }),
 
     // --- payments: early, the whole chain waits on the provider decision
-    epic("demo-2", "Payments"),
+    epic("demo-2", "Payments", {
+      description:
+        "Take money in the app. Card first, then wallets, refunds from the till and emailed receipts; the whole chain waits on which provider we pick and the PCI self-assessment has to be filed before anything goes live so that is on the list too.",
+    }),
     done("demo-2", "demo-20", "Compare Stripe and Square fees", 4, "Square cheaper under 50k a month", {
       trade: "spike",
     }),
     kid("demo-2", "demo-21", "Decide payment provider", {
+      description:
+        "Four beads wait on this call. Square is cheaper under 50k a month (demo-20) but Stripe has Apple Pay out of the box. Decide this week or the checkout slips a sprint.",
       trade: "decision",
       priority: 1,
       updatedAt: ago(3),
     }),
     kid("demo-2", "demo-22", "Build card checkout form", {
+      description: "The form customers pay on. Hosted fields from whichever provider demo-21 picks, so we never see a card number. Saved cards for logged-in regulars, guest pay for everyone else.",
+      acceptance: "- Pay as guest with a test card\n- Save a card and reuse it\n- Declined card shows the bank's reason, not ours",
       blocked: true,
       waitsOn: ["demo-21"],
       trade: "feature",
@@ -118,6 +131,7 @@ export function fixture(now = new Date()): Fixture {
     done("demo-3", "demo-34", "Recall a bumped ticket", 7, "last ten, that's plenty"),
     done("demo-3", "demo-35", "Print ticket to kitchen printer", 1, "works on the Epson, Star untested"),
     kid("demo-3", "demo-36", "Stop tablet sleeping mid-shift", {
+      description: "Kitchen iPad sleeps after 2 minutes and misses the chime. Needs a wake lock while the display is open; the Screen Wake Lock API covers Safari 16.4+, which is what's on the wall.",
       trade: "bug",
       status: "in_progress",
       assignee: "sam",
@@ -141,6 +155,7 @@ export function fixture(now = new Date()): Fixture {
     kid("demo-5", "demo-52", "Edit opening hours", { trade: "feature" }),
     kid("demo-5", "demo-53", "86 several items at once", { priority: 3 }),
     kid("demo-5", "demo-54", "Hide takings from barista role", {
+      description: "Baristas can see the day's takings on the admin home. Should be owner and manager only. Depends on roles landing with the PIN login.",
       trade: "bug",
       blocked: true,
       waitsOn: ["demo-50"],

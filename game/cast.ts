@@ -126,3 +126,26 @@ export const TRADE_COLOUR: Record<string, number> = {
   story: 0x2ecc71,
   milestone: 0xecf0f1,
 };
+
+/** The one line the author can't write: why this bead is on screen today, in site words. */
+export function whyLine(i: Item, items: Item[], now = new Date(), cfg: Config = DEFAULTS): string {
+  const age = ageDays(i, now);
+  const frees = items.filter((x) => x.waitsOn.includes(i.id)).length;
+  const freesWord = frees ? `, frees ${frees} when it lands` : "";
+  if (i.kind === "pr") return i.blocked ? "build failing" : i.status === "approved" ? "signed off, ready to merge" : "";
+  if (i.status === "closed") return i.closeReason ? `knocked off: ${i.closeReason}` : "knocked off";
+  if (i.status === "deferred") return "deferred, out of the way";
+  if (i.blocked) {
+    const on = items.filter((x) => i.waitsOn.includes(x.id));
+    const who = on.length ? ` on ${on.map((x) => `${x.id} ${x.title}`).join("; ")}` : "";
+    return `waiting${who}${freesWord}`;
+  }
+  if (needsSomeone(i, cfg)) return `needs you${freesWord}`;
+  if (i.status === "in_progress")
+    return isStale(i, now, cfg.staleDays)
+      ? `${i.assignee ?? "someone"} on it, asleep ${age} days`
+      : `${i.assignee ?? "someone"} on the tools`;
+  if (age >= cfg.goneDays) return `gone home, ${age} days quiet`;
+  if (isStale(i, now, cfg.staleDays)) return `on smoko ${age} days${freesWord}`;
+  return frees ? `ready${freesWord}` : "";
+}

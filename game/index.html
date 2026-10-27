@@ -272,15 +272,66 @@
       #board.plans g.node {
         cursor: pointer;
       }
-      #card .deps {
+      #card .crumb {
         font-size: 12px;
-        color: #aaa;
-        margin: 0 0 4px;
+        color: #888;
+        margin: -2px 0 6px;
       }
-      #card .deps a {
+      #card .why a { color: inherit; text-decoration: underline; }
+      #card .why {
+        color: #f1c40f;
+        font-size: 13px;
+        margin: 0 0 6px;
+      }
+      #card .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin: 0 0 10px;
+      }
+      #card .chip {
+        font-size: 10px;
+        padding: 1px 6px;
+        border: 1px solid #555;
+        color: #ccc;
+        white-space: nowrap;
+      }
+      #card .chip.p0 { border-color: #e74c3c; color: #e74c3c; }
+      #card .chip.p1 { border-color: #e67e22; color: #e67e22; }
+      #card .chip.label { border-style: dashed; }
+      #card .dim, #card .chip.dim { color: #777; border-color: #444; }
+      #card .summary, #card .fold, #card .notes {
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+        font-size: 13px;
+        line-height: 1.5;
+        max-width: 60ch;
+        color: #ddd;
+      }
+      #card .summary { color: #eee; }
+      #card p { margin: 0 0 8px; }
+      #card ul { margin: 0 0 8px; padding-left: 18px; }
+      #card code { font-family: monospace; font-size: 12px; color: #f1c40f; }
+      #card .fold { margin: 6px 0 0; color: #bbb; }
+      #card .fold summary {
+        cursor: pointer;
+        color: #888;
+        font-size: 12px;
+        font-family: monospace;
+      }
+      #card .fold[open] summary { color: #bbb; margin-bottom: 4px; }
+      #card .rows a.r {
+        display: flex;
+        gap: 8px;
+        align-items: baseline;
+        padding: 2px 0;
         color: #7fb3ff;
         cursor: pointer;
       }
+      #card .rows a.r.done { color: #777; text-decoration: line-through; }
+      #card .rows a.r .dim { margin-left: auto; font-size: 11px; }
+      #card .note { margin: 0 0 6px; }
+      #card .note .dim { display: block; font-size: 11px; }
+      #card a[data-open] { color: #7fb3ff; cursor: pointer; }
       #board.knockoff {
         width: 440px;
         background: #1c1a2e;

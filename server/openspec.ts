@@ -5,6 +5,7 @@ import { userName } from "./git.ts";
 import type { Item } from "./model.ts";
 import { houses, type Phase } from "./houses.ts";
 import type { Source } from "./source.ts";
+import { glance, type Detail } from "./detail.ts";
 import { loadConfig } from "./config.ts";
 
 export type Task = { text: string; done: boolean; line: number };
@@ -428,16 +429,20 @@ export const openspec: Source = {
       archived(await all(undefined, { ticks: await tickedSince(since) })).filter((i) => i.closedAt! >= since),
     ),
   closedRecent: async (limit = 200) => byClosed(archived(await all())).slice(0, limit),
-  show: async (id) => {
+  show: async (id): Promise<Detail> => {
     const c = await change(id);
-    const specs = await delta(c);
-    return [
-      specs && `spec delta\n${specs}`,
-      await text(path.join(c.dir, "proposal.md")),
-      await text(path.join(c.dir, "tasks.md")),
-    ]
-      .filter(Boolean)
-      .join("\n\n");
+    const [specs, proposal, tasks] = await Promise.all([
+      delta(c),
+      text(path.join(c.dir, "proposal.md")),
+      text(path.join(c.dir, "tasks.md")),
+    ]);
+    const why = /^## Why\s*\n([\s\S]*?)(?=\n## |$)/m.exec(proposal)?.[1] ?? "";
+    return {
+      ...glance(why),
+      acceptance: tasks || undefined,
+      design: specs ? `spec delta\n${specs}` : undefined,
+      text: proposal,
+    };
   },
   actor: userName,
   actions: {

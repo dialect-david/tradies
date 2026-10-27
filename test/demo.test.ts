@@ -83,7 +83,9 @@ describe("demo source", () => {
     await s.actions.close.run(ready.id, { text: "shipped" });
     const since = new Date(Date.now() - 3_600_000);
     expect((await s.closedSince(since)).map((i) => i.id)).toContain(ready.id);
-    expect(await s.show(ready.id)).toContain("shipped");
+    const d = await s.show(ready.id);
+    expect(d.closeReason).toBe("shipped");
+    expect(d.notes).toEqual([]);
     const id = await s.actions.create.run("", { text: "new job" });
     expect((await s.items()).some((i) => i.id === id)).toBe(true);
   });

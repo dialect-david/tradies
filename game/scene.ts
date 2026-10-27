@@ -477,7 +477,7 @@ export class Site extends Phaser.Scene {
       const { site, demo, closed, epics, config, review, items, actions, prompts } = await fetchItems();
       this.closed = closed;
       this.review = review;
-      setItems(items, actions, prompts);
+      setItems(items, actions, prompts, config);
       this.current = cast(items, new Date(), config, new Set(epics.map((e) => e.id)));
       this.siteName = site;
       this.hud.querySelector("#site")!.textContent = `🏗 ${site}` + (demo ? " · DEMO · nothing is saved" : "");
