@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import path from "node:path";
 import {
+  changeLog,
   dependsOn,
+  detailOf,
+  sections,
   gitMeta,
   kebab,
   openQuestions,
@@ -202,5 +205,40 @@ describe("openspec", () => {
     ]);
     expect([kid.priority, kid.labels, kid.blocked]).toEqual([1, [], false]);
     expect(toItems(legacy, new Set())[0].blocked).toBe(false);
+  });
+  it("show: Why glances, What Changes and Impact fold, ticks stay, deltas and log are their own", async () => {
+    const login = await byName("add-login");
+    const notes = [{ who: "dave", when: "2026-10-01T00:00:00Z", text: "login: session table" }];
+    const d = await detailOf(login, "ADDED auth: Email login", notes);
+    expect(d.summary).toBe("Nobody can sign in yet, so nothing is personal.");
+    expect(d.more).toBe(
+      "Sessions were ripped out with the legacy auth and never replaced.\n\n## What Changes\n\n- a session table\n- a login route and form",
+    );
+    expect(d.design).toBe("## Impact\n\nTouches `auth` and the UI shell.");
+    expect(d.acceptance).toContain("- [x] 1.1 session table");
+    expect(d.deltas).toBe("ADDED auth: Email login");
+    expect(d.notes).toEqual(notes);
+    expect(d).not.toHaveProperty("text");
+    expect(d).not.toHaveProperty("children");
+  });
+  it("show: no Why glances the body minus headings; design.md is the design", async () => {
+    const d = await detailOf(await byName("remove-legacy"), "", []);
+    expect(d.summary).toBe("The old auth module is dead weight.");
+    expect(d.more).toBe("Nothing imports it since the rewrite.");
+    expect(d.design).toBe("sessions in a table");
+    expect(d).not.toHaveProperty("deltas");
+    expect(d).not.toHaveProperty("notes");
+    const bare = await detailOf(await byName("later"), "", []);
+    expect(bare.summary).toBe("");
+    expect(bare.acceptance).toBe("- [x] wire it");
+  });
+  it("sections and change log", async () => {
+    expect([...sections("# T\n## Why\n\na\n\n## What Changes\nb\n").entries()]).toEqual([
+      ["why", "a"],
+      ["what changes", "b"],
+    ]);
+    const log = await changeLog((await byName("add-login")).dir);
+    expect(log.length).toBeGreaterThan(0);
+    expect(log[0]).toMatchObject({ who: expect.any(String), when: expect.stringMatching(/^\d{4}-/) });
   });
 });

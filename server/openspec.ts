@@ -5,7 +5,7 @@ import { userName } from "./git.ts";
 import type { Item } from "./model.ts";
 import { houses, type Phase } from "./houses.ts";
 import type { Source } from "./source.ts";
-import { glance, type Detail } from "./detail.ts";
+import { glance, prune, type Detail, type Note } from "./detail.ts";
 import { loadConfig } from "./config.ts";
 
 export type Task = { text: string; done: boolean; line: number };
@@ -399,6 +399,68 @@ async function delta(c: Change): Promise<string> {
   return specFiles(c.dir);
 }
 
+/** `## Heading` sections of a markdown body, keyed by lower-case heading. */
+export function sections(md: string): Map<string, string> {
+  const out = new Map<string, string>();
+  const re = /^##\s+(.+?)\s*$/gm;
+  const heads = [...md.matchAll(re)];
+  heads.forEach((h, i) => {
+    const end = heads[i + 1]?.index ?? md.length;
+    out.set(h[1].toLowerCase(), md.slice(h.index + h[0].length, end).trim());
+  });
+  return out;
+}
+
+const bodyOf = (md: string) =>
+  md
+    .replace(/^---\r?\n[\s\S]*?\r?\n---\s*/, "")
+    .replace(/^#+\s.*$/gm, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+const untitled = (md: string) => md.replace(/^#\s[^\n]*\n?/m, "").trim();
+
+const joinMd = (...parts: (string | undefined)[]) => parts.filter(Boolean).join("\n\n") || undefined;
+
+/** Commits touching the dir, newest first. */
+export async function changeLog(dir: string, limit = 20): Promise<Note[]> {
+  try {
+    const log = await sh("git", ["log", `-n${limit}`, "--format=%aI%x1f%an%x1f%s", "--", dir]);
+    return log
+      .split("\n")
+      .filter(Boolean)
+      .map((l) => {
+        const [when, who, text] = l.split("\x1f");
+        return { when, who, text };
+      });
+  } catch {
+    return [];
+  }
+}
+
+/** proposal Why → summary/more, What Changes → more, Impact + design.md → design, tasks → acceptance. */
+export async function detailOf(c: Change, deltas: string, notes: Note[]): Promise<Detail> {
+  const [proposal, tasks, design] = await Promise.all([
+    text(path.join(c.dir, "proposal.md")),
+    text(path.join(c.dir, "tasks.md")),
+    text(path.join(c.dir, "design.md")),
+  ]);
+  const sec = sections(proposal);
+  const why = sec.get("why");
+  const g = glance(why ?? bodyOf(proposal));
+  const what = sec.get("what changes");
+  const impact = sec.get("impact");
+  return prune({
+    summary: g.summary,
+    more: joinMd(g.more, what && `## What Changes\n\n${what}`),
+    acceptance: tasks.trim(),
+    design: joinMd(untitled(design), impact && `## Impact\n\n${impact}`),
+    deltas,
+    notes,
+    closeReason: c.closeReason,
+  });
+}
+
 async function change(id: string): Promise<Change> {
   const name = id.split("#")[0];
   const c = (await readChanges()).find((x) => x.name === name);
@@ -431,18 +493,8 @@ export const openspec: Source = {
   closedRecent: async (limit = 200) => byClosed(archived(await all())).slice(0, limit),
   show: async (id): Promise<Detail> => {
     const c = await change(id);
-    const [specs, proposal, tasks] = await Promise.all([
-      delta(c),
-      text(path.join(c.dir, "proposal.md")),
-      text(path.join(c.dir, "tasks.md")),
-    ]);
-    const why = /^## Why\s*\n([\s\S]*?)(?=\n## |$)/m.exec(proposal)?.[1] ?? "";
-    return {
-      ...glance(why),
-      acceptance: tasks || undefined,
-      design: specs ? `spec delta\n${specs}` : undefined,
-      text: proposal,
-    };
+    const [deltas, notes] = await Promise.all([delta(c), changeLog(c.dir)]);
+    return detailOf(c, deltas, notes);
   },
   actor: userName,
   actions: {

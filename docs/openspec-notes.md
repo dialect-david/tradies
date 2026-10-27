@@ -102,3 +102,14 @@ Differences from what tradies assumed:
 ## For bead .2 (prime doc)
 
 An agent on an openspec repo: `openspec new change <name>`, write proposal.md with a `# Title` and optional frontmatter, design.md, `specs/<cap>/spec.md` deltas, tasks.md as `- [ ] N.N text` under `## N. Section` headings. Tick boxes as work lands. `openspec archive <name> -y` when all ticked, then commit the move and the merged `openspec/specs/`. No bd, no claim; owner is the last commit author unless `owner:` is in frontmatter.
+
+## Card mapping (`show`)
+
+| On disk | Card region |
+|---|---|
+| proposal `## Why` (else body minus headings) | summary + more, via `glance` |
+| proposal `## What Changes` | more, after Why's detail |
+| design.md (title stripped) + proposal `## Impact` | design |
+| tasks.md, `- [x]`/`- [ ]` as ✓/○ | done when |
+| `openspec show --deltas-only`, else `specs/*/spec.md` | spec delta |
+| `git log -- <change dir>` | notes |

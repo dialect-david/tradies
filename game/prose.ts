@@ -3,10 +3,17 @@ export const esc = (s: string) =>
 
 const inline = (t: string) => esc(t).replace(/`([^`]+)`/g, "<code>$1</code>");
 
+const BOX = /^\[([ xX])\]\s+/;
+const li = (text: string) => {
+  const box = BOX.exec(text);
+  if (!box) return `<li>${inline(text)}</li>`;
+  const done = box[1] !== " ";
+  return `<li class="${done ? "done" : "todo"}">${done ? "✓" : "○"} ${inline(text.slice(box[0].length))}</li>`;
+};
 const list = (lines: string[], tag: "ul" | "ol", strip: RegExp) =>
-  `<${tag}>${lines.map((l) => `<li>${inline(l.replace(strip, ""))}</li>`).join("")}</${tag}>`;
+  `<${tag}>${lines.map((l) => li(l.replace(strip, ""))).join("")}</${tag}>`;
 
-/** Markdown-lite: paragraphs, - bullets, 1. lists, `code`, ## headings as a bold line, ``` fences. */
+/** Markdown-lite: paragraphs, - bullets, - [x] ticks as ✓/○, 1. lists, `code`, ## headings as a bold line, ``` fences. */
 export function prose(text: string): string {
   const out: string[] = [];
   const parts = text.replace(/\r\n/g, "\n").split(/^```[^\n]*\n?/m);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { cast } from "../game/cast.ts";
-import { demoDetail } from "../server/demo.ts";
+import { demoDetail, demoView } from "../server/demo.ts";
 import { DEFAULTS } from "../server/defaults.ts";
 import { houses } from "../server/houses.ts";
 import { fixture } from "../server/demo/fixture.ts";
@@ -123,5 +123,16 @@ describe("demo source", () => {
     expect((await s.show(ready.id)).notes).toEqual([{ text: "a note", who: foreman }]);
     const id = await s.actions.create.run("", { text: "new job" });
     expect((await s.items()).some((i) => i.id === id)).toBe(true);
+  });
+  it("view maps a PR to the same regions, linked to the bead in its title", () => {
+    const d = demoView(prs.find((p) => p.id === "#41")!, items);
+    expect(d.summary).toBe("Cart slides up from the bottom edge; tap outside to dismiss.");
+    expect(d.linked?.id).toBe("demo-13");
+    expect(d.checks?.map((c) => c.state)).toEqual(["success", "success"]);
+    expect(d.branch).toBeTruthy();
+    const bump = demoView(prs.find((p) => p.id === "#44")!, items);
+    expect(bump.summary).toBe("");
+    expect(bump).not.toHaveProperty("linked");
+    expect(bump).not.toHaveProperty("checks");
   });
 });

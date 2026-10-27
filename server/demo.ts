@@ -1,7 +1,7 @@
 import type { Item } from "./model.ts";
 import { houses } from "./houses.ts";
 import type { Source } from "./source.ts";
-import { glance, prune, row, type Detail, type Note } from "./detail.ts";
+import { glance, linkedRow, prune, row, type Detail, type Note } from "./detail.ts";
 import { fixture, type Fixture } from "./demo/fixture.ts";
 
 const byClosed = (items: Item[]) =>
@@ -15,6 +15,18 @@ export function demoDetail(i: Item, kids: Item[], notes: Note[]): Detail {
     notes,
     closeReason: i.closeReason,
     children: kids.map(row),
+  });
+}
+
+const CI: Record<string, string> = { pass: "success", fail: "failure", pending: "pending" };
+
+export function demoView(p: Item, items: Item[]): Detail {
+  const ci = p.labels.find((l) => l.startsWith("ci:"))?.slice(3);
+  return prune({
+    ...glance(p.description),
+    branch: `${p.owner}/${p.id.slice(1)}`,
+    checks: ci ? [{ name: "build", state: CI[ci] ?? ci }, { name: "test", state: CI[ci] ?? ci }] : [],
+    linked: linkedRow(p.title, items),
   });
 }
 
@@ -45,7 +57,8 @@ export function demoSource(f: Fixture = fixture()): Source {
     prs: async () => prs,
     view: async (id) => {
       const p = prs.find((x) => x.id === id);
-      return p ? `${p.id} ${p.title}\nstatus: ${p.status}  by ${p.owner}` : `no PR ${id}`;
+      if (!p) throw new Error(`no PR ${id}`);
+      return demoView(p, items);
     },
     actions: {
       claim: {

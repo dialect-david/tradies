@@ -2,6 +2,7 @@ import type { Item } from "./model.ts";
 
 export type Row = { id: string; title: string; status: string; priority: number; updatedAt: string };
 export type Note = { who?: string; when?: string; text: string };
+export type Check = { name: string; state: string };
 
 /** What a card shows. Only `summary` is required; a missing field is a missing region. */
 export type Detail = {
@@ -12,9 +13,29 @@ export type Detail = {
   notes?: Note[];
   closeReason?: string;
   children?: Row[];
-  /** Raw text for sources that have no structure yet; shown as-is below the regions. */
-  text?: string;
+  /** Spec delta lines, one fold after design. */
+  deltas?: string;
+  /** CI checks of a PR; state is lower-case (`success`, `failure`, `pending`...). */
+  checks?: Check[];
+  /** Branch of a PR, shown as a chip. */
+  branch?: string;
+  /** The bead a PR is for, named in its title or branch. */
+  linked?: Row;
 };
+
+const ID = /\b[a-z][a-z0-9]*-[a-z0-9]+(?:\.\d+)*\b/gi;
+
+/** First bead id in the text that names an item. */
+export function linkedRow(text: string, items: Item[]): Row | undefined {
+  const by = new Map(items.map((i) => [i.id, i]));
+  for (const m of text.match(ID) ?? []) {
+    const i = by.get(m);
+    if (i) return row(i);
+  }
+  return undefined;
+}
+
+export const passing = (c: Check) => /^(success|pass|passed|neutral|skipped)$/.test(c.state);
 
 const MAX = 140;
 

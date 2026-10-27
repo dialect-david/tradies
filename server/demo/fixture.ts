@@ -387,7 +387,15 @@ export function fixture(now = new Date()): Fixture {
     };
   };
   const prs: Item[] = [
-    pr({ id: "#41", title: "Add cart drawer (demo-13)", status: "approved", priority: 2, ci: "pass" }),
+    pr({
+      id: "#41",
+      title: "Add cart drawer (demo-13)",
+      status: "approved",
+      priority: 2,
+      ci: "pass",
+      description:
+        "Cart slides up from the bottom edge; tap outside to dismiss.\n\nUses the sheet component from demo-11 so there is no new animation code. Totals come from the cart store.",
+    }),
     pr({
       id: "#42",
       title: "Pick milk, size and extras (demo-15)",
@@ -403,6 +411,7 @@ export function fixture(now = new Date()): Fixture {
       priority: 1,
       ci: "pass",
       owner: "sam",
+      description: "Sends the ticket over ESC/POS to the kitchen printer; falls back to the till screen when it is offline.",
     }),
     pr({ id: "#44", title: "Bump vite to 8.3", status: "review", priority: 1, owner: "dependabot" }),
   ];

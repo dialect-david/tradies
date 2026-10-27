@@ -1,6 +1,7 @@
 import { json, sh } from "./shell.ts";
 import { fromPr, type Item, type Pr } from "./model.ts";
 import type { PrFilter } from "./defaults.ts";
+import { glance, linkedRow, prune, type Check, type Detail } from "./detail.ts";
 
 const FIELDS = "number,title,state,isDraft,reviewDecision,statusCheckRollup,author,updatedAt,url";
 export const PR_LIMIT = 50;
@@ -22,4 +23,27 @@ export async function listPrs(filter?: PrFilter): Promise<Item[]> {
 
 export const merge = (n: string) =>
   sh("gh", ["pr", "merge", n.replace("#", ""), "--squash", "--delete-branch"]);
-export const view = (n: string) => sh("gh", ["pr", "view", n.replace("#", "")]);
+const VIEW_FIELDS = "title,body,headRefName,statusCheckRollup";
+export type PrView = {
+  title: string;
+  body?: string;
+  headRefName?: string;
+  statusCheckRollup?: { name?: string; context?: string; conclusion?: string; state?: string; status?: string }[];
+};
+
+export const check = (c: NonNullable<PrView["statusCheckRollup"]>[number]): Check => ({
+  name: c.name ?? c.context ?? "check",
+  state: (c.conclusion || c.state || c.status || "pending").toLowerCase(),
+});
+
+export function fromPrView(p: PrView, items: Item[] = []): Detail {
+  return prune({
+    ...glance(p.body),
+    branch: p.headRefName,
+    checks: (p.statusCheckRollup ?? []).map(check),
+    linked: linkedRow(`${p.title} ${p.headRefName ?? ""}`, items),
+  });
+}
+
+export const view = async (n: string, items: Item[] = []) =>
+  fromPrView(await json<PrView>("gh", ["pr", "view", n.replace("#", ""), "--json", VIEW_FIELDS]), items);

@@ -18,3 +18,10 @@ describe("prose", () => {
     ));
   it("plain text has no pre", () => expect(prose("x\ny\n\nz")).not.toContain("<pre"));
 });
+
+describe("prose ticks", () => {
+  it("task boxes render as ✓ and ○", () =>
+    expect(prose("- [x] done\n- [ ] todo\n- plain")).toBe(
+      '<ul><li class="done">✓ done</li><li class="todo">○ todo</li><li>plain</li></ul>',
+    ));
+});

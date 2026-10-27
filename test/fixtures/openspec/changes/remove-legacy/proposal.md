@@ -8,3 +8,5 @@ owner: sam
 ---
 
 # Remove legacy
+
+The old auth module is dead weight. Nothing imports it since the rewrite.

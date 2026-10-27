@@ -101,10 +101,8 @@ export function api(): Plugin {
           }
           if (url.pathname === "/show") {
             const id = url.searchParams.get("id") ?? "";
-            const detail = id.startsWith("#")
-              ? { summary: "", text: await (source.view?.(id) ?? gh.view(id)) }
-              : await source.show(id);
-            return send(res, 200, detail);
+            const view = async (id: string) => source.view?.(id) ?? gh.view(id, await source.items());
+            return send(res, 200, await (id.startsWith("#") ? view : source.show)(id));
           }
           if (url.pathname === "/act" && req.method === "POST") {
             if (!sameOrigin(req)) return send(res, 403, { error: "cross-origin action refused" });

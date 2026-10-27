@@ -2,7 +2,7 @@ import { ageDays, type Item } from "../server/model.ts";
 import { act, doctor, show } from "./client.ts";
 import { score, why, type Cast } from "./cast.ts";
 import { esc, prose } from "./prose.ts";
-import type { Detail, Note, Row } from "../server/detail.ts";
+import { passing, type Check, type Detail, type Note, type Row } from "../server/detail.ts";
 import { DEFAULTS } from "../server/defaults.ts";
 import { REVIEW_REF, reviewPrompt, short, type Review } from "../server/review.ts";
 import type { Config } from "../server/defaults.ts";
@@ -72,17 +72,28 @@ const ago = (d: Date | string) => {
   const days = Math.floor((Date.now() - new Date(d).getTime()) / 86_400_000);
   return days === 0 ? "today" : days === 1 ? "yesterday" : `${days}d`;
 };
-const chips = (i: Item) =>
+const chips = (i: Item, d: Detail) =>
   `<div class="chips">` +
   [
     `<span class="chip p${i.priority}">P${i.priority}</span>`,
     `<span class="chip">${esc(i.trade)}</span>`,
     i.status !== "open" ? `<span class="chip">${esc(i.status.replace("_", " "))}</span>` : "",
-    i.assignee ? `<span class="chip">${esc(i.assignee)}</span>` : "",
+    i.assignee ?? i.owner ? `<span class="chip">${esc(i.assignee ?? i.owner!)}</span>` : "",
     `<span class="chip dim">${ago(i.updatedAt)}</span>`,
     ...i.labels.map((l) => `<span class="chip label">${esc(l)}</span>`),
+    d.branch ? `<span class="chip dim">${esc(d.branch)}</span>` : "",
   ].join("") +
   `</div>`;
+const MARK: Record<string, string> = { failure: "✗", error: "✗", cancelled: "✗", timed_out: "✗" };
+const checkList = (cs: Check[]) =>
+  cs.length
+    ? `<ul class="checks">${cs
+        .map(
+          (c) =>
+            `<li class="${passing(c) ? "done" : "todo"}">${passing(c) ? "✓" : (MARK[c.state] ?? "○")} ${esc(c.name)} <span class="dim">${esc(c.state)}</span></li>`,
+        )
+        .join("")}</ul>`
+    : "";
 const linkIds = (html: string) => {
   const ids = new Set(onSite.map((i) => i.id));
   return html.replace(/[\w-]+/g, (w) => (ids.has(w) ? `<a data-open="${w}">${w}</a>` : w));
@@ -119,10 +130,12 @@ function regions(item: Item, d: Detail): string {
   const waits = onSite.filter((i) => item.waitsOn.includes(i.id));
   const asRows = (xs: Item[]) => xs.map((i) => ({ ...i, updatedAt: i.updatedAt.toISOString() }));
   const parent = item.parent ? onSite.find((i) => i.id === item.parent) : undefined;
+  const checks = d.checks ?? [];
   return [
     parent ? `<div class="crumb">in <a data-open="${esc(parent.id)}">${esc(parent.title)}</a></div>` : "",
+    d.linked ? `<div class="crumb">for ${esc(d.linked.id)}</div>${rows([d.linked])}` : "",
     line.text ? `<div class="why why-${line.state}">${linkIds(esc(line.text))}</div>` : "",
-    chips(item),
+    chips(item, d),
     d.summary ? `<div class="summary">${prose(d.summary)}</div>` : "",
     d.closeReason && line.state !== "closed"
       ? `<div class="summary">knocked off: ${esc(d.closeReason)}</div>`
@@ -138,8 +151,9 @@ function regions(item: Item, d: Detail): string {
     fold("waits", `waits on · ${waits.length}`, rows(asRows(waits)), true),
     fold("blocks", `blocks · ${deps.length}`, rows(asRows(deps))),
     fold("design", "design", d.design ? prose(d.design) : ""),
+    fold("deltas", "spec delta", d.deltas ? prose(d.deltas) : ""),
+    fold("checks", `checks · ${checks.filter(passing).length}/${checks.length}`, checkList(checks)),
     fold("notes", `notes · ${d.notes?.length ?? 0}`, noteList(d.notes ?? [])),
-    d.text ? `<pre>${esc(d.text)}</pre>` : "",
   ].join("");
 }
 function wireFolds(root: HTMLElement) {
@@ -170,7 +184,7 @@ export async function openCard(item: Item) {
       <div class="row">${button("claim", "claim")}${button("note", "note")}${button("close", "close bead")}</div>`
         : "",
     )}`;
-  const prActions = `<div class="row">${button("merge", "merge")}</div>`;
+  const prActions = `<div class="row">${button("merge", "merge")}${item.url ? `<a class="link" href="${esc(item.url)}" target="_blank" rel="noopener">open on GitHub</a>` : ""}</div>`;
   card.innerHTML = `<h3>${idChip(item.id)} ${esc(item.title)}</h3>${regions(item, detail)}${item.kind === "bead" ? beadActions : prActions}`;
   wireCopy(card);
   wireByHand(card);
