@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { cast } from "../game/cast.ts";
+import { demoDetail } from "../server/demo.ts";
 import { DEFAULTS } from "../server/defaults.ts";
 import { houses } from "../server/houses.ts";
 import { fixture } from "../server/demo/fixture.ts";
@@ -87,6 +88,24 @@ describe("demo fixture", () => {
   });
 });
 
+describe("demo show", () => {
+  it("maps items into regions, empty fields missing", () => {
+    const epic = items.find((i) => i.id === "demo-1")!;
+    const kids = items.filter((i) => i.parent === epic.id);
+    const d = demoDetail(epic, kids, []);
+    expect(d.summary).toBeTruthy();
+    expect(d.children?.length).toBe(kids.length);
+    expect(d).not.toHaveProperty("notes");
+    expect(d).not.toHaveProperty("text");
+    const bare = demoDetail(
+      { ...epic, description: undefined, acceptance: undefined, closeReason: undefined },
+      [],
+      [],
+    );
+    expect(bare).toEqual({ summary: "" });
+  });
+});
+
 describe("demo source", () => {
   it("claim shows in_progress, close lands in closedSince", async () => {
     const { demoSource } = await import("../server/demo.ts");
@@ -99,7 +118,9 @@ describe("demo source", () => {
     expect((await s.closedSince(since)).map((i) => i.id)).toContain(ready.id);
     const d = await s.show(ready.id);
     expect(d.closeReason).toBe("shipped");
-    expect(d.notes).toEqual([]);
+    expect(d).not.toHaveProperty("notes");
+    await s.actions.note.run(ready.id, { text: "a note" });
+    expect((await s.show(ready.id)).notes).toEqual([{ text: "a note", who: foreman }]);
     const id = await s.actions.create.run("", { text: "new job" });
     expect((await s.items()).some((i) => i.id === id)).toBe(true);
   });

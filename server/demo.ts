@@ -1,13 +1,23 @@
 import type { Item } from "./model.ts";
 import { houses } from "./houses.ts";
 import type { Source } from "./source.ts";
-import { glance, row, type Detail } from "./detail.ts";
+import { glance, prune, row, type Detail, type Note } from "./detail.ts";
 import { fixture, type Fixture } from "./demo/fixture.ts";
 
 const byClosed = (items: Item[]) =>
   items.sort((a, b) => (b.closedAt?.getTime() ?? 0) - (a.closedAt?.getTime() ?? 0));
 
 /** A Source over a mutable copy of the fixture; nothing persists. */
+export function demoDetail(i: Item, kids: Item[], notes: Note[]): Detail {
+  return prune({
+    ...glance(i.description),
+    acceptance: i.acceptance,
+    notes,
+    closeReason: i.closeReason,
+    children: kids.map(row),
+  });
+}
+
 export function demoSource(f: Fixture = fixture()): Source {
   const items = f.items.map((i) => ({ ...i }));
   const prs = f.prs.map((i) => ({ ...i }));
@@ -25,17 +35,12 @@ export function demoSource(f: Fixture = fixture()): Source {
     closedCount: async () => closed().length,
     closedSince: async (since) => byClosed(closed().filter((i) => i.closedAt && i.closedAt >= since)),
     closedRecent: async (limit = 200) => byClosed(closed()).slice(0, limit),
-    show: async (id): Promise<Detail> => {
-      const i = find(id);
-      const kids = items.filter((x) => x.parent === id);
-      return {
-        ...glance(i.description),
-        acceptance: i.acceptance,
-        notes: (notes.get(id) ?? []).map((text) => ({ text, who: f.foreman })),
-        closeReason: i.closeReason,
-        children: kids.map(row),
-      };
-    },
+    show: async (id): Promise<Detail> =>
+      demoDetail(
+        find(id),
+        items.filter((x) => x.parent === id),
+        (notes.get(id) ?? []).map((text) => ({ text, who: f.foreman })),
+      ),
     actor: async () => f.foreman,
     prs: async () => prs,
     view: async (id) => {

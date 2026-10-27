@@ -1,6 +1,7 @@
 import { ageDays, type Item } from "../server/model.ts";
 import { act, doctor, show } from "./client.ts";
-import { score, whyLine, type Cast } from "./cast.ts";
+import { score, why, type Cast } from "./cast.ts";
+import { esc, prose } from "./prose.ts";
 import type { Detail, Note, Row } from "../server/detail.ts";
 import { DEFAULTS } from "../server/defaults.ts";
 import { REVIEW_REF, reviewPrompt, short, type Review } from "../server/review.ts";
@@ -24,7 +25,6 @@ export const setItems = (items: Item[], actions: string[] = [...can], p = prompt
 );
 const button = (act: string, label: string) =>
   can.has(act) ? `<button data-act="${act}">${label}</button>` : "";
-
 
 export function prompt(item: Item, plan: boolean): string {
   return fillPrompt(plan ? prompts.plan : prompts.work, item);
@@ -83,16 +83,6 @@ const chips = (i: Item) =>
     ...i.labels.map((l) => `<span class="chip label">${esc(l)}</span>`),
   ].join("") +
   `</div>`;
-const prose = (t: string) =>
-  esc(t)
-    .split(/\n{2,}/)
-    .map((p) =>
-      /^(\s*[-*]\s)/m.test(p)
-        ? `<ul>${p.split("\n").map((l) => `<li>${l.replace(/^\s*[-*]\s*/, "")}</li>`).join("")}</ul>`
-        : `<p>${p.replace(/\n/g, "<br>")}</p>`,
-    )
-    .join("")
-    .replace(/`([^`]+)`/g, "<code>$1</code>");
 const linkIds = (html: string) => {
   const ids = new Set(onSite.map((i) => i.id));
   return html.replace(/[\w-]+/g, (w) => (ids.has(w) ? `<a data-open="${w}">${w}</a>` : w));
@@ -100,7 +90,9 @@ const linkIds = (html: string) => {
 const OPEN = "tradies.cardOpen";
 const openSet = new Set<string>(JSON.parse(localStorage.getItem(OPEN) ?? "[]"));
 const fold = (key: string, head: string, body: string, open = openSet.has(key)) =>
-  body ? `<details class="fold" data-fold="${key}"${open ? " open" : ""}><summary>${head}</summary>${body}</details>` : "";
+  body
+    ? `<details class="fold" data-fold="${key}"${open ? " open" : ""}><summary>${head}</summary>${body}</details>`
+    : "";
 const rows = (rs: Row[]) =>
   rs.length
     ? `<div class="rows">${rs
@@ -113,11 +105,14 @@ const rows = (rs: Row[]) =>
 const noteList = (ns: Note[]) =>
   ns.length
     ? `<div class="notes">${ns
-        .map((n) => `<div class="note">${n.who || n.when ? `<span class="dim">${esc(n.who ?? "")} ${n.when ? ago(n.when) : ""}</span>` : ""}${prose(n.text)}</div>`)
+        .map(
+          (n) =>
+            `<div class="note">${n.who || n.when ? `<span class="dim">${esc(n.who ?? "")} ${n.when ? ago(n.when) : ""}</span>` : ""}${prose(n.text)}</div>`,
+        )
         .join("")}</div>`
     : "";
 function regions(item: Item, d: Detail): string {
-  const why = whyLine(item, onSite, new Date(), cfg);
+  const line = why(item, onSite, new Date(), cfg);
   const kids = d.children ?? [];
   const doneKids = kids.filter((k) => k.status === "closed").length;
   const deps = onSite.filter((i) => i.waitsOn.includes(item.id));
@@ -126,12 +121,19 @@ function regions(item: Item, d: Detail): string {
   const parent = item.parent ? onSite.find((i) => i.id === item.parent) : undefined;
   return [
     parent ? `<div class="crumb">in <a data-open="${esc(parent.id)}">${esc(parent.title)}</a></div>` : "",
-    why ? `<div class="why">${linkIds(esc(why))}</div>` : "",
+    line.text ? `<div class="why why-${line.state}">${linkIds(esc(line.text))}</div>` : "",
     chips(item),
     d.summary ? `<div class="summary">${prose(d.summary)}</div>` : "",
-    d.closeReason ? `<div class="summary">knocked off: ${esc(d.closeReason)}</div>` : "",
+    d.closeReason && line.state !== "closed"
+      ? `<div class="summary">knocked off: ${esc(d.closeReason)}</div>`
+      : "",
     fold("more", "more", d.more ? prose(d.more) : ""),
-    fold("acceptance", "done when", d.acceptance ? prose(d.acceptance) : "", openSet.has("acceptance") || !openSet.size),
+    fold(
+      "acceptance",
+      "done when",
+      d.acceptance ? prose(d.acceptance) : "",
+      openSet.has("acceptance") || !openSet.size,
+    ),
     fold("children", `children · ${doneKids}/${kids.length}`, rows(kids)),
     fold("waits", `waits on · ${waits.length}`, rows(asRows(waits)), true),
     fold("blocks", `blocks · ${deps.length}`, rows(asRows(deps))),
@@ -151,12 +153,12 @@ let cardSeq = 0;
 export async function openCard(item: Item) {
   const seq = ++cardSeq;
   card.classList.add("open");
-  card.innerHTML = `<h3>${idChip(item.id)} ${esc(item.title)}</h3><pre>loading…</pre>`;
+  card.innerHTML = `<h3>${idChip(item.id)} ${esc(item.title)}</h3><p class="dim">loading…</p>`;
   let detail: Detail;
   try {
     detail = await show(item.id);
   } catch (e) {
-    detail = { summary: "", text: `couldn't load: ${(e as Error).message}` };
+    detail = { summary: `couldn't load: ${(e as Error).message}` };
   }
   if (seq !== cardSeq) return;
   const hands = ["claim", "note", "close"].filter((a) => can.has(a));
@@ -221,9 +223,6 @@ export function openReview(r: Review, site: string, cfg: Config) {
 export function closeCard() {
   card.classList.remove("open");
 }
-
-const esc = (s: string) =>
-  s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
 export function openBoard(ready: Item[], title = "job board", pinnable = true) {
   closeCard();

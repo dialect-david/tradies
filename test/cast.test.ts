@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { byInspection, cast, score } from "../game/cast.ts";
+import { byInspection, cast, score, why } from "../game/cast.ts";
 import { DEFAULTS } from "../server/config.ts";
 import type { Item } from "../server/model.ts";
 
@@ -184,5 +184,64 @@ describe("inspectors", () => {
       "#1",
       "#3",
     ]);
+  });
+});
+
+describe("why line", () => {
+  const w = (i: Item, items: Item[] = [i], cfg = DEFAULTS) => why(i, items, now, cfg);
+  it("has a line for every cast state, in site words", () => {
+    expect(w(item({ status: "in_progress", assignee: "sam" }))).toEqual({
+      state: "working",
+      text: "sam on the tools",
+    });
+    expect(w(item({ status: "in_progress", updatedAt: new Date("2026-09-29") }))).toEqual({
+      state: "asleep",
+      text: "someone asleep since Tue, 11 days",
+    });
+    expect(w(item({ labels: ["needs-review"] }))).toEqual({ state: "needs", text: "needs you: review" });
+    expect(w(item({ blocked: true, assignee: "Dave" }), undefined, { ...DEFAULTS, foreman: "dave" })).toEqual(
+      {
+        state: "needs",
+        text: "needs you: blocked and yours",
+      },
+    );
+    const root = item({ id: "demo-21", title: "Decide payment provider" });
+    const a = item({ id: "a", blocked: true, waitsOn: ["demo-21"] });
+    const b = item({ id: "b", blocked: true, waitsOn: ["demo-21"] });
+    expect(w(a, [root, a, b])).toEqual({
+      state: "waiting",
+      text: "waiting on demo-21 Decide payment provider",
+    });
+    expect(w(root, [root, a, b])).toEqual({ state: "ready", text: "ready, frees 2" });
+    expect(w(item({ blocked: true, waitsOn: ["elsewhere"] }))).toEqual({
+      state: "waiting",
+      text: "waiting on materials",
+    });
+    expect(w(item({ updatedAt: new Date("2026-10-02") }))).toEqual({
+      state: "smoko",
+      text: "on smoko 8 days",
+    });
+    expect(w(item({ updatedAt: new Date("2026-09-05") }))).toEqual({
+      state: "gone",
+      text: "gone home 35 days",
+    });
+    expect(w(item({ status: "deferred" }))).toEqual({
+      state: "deferred",
+      text: "on the plans, out of the way",
+    });
+    expect(w(item({ status: "closed", closeReason: "shipped" }))).toEqual({
+      state: "closed",
+      text: "knocked off: shipped",
+    });
+    expect(w(item({ status: "closed" })).text).toBe("knocked off");
+    expect(w(item({ kind: "pr", blocked: true, status: "review" })).state).toBe("failing");
+    expect(w(item({ kind: "pr", status: "approved" }))).toEqual({
+      state: "approved",
+      text: "signed off, ready to merge",
+    });
+  });
+  it("says nothing when plainly ready", () => {
+    expect(w(item({}))).toEqual({ state: "ready", text: "" });
+    expect(w(item({ kind: "pr", status: "review" })).text).toBe("");
   });
 });

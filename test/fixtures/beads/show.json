@@ -1,0 +1,79 @@
+[
+  {
+    "id": "tradies-d2s.1",
+    "title": "Card renders bd show --json fields into regions",
+    "description": "Source.show returns structured detail instead of text: {title, description, acceptance, design, notes, comments, closeReason, children[], waitsOn[], blocks[]}. Beads impl: bd show --json --include-comments --include-dependents. Card: h3 title + id chip; breadcrumb to house; state chips (priority, trade, status, assignee, updated-ago, labels); description first paragraph always shown, rest under more; Done when (acceptance) open by default; design/notes/comments/children collapsed with counts in the summary; children and waitsOn as clickable rows (id, title, priority, age). Empty field = no region. No parsing of bd show text. Keep by-hand actions as is.",
+    "acceptance_criteria": "Card has no \u003cpre\u003e for beads. First two lines + chips answer act-or-not. Collapsed sections remember open state like by-hand. Tests cover region mapping and empty fields.",
+    "notes": "Graceful fallback for beads not written to the contract: glance line = first paragraph if there is a blank line, else first sentence (split on '. ' or newline), else first ~140ch at a word boundary with an ellipsis; the rest goes under more. Missing acceptance/design/notes = no region, no empty heading. Description that is one long paragraph still gets 60ch wrapping and markdown-lite. Never show a 'not to contract' warning on the card.",
+    "status": "in_progress",
+    "priority": 1,
+    "issue_type": "feature",
+    "assignee": "dave",
+    "created_at": "2026-10-26T04:40:24Z",
+    "created_by": "dave",
+    "updated_at": "2026-10-26T04:43:37Z",
+    "started_at": "2026-10-26T04:42:49Z",
+    "dependencies": [
+      {
+        "id": "tradies-d2s",
+        "title": "Card reads like a glance, not a wall",
+        "description": "Bead detail is bd show text in one \u003cpre\u003e: ~90ch lines, 1.0 leading, caps labels, status inferred from dates, tip footer. Reading norms (F-pattern, inverted pyramid, chunking, 45-75ch, progressive disclosure, recognition over recall) say: state as chips, relationships as links, prose last and narrow. Glance/detail split is authored by the agent at creation (title / description first line / acceptance / design / notes), not parsed at render. Card renders bd show --json fields into regions; site adds the one dynamic line (why it is on screen: age, blocker fan-out).",
+        "acceptance_criteria": "Card answers 'do I act, on what' in two lines without reading prose. No bd show text parsing. Prime tells agents the writing contract. Doctor reports compliance.",
+        "notes": "Existing beads and specs were not written to the contract and most never will be. Card must read well from any bead: contract is a bonus, not a requirement. Nothing nags inside the card.",
+        "status": "in_progress",
+        "priority": 2,
+        "issue_type": "epic",
+        "created_at": "2026-10-26T04:39:53Z",
+        "created_by": "dave",
+        "updated_at": "2026-10-27T20:30:38Z",
+        "started_at": "2026-10-27T20:30:38Z",
+        "dependency_type": "parent-child"
+      }
+    ],
+    "dependents": [
+      {
+        "id": "tradies-d2s.6",
+        "title": "OpenSpec and PR cards use the same regions",
+        "status": "in_progress",
+        "priority": 2,
+        "issue_type": "task",
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "dependency_type": "blocks"
+      },
+      {
+        "id": "tradies-d2s.2",
+        "title": "Site writes line one: why this bead is on screen",
+        "status": "in_progress",
+        "priority": 1,
+        "issue_type": "feature",
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "dependency_type": "blocks"
+      },
+      {
+        "id": "tradies-d2s.4",
+        "title": "Prose typography on the card",
+        "status": "in_progress",
+        "priority": 2,
+        "issue_type": "task",
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "dependency_type": "blocks"
+      }
+    ],
+    "comments": [
+      {
+        "id": "01a17685-c3a7-71c1-a142-29b3ec3bbf03",
+        "issue_id": "tradies-d2s.1",
+        "author": "dave",
+        "text": "spike comment",
+        "created_at": "2026-10-26T04:44:00Z"
+      }
+    ],
+    "parent": "tradies-d2s",
+    "dependent_count": 3,
+    "dependency_count": 1,
+    "comment_count": 1
+  }
+]

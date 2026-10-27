@@ -127,25 +127,58 @@ export const TRADE_COLOUR: Record<string, number> = {
   milestone: 0xecf0f1,
 };
 
+export type WhyState =
+  | "working"
+  | "asleep"
+  | "needs"
+  | "waiting"
+  | "smoko"
+  | "gone"
+  | "deferred"
+  | "closed"
+  | "failing"
+  | "approved"
+  | "ready";
+
+export type Why = { state: WhyState; text: string };
+
+const weekday = (d: Date) => d.toLocaleDateString("en-AU", { weekday: "short" });
+
 /** The one line the author can't write: why this bead is on screen today, in site words. */
-export function whyLine(i: Item, items: Item[], now = new Date(), cfg: Config = DEFAULTS): string {
+export function why(i: Item, items: Item[], now = new Date(), cfg: Config = DEFAULTS): Why {
   const age = ageDays(i, now);
   const frees = items.filter((x) => x.waitsOn.includes(i.id)).length;
-  const freesWord = frees ? `, frees ${frees} when it lands` : "";
-  if (i.kind === "pr") return i.blocked ? "build failing" : i.status === "approved" ? "signed off, ready to merge" : "";
-  if (i.status === "closed") return i.closeReason ? `knocked off: ${i.closeReason}` : "knocked off";
-  if (i.status === "deferred") return "deferred, out of the way";
-  if (i.blocked) {
+  const freesWord = frees ? `, frees ${frees}` : "";
+  const who = i.assignee ?? "someone";
+  if (i.kind === "pr")
+    return i.blocked
+      ? { state: "failing", text: "red CI, site stopped till it's green" }
+      : i.status === "approved"
+        ? { state: "approved", text: "signed off, ready to merge" }
+        : { state: "ready", text: "" };
+  if (i.status === "closed")
+    return { state: "closed", text: i.closeReason ? `knocked off: ${i.closeReason}` : "knocked off" };
+  if (i.status === "deferred") return { state: "deferred", text: "on the plans, out of the way" };
+  if (i.blocked && !needsSomeone(i, cfg)) {
     const on = items.filter((x) => i.waitsOn.includes(x.id));
-    const who = on.length ? ` on ${on.map((x) => `${x.id} ${x.title}`).join("; ")}` : "";
-    return `waiting${who}${freesWord}`;
+    const what = on.length ? on.map((x) => `${x.id} ${x.title}`).join("; ") : "materials";
+    return { state: "waiting", text: `waiting on ${what}${freesWord}` };
   }
-  if (needsSomeone(i, cfg)) return `needs you${freesWord}`;
+  if (needsSomeone(i, cfg)) {
+    const asks = i.labels
+      .filter((l) => cfg.foremanLabels.some((p) => l.startsWith(p)))
+      .map((l) => l.slice(cfg.foremanLabels.find((p) => l.startsWith(p))!.length) || l);
+    const what = asks.length ? asks.join(", ") : "blocked and yours";
+    return { state: "needs", text: `needs you: ${what}${freesWord}` };
+  }
   if (i.status === "in_progress")
     return isStale(i, now, cfg.staleDays)
-      ? `${i.assignee ?? "someone"} on it, asleep ${age} days`
-      : `${i.assignee ?? "someone"} on the tools`;
-  if (age >= cfg.goneDays) return `gone home, ${age} days quiet`;
-  if (isStale(i, now, cfg.staleDays)) return `on smoko ${age} days${freesWord}`;
-  return frees ? `ready${freesWord}` : "";
+      ? { state: "asleep", text: `${who} asleep since ${weekday(i.updatedAt)}, ${age} days` }
+      : { state: "working", text: `${who} on the tools` };
+  if (age >= cfg.goneDays) return { state: "gone", text: `gone home ${age} days${freesWord}` };
+  if (isStale(i, now, cfg.staleDays)) return { state: "smoko", text: `on smoko ${age} days${freesWord}` };
+  return { state: "ready", text: frees ? `ready${freesWord}` : "" };
 }
+
+export const whyLine = (i: Item, items: Item[], now = new Date(), cfg: Config = DEFAULTS) =>
+  why(i, items, now, cfg).text;

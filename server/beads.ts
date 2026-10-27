@@ -4,16 +4,41 @@ import { fromBead, type Bead, type Item } from "./model.ts";
 import { houses } from "./houses.ts";
 import { userName } from "./git.ts";
 import type { Source } from "./source.ts";
-import { glance, type Detail, type Row } from "./detail.ts";
+import { glance, prune, type Detail, type Row } from "./detail.ts";
 
-type Shown = Bead & {
+export type Shown = Bead & {
   description?: string;
   acceptance_criteria?: string;
   design?: string;
   notes?: string;
   comments?: { author: string; created_at: string; text: string }[];
-  dependents?: (Row & { issue_type: string; updated_at: string; dependency_type: string })[];
+  dependents?: (Omit<Row, "updatedAt"> & {
+    issue_type: string;
+    updated_at: string;
+    dependency_type: string;
+  })[];
 };
+
+export function fromShown(b: Shown): Detail {
+  const kids = (b.dependents ?? []).filter((d) => d.dependency_type === "parent-child");
+  return prune({
+    ...glance(b.description),
+    acceptance: b.acceptance_criteria,
+    design: b.design,
+    notes: [
+      ...(b.notes ? [{ text: b.notes }] : []),
+      ...(b.comments ?? []).map((c) => ({ who: c.author, when: c.created_at, text: c.text })),
+    ],
+    closeReason: b.close_reason,
+    children: kids.map((d) => ({
+      id: d.id,
+      title: d.title,
+      status: d.status,
+      priority: d.priority,
+      updatedAt: d.updated_at,
+    })),
+  });
+}
 
 const list = (status: string, extra: string[] = []) =>
   json<Bead[]>("bd", ["list", "--json", "--limit", "0", "--status", status, ...extra]);
@@ -47,26 +72,15 @@ export const beads: Source = {
       ).map(fromBead),
     ),
   show: async (id): Promise<Detail> => {
-    const [b] = await json<Shown[]>("bd", ["show", id, "--json", "--include-comments", "--include-dependents"]);
+    const [b] = await json<Shown[]>("bd", [
+      "show",
+      id,
+      "--json",
+      "--include-comments",
+      "--include-dependents",
+    ]);
     if (!b) throw new Error(`no bead ${id}`);
-    const kids = (b.dependents ?? []).filter((d) => d.dependency_type === "parent-child");
-    return {
-      ...glance(b.description),
-      acceptance: b.acceptance_criteria || undefined,
-      design: b.design || undefined,
-      notes: [
-        ...(b.notes ? [{ text: b.notes }] : []),
-        ...(b.comments ?? []).map((c) => ({ who: c.author, when: c.created_at, text: c.text })),
-      ],
-      closeReason: b.close_reason || undefined,
-      children: kids.map((d) => ({
-        id: d.id,
-        title: d.title,
-        status: d.status,
-        priority: d.priority,
-        updatedAt: d.updated_at,
-      })),
-    };
+    return fromShown(b);
   },
   actor,
   actions: {

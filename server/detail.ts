@@ -39,6 +39,14 @@ const rest = (summary: string, more: string) => {
   return m ? { summary: summary.trim(), more: m } : { summary: summary.trim() };
 };
 
+/** Drop empty fields so a missing region is a missing key. */
+export function prune(d: Detail): Detail {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(d))
+    if (v !== undefined && v !== "" && !(Array.isArray(v) && v.length === 0)) out[k] = v;
+  return { summary: d.summary, ...out } as Detail;
+}
+
 export const row = (i: Item): Row => ({
   id: i.id,
   title: i.title,

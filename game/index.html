@@ -84,6 +84,9 @@
         border: 2px solid #777;
         padding: 12px;
         display: none;
+        font-size: 13px;
+        line-height: 1.5;
+        text-align: left;
       }
       #card.open {
         display: block;
@@ -95,11 +98,6 @@
       #card h3 {
         margin: 0 0 6px;
         font-size: 15px;
-      }
-      #card pre {
-        white-space: pre-wrap;
-        font-size: 12px;
-        color: #bbb;
       }
       #card input {
         width: 100%;
@@ -138,7 +136,7 @@
       #board .by-hand {
         margin-top: 10px;
         color: #888;
-        font-size: 12px;
+        font-size: 11px;
       }
       #card .by-hand summary,
       #board .by-hand summary {
@@ -273,16 +271,23 @@
         cursor: pointer;
       }
       #card .crumb {
-        font-size: 12px;
+        font-size: 11px;
         color: #888;
         margin: -2px 0 6px;
       }
+      #card .why { margin: 0 0 6px; }
       #card .why a { color: inherit; text-decoration: underline; }
-      #card .why {
-        color: #f1c40f;
-        font-size: 13px;
-        margin: 0 0 6px;
-      }
+      #card .why-working { color: #ff8c1a; }
+      #card .why-asleep { color: #bdbdbd; }
+      #card .why-needs { color: #ffd166; }
+      #card .why-waiting { color: #c8963e; }
+      #card .why-smoko { color: #cc3333; }
+      #card .why-gone { color: #87ceeb; }
+      #card .why-deferred { color: #f1e3c6; }
+      #card .why-closed { color: #2e8b57; }
+      #card .why-failing { color: #ff8080; }
+      #card .why-approved { color: #a0ffa0; }
+      #card .why-ready { color: #f1c40f; }
       #card .chips {
         display: flex;
         flex-wrap: wrap;
@@ -290,7 +295,7 @@
         margin: 0 0 10px;
       }
       #card .chip {
-        font-size: 10px;
+        font: 11px ui-monospace, Menlo, monospace;
         padding: 1px 6px;
         border: 1px solid #555;
         color: #ccc;
@@ -302,21 +307,19 @@
       #card .dim, #card .chip.dim { color: #777; border-color: #444; }
       #card .summary, #card .fold, #card .notes {
         font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-        font-size: 13px;
-        line-height: 1.5;
         max-width: 60ch;
         color: #ddd;
       }
       #card .summary { color: #eee; }
       #card p { margin: 0 0 8px; }
-      #card ul { margin: 0 0 8px; padding-left: 18px; }
-      #card code { font-family: monospace; font-size: 12px; color: #f1c40f; }
+      #card ul, #card ol { margin: 0 0 8px; padding-left: 18px; }
+      #card code, #card pre { font: 11px/1.5 ui-monospace, Menlo, monospace; color: #f1c40f; }
+      #card pre { white-space: pre-wrap; color: #bbb; margin: 0 0 8px; }
       #card .fold { margin: 6px 0 0; color: #bbb; }
       #card .fold summary {
         cursor: pointer;
         color: #888;
-        font-size: 12px;
-        font-family: monospace;
+        font: 11px ui-monospace, Menlo, monospace;
       }
       #card .fold[open] summary { color: #bbb; margin-bottom: 4px; }
       #card .rows a.r {
