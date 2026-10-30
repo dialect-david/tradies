@@ -116,7 +116,7 @@ const rows = (rs: Row[]): string => {
   return `<div class="rows">${plain.map(rowLine).join("")}${groups
     .map((g) => {
       const t = tally(g.children!);
-      return `<div class="group"><a class="r g${g.status === "closed" ? " done" : ""}" data-open="${esc(g.id)}">${esc(g.title)} ${bar(t.closed, t.total)}</a>${rows(g.children!)}</div>`;
+      return `<div class="group"><a class="r g${g.status === "closed" ? " done" : ""}" data-open="${esc(g.id)}" title="${esc(g.title)}"><span class="gt">${esc(g.title)}</span>${bar(t.closed, t.total)}</a>${rows(g.children!)}</div>`;
     })
     .join("")}</div>`;
 };
@@ -286,7 +286,7 @@ function grouped(items: Item[], floors: Floor[] = []): string {
       .map((e) => {
         const f = stat.get(e.id);
         const open = closedGroups.has(e.id) ? "" : " open";
-        return `<details class="group" data-group="${esc(e.id)}"${open}><summary><span class="gt" data-id="${esc(e.id)}">${esc(e.title)}</span> ${f ? bar(f.closed, f.total) : `<span class="dim">${under(e.id).length} open</span>`}</summary><div class="chits">${render(e.id)}</div></details>`;
+        return `<details class="group" data-group="${esc(e.id)}"${open}><summary title="${esc(e.title)}"><span class="gt" data-id="${esc(e.id)}">${esc(e.title)}</span> ${f ? bar(f.closed, f.total) : `<span class="dim">${under(e.id).length} open</span>`}</summary><div class="chits">${render(e.id)}</div></details>`;
       })
       .join("");
   return render(undefined);
