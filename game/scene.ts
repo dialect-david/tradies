@@ -190,6 +190,7 @@ export class Site extends Phaser.Scene {
     });
     this.sheet("toolbox", TOOLBOX_FRAMES, TOOLBOX_PALETTE);
     this.sheet("cone", theme.hazard.frames, theme.hazard.palette);
+    for (const c of theme.critters) this.sheet(c.key, c.frames, c.palette);
     this.sheet("sold", SOLD_FRAMES, SOLD_PALETTE);
     this.sheet("letterbox", LETTERBOX_FRAMES, LETTERBOX_PALETTE);
     this.sheet("tradie-officer", TRADIE_FRAMES, { ...TRADIE_PALETTE, ...theme.tradie, H: "#ffffff", v: "#c6ff00" });
@@ -274,6 +275,40 @@ export class Site extends Phaser.Scene {
         repeat: -1,
         onRepeat: () => c.setX(-200),
       });
+    }
+    for (const c of theme.critters) {
+      this.anims.create({
+        key: `${c.key}-fly`,
+        frames: this.anims.generateFrameNumbers(c.key, { frames: [0, 1] }),
+        frameRate: 1000 / c.flap,
+        repeat: -1,
+      });
+      for (let i = 0; i < c.count; i++) {
+        const y = Phaser.Math.Between(gy * c.band[0], gy * c.band[1]);
+        const left = Math.random() < 0.5;
+        const sp = this.add
+          .sprite(Phaser.Math.Between(0, w), y, c.key, 0)
+          .setAlpha(c.alpha)
+          .setDepth(-1)
+          .setScrollFactor(0.5)
+          .setFlipX(!left)
+          .play(`${c.key}-fly`);
+        this.tweens.add({
+          targets: sp,
+          x: left ? -60 : w + 60,
+          duration: Phaser.Math.Between(c.cross[0], c.cross[1]) * 1000,
+          repeat: -1,
+          onRepeat: () => sp.setX(left ? w + 60 : -60),
+        });
+        this.tweens.add({
+          targets: sp,
+          y: y + c.bob,
+          duration: Phaser.Math.Between(900, 1600),
+          yoyo: true,
+          repeat: -1,
+          ease: "Sine.inOut",
+        });
+      }
     }
     this.add.image(24, gy, "tiles", TILE.tree).setOrigin(0.5, 1).setScale(TS);
     const boss = this.add.sprite(66, gy, "supervisor", 7).setOrigin(0.5, 1).setInteractive().setDepth(5);

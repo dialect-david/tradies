@@ -17,7 +17,76 @@ export type Theme = {
   ute: Record<string, string>;
   car: Record<string, string>;
   hazard: { frames: string[][]; palette: Record<string, string> };
+  /** Things in the air: a sheet of 2 frames each, drifting across the sky. */
+  critters: Critter[];
 };
+
+export type Critter = {
+  key: string;
+  frames: string[][];
+  palette: Record<string, string>;
+  count: number;
+  alpha: number;
+  /** Seconds to cross the screen. */
+  cross: [number, number];
+  /** Vertical band as a share of the ground height. */
+  band: [number, number];
+  /** Bob amplitude in px and flap interval in ms. */
+  bob: number;
+  flap: number;
+};
+
+const GHOST_FRAMES: string[][] = [
+  [
+    "....oooo....",
+    "..oowwwwoo..",
+    ".owwwwwwwwo.",
+    ".owwowwowwo.",
+    ".owwowwowwo.",
+    "owwwwwwwwwwo",
+    "owwwwoowwwwo",
+    "owwwwwwwwwwo",
+    "owwwwwwwwwwo",
+    "owwwwwwwwwwo",
+    "owwowwowwowo",
+    "ow.oww.ow.wo",
+    "o...o...o..o",
+  ],
+  [
+    "....oooo....",
+    "..oowwwwoo..",
+    ".owwwwwwwwo.",
+    ".owwowwowwo.",
+    ".owwowwowwo.",
+    "owwwwwwwwwwo",
+    "owwwwoowwwwo",
+    "owwwwwwwwwwo",
+    "owwwwwwwwwwo",
+    "owwwwwwwwwwo",
+    "owowwowwowwo",
+    "ow.wo.wwo.wo",
+    "o..o...o...o",
+  ],
+];
+const BAT_FRAMES: string[][] = [
+  [
+    "o.........o.",
+    "oo...oo..oo.",
+    ".ooooooooo..",
+    "..oooeoeo...",
+    "....ooooo...",
+    "............",
+  ],
+  [
+    "............",
+    "............",
+    "..oooooooo..",
+    "oooooeoeoooo",
+    "oo..ooooo.oo",
+    "o....ooo...o",
+  ],
+];
+
 
 const PUMPKIN_FRAMES: string[][] = [
   ["...gg...", ".oocooo.", "occwccwo", "occcccco", "ocwcccwo", "occwwwco", ".occcco.", "..oooo.."],
@@ -41,6 +110,7 @@ export const THEMES: Record<string, Theme> = {
     ute: {},
     car: {},
     hazard: { frames: CONE_FRAMES, palette: CONE_PALETTE },
+    critters: [],
   },
   halloween: {
     name: "halloween",
@@ -59,6 +129,30 @@ export const THEMES: Record<string, Theme> = {
     ute: { w: "#1a1a1a", t: "#b388ff", r: "#3a3a3a" },
     car: { w: "#4a3a5a", t: "#b388ff", r: "#3a3a3a" },
     hazard: { frames: PUMPKIN_FRAMES, palette: { o: "#1a1a1a", c: "#ff7518", w: "#ffd400", g: "#3a7d2a" } },
+    critters: [
+      {
+        key: "ghost",
+        frames: GHOST_FRAMES,
+        palette: { o: "#c9c9e6", w: "#f4f4ff" },
+        count: 3,
+        alpha: 0.75,
+        cross: [40, 70],
+        band: [0.15, 0.7],
+        bob: 18,
+        flap: 500,
+      },
+      {
+        key: "bat",
+        frames: BAT_FRAMES,
+        palette: { o: "#0a0a0a", e: "#ff3030" },
+        count: 6,
+        alpha: 1,
+        cross: [12, 25],
+        band: [0.05, 0.5],
+        bob: 10,
+        flap: 120,
+      },
+    ],
   },
 };
 
