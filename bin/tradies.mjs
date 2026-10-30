@@ -17,8 +17,14 @@ const demo =
   args.find((a) => a.startsWith("--demo="))?.slice(7) ?? (demoAt >= 0 ? args[demoAt + 1] : undefined);
 const demoKind =
   demo === "openspec" ? "openspec" : demoAt >= 0 || args.some((a) => a.startsWith("--demo=")) ? "1" : "";
+const themeAt = args.indexOf("--theme");
+const themeName = args.find((a) => a.startsWith("--theme="))?.slice(8) ?? (themeAt >= 0 ? args[themeAt + 1] : undefined);
 const positional = args.filter(
-  (a, i) => !a.startsWith("--") && !SUB.has(a) && !(demoAt >= 0 && i === demoAt + 1 && a === "openspec"),
+  (a, i) =>
+    !a.startsWith("--") &&
+    !SUB.has(a) &&
+    !(demoAt >= 0 && i === demoAt + 1 && a === "openspec") &&
+    !(themeAt >= 0 && i === themeAt + 1),
 );
 let site = path.resolve(positional[0] ?? process.cwd());
 
@@ -148,7 +154,12 @@ if (demoKind === "openspec") {
 const child = spawn(process.execPath, [vite], {
   cwd: pkg,
   stdio: "inherit",
-  env: { ...process.env, TRADIES_SITE: site, ...(demoKind ? { TRADIES_DEMO: demoKind } : {}) },
+  env: {
+    ...process.env,
+    TRADIES_SITE: site,
+    ...(demoKind ? { TRADIES_DEMO: demoKind } : {}),
+    ...(themeName ? { VITE_THEME: themeName } : {}),
+  },
 });
 for (const sig of ["SIGINT", "SIGTERM", "SIGHUP"]) process.on(sig, () => child.kill(sig));
 child.on("exit", (code, sig) => {

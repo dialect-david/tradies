@@ -54,8 +54,6 @@ import {
   TRUSS_FRAMES,
   TRUSS_PALETTE,
   TOOLBOX_FRAMES,
-  CONE_FRAMES,
-  CONE_PALETTE,
   SOLD_FRAMES,
   SOLD_PALETTE,
   LETTERBOX_FRAMES,
@@ -63,6 +61,7 @@ import {
   TOOLBOX_PALETTE,
   type Stage,
 } from "./sprites.ts";
+import { theme } from "./theme.ts";
 
 const GROUND = 0.78;
 const T = 18;
@@ -94,7 +93,7 @@ const TOWN = {
   fenceR: 46,
 };
 const STAGES: Stage[] = ["site", "slab", "frame", "roof", "lockup", "fitout", "done"];
-const PAINT = [0xffffff, 0xf7e7c6, 0xd9efe0, 0xdfe7f5, 0xf5dede, 0xefe3f7];
+const PAINT = theme.paint;
 
 type Actor = {
   item: Item;
@@ -170,33 +169,36 @@ export class Site extends Phaser.Scene {
     g.generateTexture("dust", 6, 6);
     g.clear().fillStyle(0xdddddd).fillRect(0, 0, 30, 3);
     g.generateTexture("line", 60, 3);
-    this.sheet("kelpie", KELPIE_FRAMES, KELPIE_PALETTE);
+    this.sheet("kelpie", KELPIE_FRAMES, { ...KELPIE_PALETTE, ...theme.kelpie });
     this.sheet("slab", SLAB_FRAMES, SLAB_PALETTE);
     this.sheet("can", CAN_FRAMES, CAN_PALETTE);
     this.sheet("empty", CAN_FRAMES, EMPTY_PALETTE);
-    this.sheet("ute", UTE_FRAMES, UTE_PALETTE);
-    this.sheet("car", UTE_FRAMES, { ...UTE_PALETTE, w: "#e8eef5", t: "#2c3e50" });
+    this.sheet("ute", UTE_FRAMES, { ...UTE_PALETTE, ...theme.ute });
+    this.sheet("car", UTE_FRAMES, { ...UTE_PALETTE, w: "#e8eef5", t: "#2c3e50", ...theme.car });
     for (const [trade, colour] of Object.entries(TRADE_COLOUR))
       this.sheet(`tradie-${trade}`, TRADIE_FRAMES, {
         ...TRADIE_PALETTE,
+        ...theme.tradie,
         H: "#" + colour.toString(16).padStart(6, "0"),
       });
     this.sheet("tradie-inspector", TRADIE_FRAMES, {
       ...TRADIE_PALETTE,
+      ...theme.tradie,
       H: "#ffffff",
       v: "#2c3e50",
       V: "#2c3e50",
     });
     this.sheet("toolbox", TOOLBOX_FRAMES, TOOLBOX_PALETTE);
-    this.sheet("cone", CONE_FRAMES, CONE_PALETTE);
+    this.sheet("cone", theme.hazard.frames, theme.hazard.palette);
     this.sheet("sold", SOLD_FRAMES, SOLD_PALETTE);
     this.sheet("letterbox", LETTERBOX_FRAMES, LETTERBOX_PALETTE);
-    this.sheet("tradie-officer", TRADIE_FRAMES, { ...TRADIE_PALETTE, H: "#ffffff", v: "#c6ff00" });
+    this.sheet("tradie-officer", TRADIE_FRAMES, { ...TRADIE_PALETTE, ...theme.tradie, H: "#ffffff", v: "#c6ff00" });
     this.sheet("roof-red", ROOF_FRAMES, { ...ROOF_PALETTE, ...ROOF_COLOURS.red });
     this.sheet("roof-grey", ROOF_FRAMES, { ...ROOF_PALETTE, ...ROOF_COLOURS.grey });
     this.sheet("truss", TRUSS_FRAMES, TRUSS_PALETTE);
     this.sheet("supervisor", TRADIE_FRAMES, {
       ...TRADIE_PALETTE,
+      ...theme.tradie,
       H: "#ffffff",
       v: "#f4f4f4",
       V: "#f4f4f4",
@@ -222,11 +224,13 @@ export class Site extends Phaser.Scene {
     this.grass = this.add
       .tileSprite(0, gy, w, T * TS, "tiles", TILE.grass)
       .setOrigin(0, 0)
-      .setTileScale(TS);
+      .setTileScale(TS)
+      .setTint(theme.grassTint);
     this.dirt = this.add
       .tileSprite(0, gy + T * TS, w, h - gy - T * TS, "tiles", TILE.dirt)
       .setOrigin(0, 0)
-      .setTileScale(TS);
+      .setTileScale(TS)
+      .setTint(theme.dirtTint);
     this.closeSign = this.add
       .container(0, gy, [
         this.add.image(0, 0, "tiles", TILE.sign).setOrigin(0.5, 1).setScale(HS),
@@ -237,7 +241,7 @@ export class Site extends Phaser.Scene {
       .setVisible(false);
     this.roadY = gy + T * TS * 2 + 8;
     this.road = this.add
-      .rectangle(0, this.roadY - 22, w, 44, 0x4a4a4a)
+      .rectangle(0, this.roadY - 22, w, 44, theme.road)
       .setOrigin(0, 0.5)
       .setDepth(1);
     this.lines = this.add
@@ -262,6 +266,7 @@ export class Site extends Phaser.Scene {
         ])
         .setAlpha(0.9)
         .setScrollFactor(0.3);
+      for (const img of c.list as Phaser.GameObjects.Image[]) img.setTint(theme.cloudTint);
       this.tweens.add({
         targets: c,
         x: c.x + w + 200,
@@ -397,9 +402,21 @@ export class Site extends Phaser.Scene {
     this.empties = this.add.container(0, gy);
     this.ute = this.add.container(0, gy);
     this.sun = this.add
-      .circle(w * 0.15, 90, 34, 0xffe066)
+      .circle(w * 0.15, 90, 34, theme.sun)
       .setDepth(-1)
       .setScrollFactor(0);
+    if (theme.moon)
+      this.add
+        .circle(w * 0.15 + 14, 80, 30, Phaser.Display.Color.HexStringToColor(theme.sky).color)
+        .setDepth(-1)
+        .setScrollFactor(0);
+    if (theme.stars)
+      for (let i = 0; i < 60; i++)
+        this.add
+          .circle(Phaser.Math.Between(0, w), Phaser.Math.Between(10, gy - 120), Phaser.Math.Between(1, 2), 0xffffff)
+          .setAlpha(Phaser.Math.FloatBetween(0.3, 0.9))
+          .setDepth(-2)
+          .setScrollFactor(0);
     this.dusk = this.add
       .rectangle(w / 2, h / 2, w, h, 0x2a1a3e, 0)
       .setDepth(9)
@@ -480,7 +497,7 @@ export class Site extends Phaser.Scene {
       setItems(items, actions, prompts, config);
       this.current = cast(items, new Date(), config, new Set(epics.map((e) => e.id)));
       this.siteName = site;
-      this.hud.querySelector("#site")!.textContent = `🏗 ${site}` + (demo ? " · DEMO · nothing is saved" : "");
+      this.hud.querySelector("#site")!.textContent = `${theme.emoji} ${site}` + (demo ? " · DEMO · nothing is saved" : "");
       this.street(layoutStreet(epics, items));
       this.surveySign.setVisible(epics.length === 0 && !demo);
       if (!this.onSmoko && !this.knockedOff) this.place(this.current);
