@@ -117,3 +117,20 @@ describe("shortTitle", () => {
     expect(shortTitle("http://x")).toBe("http://x");
   });
 });
+
+describe("storeys", () => {
+  const floor = (id: string, closed: number, total: number, status = "open") => ({ id, title: id, status, closed, total });
+  it("none is a house, up to three low rise, up to seven mid rise, eight or more a tower", async () => {
+    const { storeys, MAX_FLOORS } = await import("../game/street.ts");
+    expect(storeys().kind).toBe("house");
+    expect(storeys([floor("a", 0, 1)]).kind).toBe("lowrise");
+    expect(storeys(Array.from({ length: 5 }, (_, i) => floor(`f${i}`, 1, 1, "closed"))).kind).toBe("midrise");
+    const tower = storeys(Array.from({ length: 9 }, (_, i) => floor(`f${i}`, i < 4 ? 1 : 0, 1, i < 4 ? "closed" : "open")));
+    expect(tower.kind).toBe("tower");
+    expect(tower.crane).toBe(true);
+    expect(storeys(Array.from({ length: 9 }, (_, i) => floor(`f${i}`, 1, 1, "closed"))).crane).toBe(false);
+    const big = storeys(Array.from({ length: 15 }, (_, i) => floor(`f${i}`, 0, 1)));
+    expect(big.shown.length).toBe(MAX_FLOORS);
+    expect(big.extra).toBe(3);
+  });
+});

@@ -21,6 +21,27 @@ export type House = {
 };
 
 export const HOUSE_W = 3;
+export const MAX_FLOORS = 12;
+
+export type Storeys = {
+  shown: Floor[];
+  extra: number;
+  kind: "house" | "lowrise" | "midrise" | "tower";
+  crane: boolean;
+};
+
+/** Child epics as floors: 1-3 low rise, 4-7 mid rise (flat roof), 8+ tower with a crane while any floor is open. */
+export function storeys(floors: Floor[] = []): Storeys {
+  const shown = floors.slice(0, MAX_FLOORS);
+  const n = floors.length;
+  const kind = n === 0 ? "house" : n <= 3 ? "lowrise" : n <= 7 ? "midrise" : "tower";
+  return {
+    shown,
+    extra: n - shown.length,
+    kind,
+    crane: kind === "tower" && floors.some((f) => f.status !== "closed"),
+  };
+}
 export const TILE_PX = 48;
 export const HOUSE_PITCH = HOUSE_W * TILE_PX + 44;
 export const STREET_START = 130;

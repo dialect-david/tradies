@@ -26,7 +26,8 @@ describe("demo fixture", () => {
 
   it("builds a street with houses at every stage, one sold, one nested", () => {
     const by = Object.fromEntries(stats.map((h) => [h.id, h]));
-    expect(stats.map((h) => h.id)).toEqual(["demo-1", "demo-2", "demo-3", "demo-4", "demo-5"]);
+    expect(stats.map((h) => h.id)).toEqual(["demo-1", "demo-2", "demo-3", "demo-4", "demo-5", "demo-8"]);
+    expect(by["demo-8"].floors?.length).toBe(9);
     expect(by["demo-4"].status).toBe("closed");
     expect(by["demo-3"].closed / by["demo-3"].total).toBeGreaterThan(0.7);
     expect(by["demo-2"].closed / by["demo-2"].total).toBeLessThan(0.2);

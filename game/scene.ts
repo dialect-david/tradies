@@ -62,6 +62,8 @@ import {
   type Stage,
 } from "./sprites.ts";
 import { theme } from "./theme.ts";
+import { storeys } from "./street.ts";
+import type { Floor } from "../server/houses.ts";
 
 const GROUND = 0.78;
 const T = 18;
@@ -599,18 +601,37 @@ export class Site extends Phaser.Scene {
     const openLot = () =>
       openBoard(lot.house.items, shed ? "the shed" : lot.house.title.slice(0, 60), true, lot.house.floors);
     const W = shed ? 2 : house.sold ? TERRACE_W : HOUSE_W;
-    const H = shed ? 1 : 2;
+    const G = shed ? 1 : 2;
+    const st = storeys(shed ? [] : house.floors);
+    const H = G + st.shown.length;
+    const under = (fid: string) => {
+      const ids = new Set([fid]);
+      for (let grew = true; grew; ) {
+        grew = false;
+        for (const i of house.items) if (i.parent && ids.has(i.parent) && !ids.has(i.id)) (ids.add(i.id), (grew = true));
+      }
+      return ids;
+    };
+    const openFloor = (f: Floor) => {
+      const ids = under(f.id);
+      openBoard(
+        house.items.filter((i) => ids.has(i.id) && i.id !== f.id),
+        f.title.slice(0, 60),
+        true,
+        house.floors?.filter((x) => x.id !== f.id && ids.has(x.id)),
+      );
+    };
     const seed = [...house.id].reduce((n, ch) => n + ch.charCodeAt(0), 0);
     const roofKey = shed || seed % 2 ? "roof-grey" : "roof-red";
     const wall = shed || seed % 3 === 0 ? TOWN.wall.wood : TOWN.wall.stone;
     const SLAB = 10;
-    const tile = (col: number, row: number, frame: number, sheet = "town") => {
+    const tile = (col: number, row: number, frame: number, sheet = "town", open = openLot) => {
       const img = this.add
         .image(col * TILE_PX, -(row - 1) * TILE_PX - SLAB, sheet, frame)
         .setOrigin(0, 1)
         .setScale(HS)
         .setInteractive();
-      img.on("pointerdown", () => openLot());
+      img.on("pointerdown", () => open());
       lot.box.add(img);
       return img;
     };
@@ -645,19 +666,68 @@ export class Site extends Phaser.Scene {
       img.on("pointerdown", () => openLot());
       lot.box.add(img);
     };
+    const pitched = st.kind === "house" || st.kind === "lowrise";
     if (at >= 2 && at < 4) {
-      for (let r = 1; r <= H; r++) for (const c of [0, W - 1]) tile(c, r, TOWN.post);
-      if (at === 2) topper("truss");
+      for (let r = 1; r <= G; r++) for (const c of [0, W - 1]) tile(c, r, TOWN.post);
+      if (at === 2 && pitched) topper("truss");
     }
     const paint = house.sold ? PAINT[seed % PAINT.length]! : 0xffffff;
     if (at >= 4) {
-      for (let r = 1; r <= H; r++)
+      for (let r = 1; r <= G; r++)
         for (let c = 0; c < W; c++)
           tile(c, r, c === mid && r === 1 ? wall.opening : wall.plain).setTint(paint);
       lot.door = tile(mid, 1, at >= 5 ? TOWN.doorLit : TOWN.door);
     }
-    if (at >= 3) topper(roofKey);
-    if (at >= 5 && H > 1) for (const c of [0, W - 1]) tile(c, 2, wall.window).setTint(paint);
+    if (at >= 5 && G > 1) for (const c of [0, W - 1]) tile(c, 2, wall.window).setTint(paint);
+    if (at >= 2)
+      st.shown.forEach((f, k) => {
+        const r = G + 1 + k;
+        const open = () => openFloor(f);
+        const bare = f.total === 0 || (f.closed === 0 && f.status !== "closed");
+        if (bare) {
+          for (const c of [0, W - 1]) tile(c, r, TOWN.post, "town", open);
+          tile(0, r, TILE.beam, "tiles", open).setScale((W * TILE_PX) / T, HS * 0.12);
+          return;
+        }
+        for (let c = 0; c < W; c++) tile(c, r, wall.plain, "town", open).setTint(paint);
+        const lit = f.status === "closed" ? 0xffe9a0 : paint;
+        for (const c of W > 2 ? [0, W - 1] : [0]) tile(c, r, wall.window, "town", open).setTint(lit);
+      });
+    if (at >= 3 && pitched) topper(roofKey);
+    if (at >= 2) {
+      if (!pitched) {
+        const par = this.add
+          .rectangle(-4, roofY, W * TILE_PX + 8, 8, 0x555555)
+          .setOrigin(0, 1)
+          .setStrokeStyle(1, 0x333333)
+          .setInteractive();
+        par.on("pointerdown", () => openLot());
+        lot.box.add(par);
+      }
+      if (st.extra) {
+        const more = this.add
+          .text((W * TILE_PX) / 2, roofY - (pitched ? 18 * PX * roofScale : 8) - 2, `+${st.extra}`, {
+            fontSize: "10px",
+            color: "#ffd700",
+            backgroundColor: "#0008",
+          })
+          .setOrigin(0.5, 1)
+          .setInteractive();
+        more.on("pointerdown", () => openLot());
+        lot.box.add(more);
+      }
+      if (st.crane) {
+        const mx = W * TILE_PX + 14;
+        const top = roofY - 70;
+        const yellow = 0xf1c40f;
+        lot.box.add(this.add.rectangle(mx, 0, 6, -top, yellow).setOrigin(0.5, 1));
+        lot.box.add(this.add.rectangle(mx + 10, top, W * TILE_PX + 50, 5, yellow).setOrigin(1, 0.5));
+        lot.box.add(this.add.rectangle(mx - 2, top - 8, 14, 16, 0x555555).setOrigin(0.5, 0.5));
+        const hx = mx - W * TILE_PX * 0.6;
+        lot.box.add(this.add.rectangle(hx, top + 2, 1, 34, 0xdddddd).setOrigin(0.5, 0));
+        lot.box.add(this.add.rectangle(hx, top + 36, 8, 6, 0x888888).setOrigin(0.5, 0));
+      }
+    }
     if (at >= 6 && !house.sold) {
       tile(-1, 1, TOWN.fenceL);
       tile(W, 1, TOWN.fenceR);
@@ -694,13 +764,18 @@ export class Site extends Phaser.Scene {
     }
     lot.box.add(
       this.add
-        .text((W * TILE_PX) / 2, at ? roofY - 18 * PX * roofScale - 8 : -24, label, {
+        .text(
+          (W * TILE_PX) / 2,
+          at ? roofY - (pitched ? 18 * PX * roofScale : 8) - (st.extra ? 22 : 8) : -24,
+          label,
+          {
           fontSize: "10px",
           color: "#fff",
           backgroundColor: "#0006",
           align: "center",
-          wordWrap: { width: W * TILE_PX + (house.sold ? 4 : 36) },
-        })
+            wordWrap: { width: W * TILE_PX + (house.sold ? 4 : 36) },
+          },
+        )
         .setOrigin(0.5, 1)
         .setName("label")
         .setInteractive()
