@@ -96,6 +96,8 @@ const TOWN = {
 };
 const STAGES: Stage[] = ["site", "slab", "frame", "roof", "lockup", "fitout", "done"];
 const PAINT = theme.paint;
+/** The on-the-tools board spans the top of the screen; labels stay below it. */
+const BOARD_BOTTOM = 196;
 
 type Actor = {
   item: Item;
@@ -766,7 +768,10 @@ export class Site extends Phaser.Scene {
       this.add
         .text(
           (W * TILE_PX) / 2,
-          at ? roofY - (pitched ? 18 * PX * roofScale : 8) - (st.extra ? 22 : 8) : -24,
+          Math.max(
+            at ? roofY - (pitched ? 18 * PX * roofScale : 8) - (st.extra ? 22 : 8) : -24,
+            BOARD_BOTTOM + 30 - lot.box.y,
+          ),
           label,
           {
           fontSize: "10px",
