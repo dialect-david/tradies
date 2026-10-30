@@ -12,7 +12,10 @@ export type HouseStat = {
   closed: number;
   total: number;
   phase?: Phase;
+  /** Child epics folded into this house, each with its own tally. */
+  floors?: Floor[];
 };
+export type Floor = { id: string; title: string; status: string; closed: number; total: number };
 
 export function houses(
   all: Item[],
@@ -49,6 +52,37 @@ export function houses(
       };
       walk(i.id);
       const phase = phaseOf(i.id);
-      return { id: i.id, title: i.title, status: i.status, closed, total, ...(phase ? { phase } : {}) };
+      const floors: Floor[] = [];
+      const floorsOf = (id: string) => {
+        for (const c of children.get(id) ?? []) {
+          if (tops.has(c)) continue;
+          const kid = byId.get(c)!;
+          if (kid.trade === "epic") {
+            let fc = 0;
+            let ft = 0;
+            const count = (x: string) => {
+              for (const g of children.get(x) ?? []) {
+                if (tops.has(g)) continue;
+                ft++;
+                if (byId.get(g)!.status === "closed") fc++;
+                count(g);
+              }
+            };
+            count(c);
+            floors.push({ id: c, title: kid.title, status: kid.status, closed: fc, total: ft });
+          }
+          floorsOf(c);
+        }
+      };
+      floorsOf(i.id);
+      return {
+        id: i.id,
+        title: i.title,
+        status: i.status,
+        closed,
+        total,
+        ...(phase ? { phase } : {}),
+        ...(floors.length ? { floors } : {}),
+      };
     });
 }

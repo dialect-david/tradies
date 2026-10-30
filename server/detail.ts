@@ -1,6 +1,29 @@
 import type { Item } from "./model.ts";
 
-export type Row = { id: string; title: string; status: string; priority: number; updatedAt: string };
+export type Row = {
+  id: string;
+  title: string;
+  status: string;
+  priority: number;
+  updatedAt: string;
+  trade?: string;
+  /** Rows under a sub-epic; present only when the row is a group. */
+  children?: Row[];
+};
+
+/** closed/total over every row beneath, groups included. */
+export function tally(rows: Row[]): { closed: number; total: number } {
+  let closed = 0;
+  let total = 0;
+  for (const r of rows) {
+    total++;
+    if (r.status === "closed") closed++;
+    const t = tally(r.children ?? []);
+    closed += t.closed;
+    total += t.total;
+  }
+  return { closed, total };
+}
 export type Note = { who?: string; when?: string; text: string };
 export type Check = { name: string; state: string };
 
@@ -74,4 +97,15 @@ export const row = (i: Item): Row => ({
   status: i.status,
   priority: i.priority,
   updatedAt: i.updatedAt.toISOString(),
+  trade: i.trade,
 });
+
+/** Rows for the children of `id`, nesting under sub-epics. */
+export function tree(id: string, all: Item[]): Row[] {
+  return all
+    .filter((i) => i.parent === id)
+    .map((i) => {
+      const kids = i.trade === "epic" ? tree(i.id, all) : [];
+      return kids.length ? { ...row(i), children: kids } : row(i);
+    });
+}

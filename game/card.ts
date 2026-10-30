@@ -2,7 +2,8 @@ import { ageDays, type Item } from "../server/model.ts";
 import { act, doctor, show } from "./client.ts";
 import { score, why, type Cast } from "./cast.ts";
 import { esc, prose } from "./prose.ts";
-import { passing, type Check, type Detail, type Note, type Row } from "../server/detail.ts";
+import { passing, tally, type Check, type Detail, type Note, type Row } from "../server/detail.ts";
+import type { Floor } from "../server/houses.ts";
 import { DEFAULTS } from "../server/defaults.ts";
 import { REVIEW_REF, reviewPrompt, short, type Review } from "../server/review.ts";
 import type { Config } from "../server/defaults.ts";
@@ -104,15 +105,21 @@ const fold = (key: string, head: string, body: string, open = openSet.has(key)) 
   body
     ? `<details class="fold" data-fold="${key}"${open ? " open" : ""}><summary>${head}</summary>${body}</details>`
     : "";
-const rows = (rs: Row[]) =>
-  rs.length
-    ? `<div class="rows">${rs
-        .map(
-          (r) =>
-            `<a class="r${r.status === "closed" ? " done" : ""}" data-open="${esc(r.id)}"><span class="chip p${r.priority}">P${r.priority}</span>${esc(r.title)}<span class="dim">${ago(r.updatedAt)}</span></a>`,
-        )
-        .join("")}</div>`
-    : "";
+const bar = (closed: number, total: number) =>
+  `<span class="bar" title="${closed}/${total}"><i style="width:${total ? Math.round((100 * closed) / total) : 0}%"></i></span><span class="dim">${closed}/${total}</span>`;
+const rowLine = (r: Row) =>
+  `<a class="r${r.status === "closed" ? " done" : ""}" data-open="${esc(r.id)}"><span class="chip p${r.priority}">P${r.priority}</span>${esc(r.title)}<span class="dim">${ago(r.updatedAt)}</span></a>`;
+const rows = (rs: Row[]): string => {
+  if (!rs.length) return "";
+  const plain = rs.filter((r) => !r.children);
+  const groups = rs.filter((r) => r.children);
+  return `<div class="rows">${plain.map(rowLine).join("")}${groups
+    .map((g) => {
+      const t = tally(g.children!);
+      return `<div class="group"><a class="r g${g.status === "closed" ? " done" : ""}" data-open="${esc(g.id)}">${esc(g.title)} ${bar(t.closed, t.total)}</a>${rows(g.children!)}</div>`;
+    })
+    .join("")}</div>`;
+};
 const noteList = (ns: Note[]) =>
   ns.length
     ? `<div class="notes">${ns
@@ -125,7 +132,7 @@ const noteList = (ns: Note[]) =>
 function regions(item: Item, d: Detail): string {
   const line = why(item, onSite, new Date(), cfg);
   const kids = d.children ?? [];
-  const doneKids = kids.filter((k) => k.status === "closed").length;
+  const kt = tally(kids);
   const deps = onSite.filter((i) => i.waitsOn.includes(item.id));
   const waits = onSite.filter((i) => item.waitsOn.includes(i.id));
   const asRows = (xs: Item[]) => xs.map((i) => ({ ...i, updatedAt: i.updatedAt.toISOString() }));
@@ -147,7 +154,7 @@ function regions(item: Item, d: Detail): string {
       d.acceptance ? prose(d.acceptance) : "",
       openSet.has("acceptance") || !openSet.size,
     ),
-    fold("children", `children · ${doneKids}/${kids.length}`, rows(kids)),
+    fold("children", `children · ${kt.closed}/${kt.total}`, rows(kids)),
     fold("waits", `waits on · ${waits.length}`, rows(asRows(waits)), true),
     fold("blocks", `blocks · ${deps.length}`, rows(asRows(deps))),
     fold("design", "design", d.design ? prose(d.design) : ""),
@@ -163,6 +170,27 @@ function wireFolds(root: HTMLElement) {
       localStorage.setItem(OPEN, JSON.stringify([...openSet]));
     });
 }
+const findRow = (rs: Row[], id: string): Row | undefined => {
+  for (const r of rs) {
+    if (r.id === id) return r;
+    const hit = findRow(r.children ?? [], id);
+    if (hit) return hit;
+  }
+  return undefined;
+};
+const fromRow = (r?: Row): Item | undefined =>
+  r && {
+    kind: "bead",
+    id: r.id,
+    title: r.title,
+    status: r.status,
+    priority: r.priority,
+    trade: r.trade ?? "task",
+    updatedAt: new Date(r.updatedAt),
+    blocked: false,
+    waitsOn: [],
+    labels: [],
+  };
 let cardSeq = 0;
 export async function openCard(item: Item) {
   const seq = ++cardSeq;
@@ -191,7 +219,8 @@ export async function openCard(item: Item) {
   wireFolds(card);
   for (const a of card.querySelectorAll<HTMLElement>("[data-open]"))
     a.addEventListener("click", () => {
-      const next = onSite.find((i) => i.id === a.dataset.open);
+      const id = a.dataset.open!;
+      const next = onSite.find((i) => i.id === id) ?? fromRow(findRow(detail.children ?? [], id));
       if (next) void openCard(next);
     });
   for (const b of card.querySelectorAll<HTMLButtonElement>("[data-prompt]"))
@@ -238,17 +267,37 @@ export function closeCard() {
   card.classList.remove("open");
 }
 
-export function openBoard(ready: Item[], title = "job board", pinnable = true) {
+const CLOSED_GROUPS = "tradies.groupsClosed";
+const closedGroups = new Set<string>(JSON.parse(localStorage.getItem(CLOSED_GROUPS) ?? "[]"));
+const chit = (i: Item) =>
+  `<div class="chit p${i.priority}" data-id="${esc(i.id)}" data-text="${esc(`${i.id} ${i.title} ${i.labels.join(" ")} ${i.closeReason ?? ""}`.toLowerCase())}"><b>P${i.priority}</b> <span class="trade">${esc(i.trade)} · ${ageDays(i)}d</span> <span class="title">${esc(i.title)}</span>${i.closeReason ? `<div class="why">${esc(i.closeReason.slice(0, 120))}</div>` : ""}<div class="id">${idChip(i.id)}</div></div>`;
+/** Chits grouped under the sub-epics in the list; beads with no sub-epic here come first, flat. */
+function grouped(items: Item[], floors: Floor[] = []): string {
+  const ids = new Set(items.map((i) => i.id));
+  const epics = items.filter((i) => i.trade === "epic");
+  const stat = new Map(floors.map((f) => [f.id, f]));
+  const under = (pid: string | undefined) =>
+    items.filter((i) => i.trade !== "epic" && (pid ? i.parent === pid : !i.parent || !ids.has(i.parent)));
+  const subEpics = (pid: string | undefined) =>
+    epics.filter((e) => (pid ? e.parent === pid : !e.parent || !ids.has(e.parent)));
+  const render = (pid: string | undefined): string =>
+    under(pid).map(chit).join("") +
+    subEpics(pid)
+      .map((e) => {
+        const f = stat.get(e.id);
+        const open = closedGroups.has(e.id) ? "" : " open";
+        return `<details class="group" data-group="${esc(e.id)}"${open}><summary><span class="gt" data-id="${esc(e.id)}">${esc(e.title)}</span> ${f ? bar(f.closed, f.total) : `<span class="dim">${under(e.id).length} open</span>`}</summary><div class="chits">${render(e.id)}</div></details>`;
+      })
+      .join("");
+  return render(undefined);
+}
+
+export function openBoard(ready: Item[], title = "job board", pinnable = true, floors?: Floor[]) {
   closeCard();
   pinnable &&= can.has("create");
   board.classList.add("open");
   document.body.classList.add("board-open");
-  const chits = ready
-    .map(
-      (i) =>
-        `<div class="chit p${i.priority}" data-id="${esc(i.id)}" data-text="${esc(`${i.id} ${i.title} ${i.labels.join(" ")} ${i.closeReason ?? ""}`.toLowerCase())}"><b>P${i.priority}</b> <span class="trade">${esc(i.trade)} · ${ageDays(i)}d</span> <span class="title">${esc(i.title)}</span>${i.closeReason ? `<div class="why">${esc(i.closeReason.slice(0, 120))}</div>` : ""}<div class="id">${idChip(i.id)}</div></div>`,
-    )
-    .join("");
+  const chits = grouped(ready, floors);
   board.innerHTML = `
     <div class="head"><h3>${esc(title)} · ${ready.length}</h3><input class="filter" placeholder="find…" autocomplete="off" /></div>
     ${byHand(
@@ -269,6 +318,8 @@ export function openBoard(ready: Item[], title = "job board", pinnable = true) {
       c.hidden = !hit;
       if (hit) shown++;
     }
+    for (const g of [...board.querySelectorAll<HTMLDetailsElement>("details.group")].reverse())
+      g.hidden = !!q && !g.querySelector(".chit:not([hidden])");
     board.querySelector("h3")!.textContent = `${title} · ${q ? `${shown} of ` : ""}${ready.length}`;
   });
   filter.focus();
@@ -288,10 +339,16 @@ export function openBoard(ready: Item[], title = "job board", pinnable = true) {
     }
   });
   wireCopy(board);
-  for (const c of board.querySelectorAll<HTMLElement>(".chit"))
-    c.addEventListener("click", () => {
+  for (const c of board.querySelectorAll<HTMLElement>(".chit, .gt"))
+    c.addEventListener("click", (e) => {
+      e.preventDefault();
       const item = ready.find((i) => i.id === c.dataset.id);
       if (item) void openCard(item);
+    });
+  for (const g of board.querySelectorAll<HTMLDetailsElement>("details.group"))
+    g.addEventListener("toggle", () => {
+      g.open ? closedGroups.delete(g.dataset.group!) : closedGroups.add(g.dataset.group!);
+      localStorage.setItem(CLOSED_GROUPS, JSON.stringify([...closedGroups]));
     });
 }
 

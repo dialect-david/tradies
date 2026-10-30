@@ -596,7 +596,8 @@ export class Site extends Phaser.Scene {
     lot.door = undefined;
     lot.doorUsers = 0;
     const shed = house.id === SHED;
-    const openLot = () => openBoard(lot.house.items, shed ? "the shed" : lot.house.title.slice(0, 60), true);
+    const openLot = () =>
+      openBoard(lot.house.items, shed ? "the shed" : lot.house.title.slice(0, 60), true, lot.house.floors);
     const W = shed ? 2 : house.sold ? TERRACE_W : HOUSE_W;
     const H = shed ? 1 : 2;
     const seed = [...house.id].reduce((n, ch) => n + ch.charCodeAt(0), 0);

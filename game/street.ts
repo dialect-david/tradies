@@ -1,5 +1,5 @@
 import type { Item } from "../server/model.ts";
-import type { HouseStat } from "../server/houses.ts";
+import type { Floor, HouseStat } from "../server/houses.ts";
 import { stage, type Stage } from "./sprites.ts";
 
 export type Epic = HouseStat;
@@ -17,6 +17,7 @@ export type House = {
   items: Item[];
   sold: boolean;
   no?: number;
+  floors?: Floor[];
 };
 
 export const HOUSE_W = 3;
@@ -98,6 +99,7 @@ export function layoutStreet(epics: Epic[], items: Item[]): Street {
       items: homes.get(e.id) ?? [],
       sold: isSold,
       ...(isSold ? { no: sold } : {}),
+      ...(e.floors ? { floors: e.floors } : {}),
     };
   });
   const shed: House = {

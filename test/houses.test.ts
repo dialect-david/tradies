@@ -44,3 +44,39 @@ describe("houses", () => {
     expect(h[0]).toMatchObject({ closed: 2, total: 4 });
   });
 });
+
+describe("floors", () => {
+  it("lists child epics with their own tally, nested ones included", () => {
+    const b = (id: string, over: Partial<Item> = {}, parent?: string): Item => ({
+      kind: "bead",
+      id,
+      title: id,
+      status: "open",
+      priority: 2,
+      trade: "task",
+      updatedAt: new Date("2026-10-01T00:00:00Z"),
+      blocked: false,
+      waitsOn: [],
+      parent,
+      labels: [],
+      ...over,
+    });
+    const all = [
+      b("top", { trade: "epic" }),
+      b("top.1", {}, "top"),
+      b("sub", { trade: "epic" }, "top"),
+      b("sub.1", { status: "closed" }, "sub"),
+      b("sub.2", {}, "sub"),
+      b("deep", { trade: "epic" }, "sub"),
+      b("deep.1", {}, "deep"),
+      b("flat", { trade: "epic" }),
+    ];
+    const [top, flat] = houses(all, { houseTypes: ["epic"] });
+    expect(top!.floors).toEqual([
+      { id: "sub", title: "sub", status: "open", closed: 1, total: 4 },
+      { id: "deep", title: "deep", status: "open", closed: 0, total: 1 },
+    ]);
+    expect(top!.total).toBe(6);
+    expect(flat!.floors).toBeUndefined();
+  });
+});

@@ -1,20 +1,20 @@
 import type { Item } from "./model.ts";
 import { houses } from "./houses.ts";
 import type { Source } from "./source.ts";
-import { glance, linkedRow, prune, row, type Detail, type Note } from "./detail.ts";
+import { glance, linkedRow, prune, tree, type Detail, type Note } from "./detail.ts";
 import { fixture, type Fixture } from "./demo/fixture.ts";
 
 const byClosed = (items: Item[]) =>
   items.sort((a, b) => (b.closedAt?.getTime() ?? 0) - (a.closedAt?.getTime() ?? 0));
 
 /** A Source over a mutable copy of the fixture; nothing persists. */
-export function demoDetail(i: Item, kids: Item[], notes: Note[]): Detail {
+export function demoDetail(i: Item, all: Item[], notes: Note[]): Detail {
   return prune({
     ...glance(i.description),
     acceptance: i.acceptance,
     notes,
     closeReason: i.closeReason,
-    children: kids.map(row),
+    children: tree(i.id, all),
   });
 }
 
@@ -50,7 +50,7 @@ export function demoSource(f: Fixture = fixture()): Source {
     show: async (id): Promise<Detail> =>
       demoDetail(
         find(id),
-        items.filter((x) => x.parent === id),
+        items,
         (notes.get(id) ?? []).map((text) => ({ text, who: f.foreman })),
       ),
     actor: async () => f.foreman,

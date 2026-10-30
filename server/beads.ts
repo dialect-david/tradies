@@ -19,8 +19,24 @@ export type Shown = Bead & {
   })[];
 };
 
-export function fromShown(b: Shown): Detail {
-  const kids = (b.dependents ?? []).filter((d) => d.dependency_type === "parent-child");
+export const kidsOf = (b: Shown) => (b.dependents ?? []).filter((d) => d.dependency_type === "parent-child");
+
+/** subs: sub-epics' own `bd show` results, keyed by id, so their children nest. */
+export function fromShown(b: Shown, subs: Record<string, Shown> = {}): Detail {
+  const rowsOf = (x: Shown): Row[] =>
+    kidsOf(x).map((d) => {
+      const sub = subs[d.id];
+      const kids = sub ? rowsOf(sub) : [];
+      return {
+        id: d.id,
+        title: d.title,
+        status: d.status,
+        priority: d.priority,
+        updatedAt: d.updated_at,
+        trade: d.issue_type,
+        ...(kids.length ? { children: kids } : {}),
+      };
+    });
   return prune({
     ...glance(b.description),
     acceptance: b.acceptance_criteria,
@@ -30,13 +46,7 @@ export function fromShown(b: Shown): Detail {
       ...(b.comments ?? []).map((c) => ({ who: c.author, when: c.created_at, text: c.text })),
     ],
     closeReason: b.close_reason,
-    children: kids.map((d) => ({
-      id: d.id,
-      title: d.title,
-      status: d.status,
-      priority: d.priority,
-      updatedAt: d.updated_at,
-    })),
+    children: rowsOf(b),
   });
 }
 
@@ -80,7 +90,16 @@ export const beads: Source = {
       "--include-dependents",
     ]);
     if (!b) throw new Error(`no bead ${id}`);
-    return fromShown(b);
+    const subs: Record<string, Shown> = {};
+    const fetch = async (x: Shown) => {
+      const epics = kidsOf(x).filter((d) => d.issue_type === "epic");
+      const shown = await Promise.all(
+        epics.map((d) => json<Shown[]>("bd", ["show", d.id, "--json", "--include-dependents"])),
+      );
+      for (const [sub] of shown) if (sub) (subs[sub.id] = sub), await fetch(sub);
+    };
+    await fetch(b);
+    return fromShown(b, subs);
   },
   actor,
   actions: {

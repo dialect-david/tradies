@@ -37,8 +37,33 @@ describe("fromShown", () => {
       ],
     });
     expect(d.children).toEqual([
-      { id: "k", title: "kid", status: "closed", priority: 3, updatedAt: "2026-10-01T00:00:00Z" },
+      { id: "k", title: "kid", status: "closed", priority: 3, updatedAt: "2026-10-01T00:00:00Z", trade: "task" },
     ]);
+  });
+
+  it("nests a sub-epic's children when its show is supplied", () => {
+    const sub = {
+      id: "e",
+      title: "sub epic",
+      status: "open",
+      priority: 2,
+      issue_type: "epic",
+      updated_at: "2026-10-01T00:00:00Z",
+      dependency_type: "parent-child",
+    };
+    const d = fromShown(
+      { ...shown!, dependents: [sub] },
+      {
+        e: {
+          ...sub,
+          dependents: [
+            { ...sub, id: "e.1", title: "leaf", issue_type: "task", status: "closed" },
+            { ...sub, id: "e.2", title: "leaf2", issue_type: "task" },
+          ],
+        } as never,
+      },
+    );
+    expect(d.children?.[0]?.children?.map((r) => r.id)).toEqual(["e.1", "e.2"]);
   });
   it("empty fields are missing keys", () => {
     const bare: Shown = {

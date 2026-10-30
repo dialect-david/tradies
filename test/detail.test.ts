@@ -23,3 +23,16 @@ describe("glance", () => {
   it("newline without blank line splits too", () =>
     expect(glance("Head\nbody")).toEqual({ summary: "Head", more: "body" }));
 });
+
+describe("tree and tally", () => {
+  it("nests under sub-epics and counts every row", async () => {
+    const { tree, tally } = await import("../server/detail.ts");
+    const { fixture } = await import("../server/demo/fixture.ts");
+    const { items } = fixture(new Date("2026-10-21T12:00:00Z"));
+    const kids = tree("demo-5", items);
+    const reports = kids.find((r) => r.id === "demo-6")!;
+    expect(reports.children?.length).toBe(4);
+    expect(tally(reports.children!)).toEqual({ closed: 1, total: 4 });
+    expect(tally(kids).total).toBe(items.filter((i) => i.parent === "demo-5" || i.parent === "demo-6").length);
+  });
+});
